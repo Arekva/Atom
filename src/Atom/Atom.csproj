@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="../assets/**/*.*">
+        <Link>Assets/%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Silk.NET.Core" Version="2.12.0" />
+      <PackageReference Include="Silk.NET.GLFW" Version="2.12.0" />
+      <PackageReference Include="Silk.NET.Input" Version="2.12.0" />
+      <PackageReference Include="Silk.NET.Vulkan" Version="2.12.0" />
+      <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.12.0" />
+      <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.12.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Engine\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Engine\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Engine\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="Engine\Atom.Engine.csproj" />
+    </ItemGroup>
+
+    <!--<ItemGroup>
+      <ProjectReference Include="Engine\Atom.Engine.csproj" />
+    </ItemGroup>-->
+</Project>

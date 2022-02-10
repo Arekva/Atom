@@ -1,0 +1,13 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "NDC",
+    "Description": "Draws an image fitting the width and height of the viewport (Full-screen).\n\nAll the required vertex data is hardcoded within the vertex shader.\nThe only data to pass is the image to draw, which is on the uniform combined image sampler 0.0.\nThis shader only writes to one Color image pass result.",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+
+    "Stages": 
+    {
+        "Vertex": "Modules/ndc.vert.spv",
+        "Fragment": "Modules/ndc.frag.spv"
+    }
+}
