@@ -8,6 +8,19 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\SPIRV-Cross\SPIRV-Cross.csproj" />
+      <ProjectReference Include="Core\Atom.Engine.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Core\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Core\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Core\**" />
     </ItemGroup>
 
 </Project>

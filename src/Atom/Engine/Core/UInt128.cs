@@ -1,12 +1,9 @@
-﻿using System.Numerics;
-using System.Runtime.CompilerServices;
-
-namespace Atom.Engine;
+﻿namespace Atom.Engine;
 
 public struct UInt128 : IFormattable, IEquatable<UInt128>//, IComparable<UInt128>
 {
-    public static readonly u128 MinValue = 0x0;
-    public static readonly u128 MaxValue = new (ulong.MaxValue, ulong.MaxValue);
+    public static readonly UInt128 MinValue = 0x0;
+    public static readonly UInt128 MaxValue = new (ulong.MaxValue, ulong.MaxValue);
 
     private const int SIZE_OF = sizeof(ulong) * 2;
     private const int SIZE_OF_BIT = SIZE_OF * 8;
@@ -18,40 +15,37 @@ public struct UInt128 : IFormattable, IEquatable<UInt128>//, IComparable<UInt128
     public UInt128(ulong high, ulong low) => (_a, _b) = (high, low);
     
     
-    public static u128 operator >>(u128 n, int shift)
+    public static UInt128 operator >> (UInt128 n, int shift)
     {
         shift %= sizeof(ulong) * 8 * 2;
         return shift > sizeof(ulong) * 8 
-            ? new u128(0, n._a >> shift)
-            : new u128(n._a >> shift, (n._b >> shift) | (n._a << (sizeof(ulong) * 8 - shift)));
+            ? new UInt128(0, n._a >> shift)
+            : new UInt128(n._a >> shift, (n._b >> shift) | (n._a << (sizeof(ulong) * 8 - shift)));
     }
     
-    public static u128 operator <<(u128 n, int shift)
+    public static UInt128 operator <<(UInt128 n, int shift)
     {
         shift %= sizeof(ulong) * 8 * 2;
         return shift > sizeof(ulong) * 8 
-            ? new u128(n._b << shift, 0) 
-            : new u128((n._a << shift) | (n._b >> (sizeof(ulong) * 8 - shift)), n._b << shift);
+            ? new UInt128(n._b << shift, 0) 
+            : new UInt128((n._a << shift) | (n._b >> (sizeof(ulong) * 8 - shift)), n._b << shift);
     }
 
-    public static u128 operator ~(u128 n) => new(~n._a, ~n._b);
+    public static UInt128 operator ~(UInt128 n) => new(~n._a, ~n._b);
 
-    public static u128 operator ^(u128 lhs, u128 rhs) => new(lhs._a ^ rhs._a, lhs._b ^ rhs._b);
+    public static UInt128 operator ^(UInt128 lhs, UInt128 rhs) => new(lhs._a ^ rhs._a, lhs._b ^ rhs._b);
 
-    public static u128 operator &(u128 lhs, u128 rhs) => new(lhs._a & rhs._a, lhs._b & rhs._b);
+    public static UInt128 operator &(UInt128 lhs, UInt128 rhs) => new(lhs._a & rhs._a, lhs._b & rhs._b);
 
-    public static u128 operator |(u128 lhs, u128 rhs) => new(lhs._a | rhs._a, lhs._b | rhs._b);
-
-
-    public static implicit operator u128(in ulong @ulong) => new(0, @ulong);
+    public static UInt128 operator |(UInt128 lhs, UInt128 rhs) => new(lhs._a | rhs._a, lhs._b | rhs._b);
 
 
-    public bool Equals(u128 other) => other._a == _a && other._b == _b;
+    public static implicit operator UInt128(in ulong @ulong) => new(0, @ulong);
 
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(_a, _b);
-    }
+
+    public bool Equals(UInt128 other) => other._a == _a && other._b == _b;
+
+    public override int GetHashCode() => HashCode.Combine(_a, _b);
 
     public string ToString() => ToString("X");
     public string ToString(string? format) => ToString(format, null);
