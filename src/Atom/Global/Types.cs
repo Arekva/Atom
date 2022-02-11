@@ -10,10 +10,6 @@ global using i64 = System.Int64;
 global using u128 = Atom.Engine.UInt128;
 //global using i128 = Atom.Engine.Int128;
 
-// pointers
-global using usize = nuint;
-global using isize = nint;
-
 // floats
 global using f16 = System.Half;
 global using f32 = System.Single;

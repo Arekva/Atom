@@ -16,15 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Silk.NET.Core" Version="2.12.0" />
-      <PackageReference Include="Silk.NET.GLFW" Version="2.12.0" />
-      <PackageReference Include="Silk.NET.Input" Version="2.12.0" />
-      <PackageReference Include="Silk.NET.Vulkan" Version="2.12.0" />
-      <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.12.0" />
-      <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.12.0" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Compile Remove="Engine\**" />
     </ItemGroup>
 
@@ -37,7 +28,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\SPIRV-Cross\SPIRV-Cross.csproj" />
       <ProjectReference Include="Engine\Atom.Engine.csproj" />
+      <ProjectReference Include="Engine\Core\Atom.Engine.Core.csproj" />
     </ItemGroup>
 
     <!--<ItemGroup>

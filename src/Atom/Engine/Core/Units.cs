@@ -32,8 +32,14 @@ public static class Units
     public const double Metre      = Unit;
     public const double Millimetre = Milli*Metre;
     
-    
     public const double AstronomicalUnit = 149_597_870_700.0D * Metre;
     public const double LightYear        = 9_460_730_472_580_800.0D * Metre;
     public const double Parsec           = (648_000.0D / Math.PI) * AstronomicalUnit;
+    
+    
+    
+    // Weights
+    public const double Kilogram  = Kilo*Metre;
+    public const double Gram      = Unit;
+    public const double Milligram = Milli*Metre;
 }
