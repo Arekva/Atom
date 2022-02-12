@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum ResourceType
+    public enum ResourceType
     {
         Unknown               = 0 ,
         UniformBuffer         = 1 ,

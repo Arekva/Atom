@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal struct EntryPoint
+    public struct EntryPoint
     {
         public ExecutionModel ExecutionModel;
         public string? Name;

@@ -30,7 +30,6 @@
     <ItemGroup>
       <ProjectReference Include="..\SPIRV-Cross\SPIRV-Cross.csproj" />
       <ProjectReference Include="Engine\Atom.Engine.csproj" />
-      <ProjectReference Include="Engine\Core\Atom.Engine.Core.csproj" />
     </ItemGroup>
 
     <!--<ItemGroup>

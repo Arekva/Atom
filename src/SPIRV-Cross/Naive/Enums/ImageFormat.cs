@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum ImageFormat
+    public enum ImageFormat
     {
         Unknown = 0,
         Rgba32f = 1,

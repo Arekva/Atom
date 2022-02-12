@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum AccessQualifier
+    public enum AccessQualifier
     {
         ReadOnly = 0,
         WriteOnly = 1,

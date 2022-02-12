@@ -14,14 +14,17 @@
 
     <ItemGroup>
       <Compile Remove="Core\**" />
+      <Compile Remove="Astro\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="Core\**" />
+      <EmbeddedResource Remove="Astro\**" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Core\**" />
+      <None Remove="Astro\**" />
     </ItemGroup>
 
     <ItemGroup>

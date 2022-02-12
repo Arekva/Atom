@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum Dimension
+    public enum Dimension
     {
         Dim1D = 0,
         Dim2D = 1,

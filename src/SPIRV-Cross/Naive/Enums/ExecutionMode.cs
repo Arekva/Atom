@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum ExecutionMode
+    public enum ExecutionMode
     {
         Invocations = 0,
 		SpacingEqual = 1,

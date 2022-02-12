@@ -191,6 +191,8 @@ public static class VK
         string[] extensions = GetRequiredDeviceExtensions();
         vk.DeviceQueueCreateInfo[] queues = GetRequiredQueues();
 
+        //PhysicalDeviceFeatures enabled_features = 
+        
         fixed (vk.DeviceQueueCreateInfo* p_queues = queues)
         {
             vk.DeviceCreateInfo info = new (
@@ -230,7 +232,7 @@ public static class VK
 #endif
         extensions.AddRange(new string []
         {
-            KhrSwapchain.ExtensionName
+            KhrSwapchain.ExtensionName,
         });
 
         return extensions.Distinct().ToArray();

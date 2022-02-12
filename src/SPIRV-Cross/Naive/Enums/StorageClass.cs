@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum StorageClass
+    public enum StorageClass
     {
         UniformConstant = 0,
         Input = 1,

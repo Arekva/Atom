@@ -2,7 +2,7 @@
 
 namespace SPIRVCross.Naive
 {
-    internal class Set : ISpvcObject<spvc_set>
+    public class Set : ISpvcObject<spvc_set>
     {
         public nint Handle { get; set; }
         

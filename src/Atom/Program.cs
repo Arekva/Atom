@@ -1,4 +1,5 @@
 using Atom.Engine;
+using Silk.NET.Vulkan;
 
 namespace Atom.Game;
 

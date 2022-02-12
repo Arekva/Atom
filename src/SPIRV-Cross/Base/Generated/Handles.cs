@@ -16,7 +16,7 @@ namespace SPIRVCross.Base
 	/// A dispatchable handle.
 	/// </summary>
 	[DebuggerDisplay("{DebuggerDisplay,nq}")]
-	internal readonly partial struct spvc_context : IEquatable<spvc_context>
+	public readonly partial struct spvc_context : IEquatable<spvc_context>
 	{
 		public spvc_context(nint handle) { Handle = handle; }
 		public nint Handle { get; }
@@ -62,7 +62,7 @@ namespace SPIRVCross.Base
 	/// A dispatchable handle.
 	/// </summary>
 	[DebuggerDisplay("{DebuggerDisplay,nq}")]
-	internal readonly partial struct spvc_compiler : IEquatable<spvc_compiler>
+	public readonly partial struct spvc_compiler : IEquatable<spvc_compiler>
 	{
 		public spvc_compiler(nint handle) { Handle = handle; }
 		public nint Handle { get; }
@@ -85,7 +85,7 @@ namespace SPIRVCross.Base
 	/// A dispatchable handle.
 	/// </summary>
 	[DebuggerDisplay("{DebuggerDisplay,nq}")]
-	internal readonly partial struct spvc_compiler_options : IEquatable<spvc_compiler_options>
+	public readonly partial struct spvc_compiler_options : IEquatable<spvc_compiler_options>
 	{
 		public spvc_compiler_options(nint handle) { Handle = handle; }
 		public nint Handle { get; }
@@ -131,7 +131,7 @@ namespace SPIRVCross.Base
 	/// A dispatchable handle.
 	/// </summary>
 	[DebuggerDisplay("{DebuggerDisplay,nq}")]
-	internal readonly partial struct spvc_type : IEquatable<spvc_type>
+	public readonly partial struct spvc_type : IEquatable<spvc_type>
 	{
 		public spvc_type(nint handle) { Handle = handle; }
 		public nint Handle { get; }

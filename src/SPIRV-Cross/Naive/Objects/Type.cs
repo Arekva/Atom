@@ -3,7 +3,7 @@ using static SPIRVCross.Base.SPIRV;
 
 namespace SPIRVCross.Naive
 {
-    internal class Type : ISpvcObject<spvc_type>
+    public class Type : ISpvcObject<spvc_type>
     {
         public nint Handle { get; set; }
 

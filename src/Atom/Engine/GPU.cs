@@ -18,12 +18,20 @@ public class GPU
     public readonly PhysicalDeviceIDProperties IDProperties;
 
     public readonly PhysicalDeviceMemoryProperties MemoryProperties;
-
-    public readonly PhysicalDeviceFeatures Features;
+    
+    
     
     private QueueFamily[] _queueFamilies;
 
     public QueueFamily[] QueueFamilies => _queueFamilies;
+
+    
+    
+    public readonly PhysicalDeviceFeatures Features;
+
+    public readonly PhysicalDeviceBufferDeviceAddressFeaturesKHR BufferAddressFeatures;
+
+    public readonly PhysicalDeviceIndexTypeUint8FeaturesEXT IndexU8Features;
     
     
     public string Name { get; }
@@ -64,7 +72,13 @@ public class GPU
         _instance = instance;
         _physicalDevice = physicalDevice;
 
-        
+        PhysicalDeviceProperties old_properties = VK.API.GetPhysicalDeviceProperty(physicalDevice);
+        if (old_properties.ApiVersion < Version.Vulkan12)
+        {
+            Log.Warning($"Device {LowLevel.GetString(old_properties.DeviceName)} API version is too old ({old_properties.ApiVersion})");
+            return;
+        }
+
         PhysicalDeviceProperties2
             .Chain(out PhysicalDeviceProperties2 properties)
             .AddNext(out IDProperties);
@@ -81,7 +95,8 @@ public class GPU
 
         PhysicalDeviceFeatures2
             .Chain(out PhysicalDeviceFeatures2 features)
-            .AddNext(out PhysicalDeviceIndexTypeUint8FeaturesEXT index_uint8);
+            .AddNext(out PhysicalDeviceBufferDeviceAddressFeaturesKHR BufferAddressFeatures)
+            .AddNext(out PhysicalDeviceIndexTypeUint8FeaturesEXT IndexU8Features);
         VK.API.GetPhysicalDeviceFeatures2(physicalDevice, &features);
         Features = features.Features;
 

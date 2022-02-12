@@ -1,7 +1,7 @@
 ﻿// ReSharper disable InconsistentNaming
 namespace SPIRVCross.Naive
 {
-    internal enum Capability
+    public enum Capability
     {
         Matrix = 0,
 		Shader = 1,

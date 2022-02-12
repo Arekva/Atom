@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum CaptureMode
+    public enum CaptureMode
     {
         Copy,
         TakeOwnership

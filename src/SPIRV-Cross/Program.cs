@@ -27,9 +27,9 @@ public class Program : IDisposable
     
     public Program(u8[] source, Language backend = Language.Glsl)
     {
-        if (source == null) throw new ArgumentNullException(nameof(source), "The source code of the SPIR-V program must be provided.");
-
-        LoadProgramInternal(source, backend);
+        LoadProgramInternal(
+            source ?? throw new ArgumentNullException(nameof(source), "The source code of the SPIR-V program must be provided."), 
+            backend);
     }
 
     private void LoadProgramInternal(u8[] source, Language backend)
@@ -146,7 +146,7 @@ public class Program : IDisposable
         }
     }
 
-    public u8[] Compile() => Compiler.Compile();
+    public string Compile() => Compiler.Compile();
 
     private bool _disposed;
     public void Dispose()

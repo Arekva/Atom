@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal struct CombinedImageSampler
+    public struct CombinedImageSampler
     {
         public u32 CombinedId;
         public u32 ImageId;

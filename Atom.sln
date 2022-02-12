@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine", "src/Atom/Eng
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Core", "src/Atom/Engine/Core/Atom.Engine.Core.csproj", "{0753EE7C-607E-4F81-8CA1-90F0539F4275}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeTest", "src\Test\ComputeTest\ComputeTest\ComputeTest.csproj", "{B4E3319C-38BE-4761-9BC8-3F44820734C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Astro", "src\Atom\Engine\Astro\Atom.Engine.Astro.csproj", "{87919550-A14C-4A7E-A182-A422B90F5D8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -30,5 +34,13 @@ Global
 		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Debug|x64.Build.0 = Debug|x64
 		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Release|x64.ActiveCfg = Release|x64
 		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Release|x64.Build.0 = Release|x64
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.Build.0 = Debug|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.ActiveCfg = Release|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.Build.0 = Release|Any CPU
+		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Debug|x64.Build.0 = Debug|Any CPU
+		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Release|x64.ActiveCfg = Release|Any CPU
+		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

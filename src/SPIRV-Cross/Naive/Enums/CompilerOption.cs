@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum CompilerOption
+	public enum CompilerOption
     {
         Unknown = 0,
 		ForceTemporary = 16777217,

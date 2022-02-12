@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using SPIRVCross.Base;
 using static SPIRVCross.Base.SPIRV;
 
 namespace SPIRVCross.Naive
 {
-    internal unsafe class Compiler : ISpvcObject<spvc_compiler>
+    public unsafe class Compiler : ISpvcObject<spvc_compiler>
     {
         public nint Handle { get; set; }
         public Context Context { get; set; }
@@ -32,18 +33,26 @@ namespace SPIRVCross.Naive
             spvc_compiler_build_dummy_sampler_for_combined_images(this, &result).AsManaged().ThrowIfError("Unable to build dummy sampler for combined images: " + Context.GetLastErrorString());
             return result;
         }
-        public u8[] Compile()
+        public string Compile()
         {
             u8* result = null;
-            spvc_compiler_compile(this.ToSpvc(), result).AsManaged().ThrowIfError("Unable to compile the code: " + Context.GetLastErrorString());
-            ushort size = (ushort)(result![5] >> 16);
-            return new Span<u8>(result, size).ToArray();
+            Result res = spvc_compiler_compile(this, &result).AsManaged();
+            if (res != Result.Success)
+            { 
+                throw new Exception("Unable to compile the code: " + Context.GetLastErrorString());
+            }
+
+            return Marshal.PtrToStringAnsi((nint)result)!;
         }
         public CompilerOptions CreateCompilerOptions()
         {
             spvc_compiler_options opt;
             spvc_compiler_create_compiler_options(this, &opt);
             return SpvcObject.From<CompilerOptions, spvc_compiler_options>(opt);
+        }
+        public void InstallCompilerOptions(CompilerOptions options)
+        {
+            spvc_compiler_install_compiler_options(this, options).AsManaged().ThrowIfError("Unable to install options for the compiler: " + Context.GetLastErrorString());
         }
         public Resources CreateShaderResources()
         {

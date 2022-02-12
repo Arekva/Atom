@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum ExecutionModel
+    public enum ExecutionModel
     {
         Vertex = 0,
         TessellationControl = 1,

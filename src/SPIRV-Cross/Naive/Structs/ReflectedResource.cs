@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal struct ReflectedResource
+    public struct ReflectedResource
     {
         public u32 Id { get; init; }
         public u32 BaseTypeId { get; init; }

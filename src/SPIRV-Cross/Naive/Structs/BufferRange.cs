@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal struct BufferRange
+    public struct BufferRange
     {
         public u32 Index;
         public nuint Offset;

@@ -5,15 +5,10 @@ using static SPIRVCross.Base.SPIRV;
 
 namespace SPIRVCross.Naive
 {
-    internal class Resources : ISpvcObject<spvc_resources>
+    public class Resources : ISpvcObject<spvc_resources>
     {
         public nint Handle { get; set; }
 
-        private void t()
-        {
-           //spvc_()
-        }
-        
         public ReflectedResource[] GetResourceListForType(ResourceType type)
         {
             nuint count;

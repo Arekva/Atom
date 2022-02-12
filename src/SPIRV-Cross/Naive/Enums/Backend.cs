@@ -1,12 +1,12 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum Backend
+    public enum Backend
     {
         None = 0,
-        Glsl = 1,
-        Hlsl = 2,
-        Msl = 3,
-        Cpp = 4,
-        Json = 5
+        GLSL = 1,
+        HLSL = 2,
+        MSL = 3,
+        CPP = 4,
+        JSON = 5
     }
 }

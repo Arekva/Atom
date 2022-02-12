@@ -185,9 +185,9 @@ namespace SPIRVCross.Base
 		}
 
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		private delegate spvc_result  PFN_spvc_compiler_compile(spvc_compiler compiler, u8* source);
+		private delegate spvc_result  PFN_spvc_compiler_compile(spvc_compiler compiler, u8** source);
 		private static readonly PFN_spvc_compiler_compile spvc_compiler_compile_ = LoadFunction<PFN_spvc_compiler_compile>(nameof(spvc_compiler_compile));
-		public static spvc_result spvc_compiler_compile(spvc_compiler compiler, u8* source)
+		public static spvc_result spvc_compiler_compile(spvc_compiler compiler, u8** source)
 		{
 			return spvc_compiler_compile_(compiler, source);
 		}

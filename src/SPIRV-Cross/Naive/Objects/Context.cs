@@ -1,12 +1,9 @@
-﻿using System;
-using SPIRVCross;
-
-using SPIRVCross.Base;
+﻿using SPIRVCross.Base;
 using static SPIRVCross.Base.SPIRV;
 
 namespace SPIRVCross.Naive
 {
-    internal unsafe class Context : ISpvcObject<spvc_context>, IDisposable
+    public unsafe class Context : ISpvcObject<spvc_context>, IDisposable
     {
         public nint Handle { get; set; }
 
@@ -26,15 +23,21 @@ namespace SPIRVCross.Naive
         public static Context Create() => SpvcObject.From<Context, spvc_context>(CreateInternal());
         public IntermediateRepresentation ParseSpirV(u8[] code)
         {
-            SpvId* spirv; 
             fixed (u8* srcPtr = code) 
+            {
+                SpvId* spirv; 
                 spirv = (SpvId*) srcPtr;
             
             u32 wordCount = (u32)code.Length / sizeof(u32);
             
             spvc_parsed_ir ir; 
-            spvc_context_parse_spirv(this, spirv, wordCount, &ir).AsManaged().ThrowIfError("Unable to parse SPIR-V source code: " + GetLastErrorString());
+            Result res = spvc_context_parse_spirv(this, spirv, wordCount, &ir).AsManaged();
+            if (res != Result.Success)
+            {
+                throw new Exception($"SPIRV loading return error: {res}");
+            }
             return SpvcObject.From<IntermediateRepresentation, spvc_parsed_ir>(ir);
+            }
         }
         public Compiler CreateCompiler(Backend backend, IntermediateRepresentation ir, CaptureMode captureMode)
         {

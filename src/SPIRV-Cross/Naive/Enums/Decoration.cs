@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum Decoration
+    public enum Decoration
     {
         RelaxedPrecision = 0,
 		SpecId = 1,

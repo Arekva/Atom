@@ -1,0 +1,32 @@
+ #version 450
+
+layout (local_size_x = 256) in;
+
+layout(set = 0, binding = 0) uniform Config{
+    int vectorLength;
+} opData;
+
+layout(set = 0, binding = 1) buffer InputBufferA {
+    float data[];
+} A;
+layout(set = 0, binding = 2) buffer InputBufferB {
+    float data[];
+} B;
+
+layout(set = 0, binding = 3) buffer OutputBuffer {
+    float data[];
+} C;
+
+
+void vector_add()
+{
+    // Get the index of the current element to be processed
+	uint i = gl_GlobalInvocationID.x;
+    
+    // Make sure we don't access past the buffer size
+    if(i < opData.vectorLength)
+    {
+        // Do the operation
+        C.data[i] = A.data[i] + B.data[i];
+    }
+}

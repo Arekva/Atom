@@ -1,6 +1,6 @@
 ﻿namespace SPIRVCross.Naive
 {
-    internal enum BaseType
+    public enum BaseType
     {
         Unknown = 0,
         Void = 1,
