@@ -36,7 +36,7 @@ public class ViewportWindow : IDisposable
         _gpu = VK.GPU;
         
         WindowOptions options = WindowOptions.DefaultVulkan;
-
+        
         Version vk_version = VK.ApplicationVersion;
         
         // todo: in the future, check if older versions are also supported by the engine so more gpus are supported.
@@ -167,7 +167,7 @@ public class ViewportWindow : IDisposable
             int time_count = ordered_times.Length;
 
             double tenPct = ordered_times[time_count / 10];
-            Log.Info($"[|#FF9100,FPS|] AVG: {1.0D/avg:F0} ({avg*1000.0D:F2} ms) | 10% LOW: {1.0D/tenPct:F0} ({tenPct*1000.0D:F2} ms) /// MIN: {1.0D/min:F0} ({min*1000.0D:F2} ms) / MAX: {1.0D/max:F0} ({max*1.000D:F0} ms) ({elapsed:F2} sec)");
+            Log.Info($"[|#FF9100,FPS|] COUNT: {time_count} | AVG: {1.0D/avg:F0} ({avg*1000.0D:F2} ms) | 10% LOW: {1.0D/tenPct:F0} ({tenPct*1000.0D:F2} ms) /// MIN: {1.0D/min:F0} ({min*1000.0D:F2} ms) / MAX: {1.0D/max:F0} ({max*1.000D:F0} ms) ({elapsed:F2} sec)");
             
             _times.Clear();
             _minTime = double.NegativeInfinity;

@@ -17,7 +17,6 @@ public struct RegularCellData
     public byte GeometryCounts;
     /// <summary> Groups of 3 indexes giving the triangulation. </summary>
     public byte[] VertexIndex; // 15 elements
-    // todo: hardcode vertex array variables in struct (no heap alloc.)
 
     public int GetVertexCount => GeometryCounts >> 4;
     public int GetTriangleCount => GeometryCounts & 0x0F;

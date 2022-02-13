@@ -76,6 +76,8 @@ public struct Fence
     
 #endregion
 
+#region User defined
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Result Reset() => Handle.Reset(_fences[Handle]);
 
@@ -110,4 +112,7 @@ public struct Fence
         => await SlimFence.WaitAnyAsync(_fences[fences[0].Handle],
             Unsafe.As<Fence[], SlimFence[]>(ref fences),
             timeout);
+    
+#endregion
+
 }

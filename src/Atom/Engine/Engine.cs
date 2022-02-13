@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Reflection;
 using Silk.NET.GLFW;
+using Silk.NET.Vulkan;
 
 namespace Atom.Engine;
 
@@ -60,7 +61,11 @@ public static class Engine
         DisplayWelcomeBanner();
         if (IsGUI)
         {
-            VK.Initialize(Version.Vulkan12, 
+            VK.Initialize(
+                Engine.Name,
+                Engine.Version,
+                Game.Name,
+                Game.Version,
                 GetRequiredInstanceLayers(), 
                 GetRequiredInstanceExtensions()
             );

@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Astro;
 
 /// <summary> Defines an on-rail orbit </summary>
 public class Orbit : ITrajectory

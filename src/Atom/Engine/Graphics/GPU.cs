@@ -73,7 +73,7 @@ public class GPU
         _physicalDevice = physicalDevice;
 
         PhysicalDeviceProperties old_properties = VK.API.GetPhysicalDeviceProperty(physicalDevice);
-        if (old_properties.ApiVersion < Version.Vulkan12)
+        if (old_properties.ApiVersion < Vk.Version12)
         {
             Log.Warning($"Device {LowLevel.GetString(old_properties.DeviceName)} API version is too old ({old_properties.ApiVersion})");
             return;

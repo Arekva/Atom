@@ -1,5 +1,9 @@
 using Atom.Engine;
+using Atom.Engine.Astro;
 using Silk.NET.Vulkan;
+using Atom.Engine.Astro.Transvoxel;
+using Atom.Engine.Shader;
+using Silk.NET.Maths;
 
 namespace Atom.Game;
 
@@ -15,6 +19,8 @@ public class Game
     {
         try
         {
+            Video.Title = $"{Engine.Game.Name} {Engine.Game.Version}";
+            
             // make window thread
             Thread window_thread = create_window();
 
@@ -22,6 +28,21 @@ public class Game
 
             try
             {
+                /*using CelestialBody planet = new (
+                    name: "Terre", 
+                    radius: 6371000.0D, 
+                    mass: 5.972E+24
+                );
+
+                Grid grid = planet.Grid;
+                (Vector3D<float>[] vert, uint[] indices, Vector3D<float>[] normals) verts = grid.Cells.First().Visit();*/
+
+                using IRasterShader shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard");
+
+                {
+                    
+                }
+
                 /*using RasterShader shader = Shader.Load<RasterShader>("Engine", "Standard");
                 using RasterizedMaterial material = new(shader);
     
@@ -56,7 +77,7 @@ public class Game
             using ViewportWindow viewport_window = new();
             viewport_window.Run();
         });
-        win_thread.Priority = ThreadPriority.AboveNormal;
+        win_thread.Priority = ThreadPriority.Highest;
         win_thread.Name = "Window";
         win_thread.IsBackground = true;
         win_thread.Start();

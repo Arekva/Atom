@@ -119,7 +119,7 @@ public partial class Cell
          *                                                                      *
          *                                                                      */
 
-        public unsafe (Vector3[], uint[], Vector3[]) Visit()
+        public (Vector3D<float>[], uint[], Vector3D<float>[]) Visit()
         {
             // first get all the required data to generate the cell.
             // we need all the neighbors of the current cell and the
@@ -139,7 +139,7 @@ public partial class Cell
             Cell[] cubeCell = new Cell[27];
             
             // normal interpolation stuff
-            Vector3[] grad = new Vector3[2];
+            Vector3D<double>[] grad = new Vector3D<double>[2];
             double[] isos = new double[2];
             //int[] cornerOffset = new int[3]; 
 
@@ -172,7 +172,7 @@ public partial class Cell
                 return (cell, voxel);
             }
 
-            Vector3 InterpolateNormal(int x, int y, int z, double isosurface, int corner1, int corner2)
+            Vector3D<double> InterpolateNormal(int x, int y, int z, double isosurface, int corner1, int corner2)
             {
                 for (int i = 0; i < 2; i++)
                 {
@@ -187,30 +187,26 @@ public partial class Cell
                     isos[i] = cube[voxel.arr][voxel.idx];
                 }
 
-                Vector3 grad1 = grad[0];
-                Vector3 grad2 = grad[1];
+                Vector3D<double> grad1 = grad[0];
+                Vector3D<double> grad2 = grad[1];
                 double iso1 = isos[0];
                 double iso2 = isos[1];
                 
                 // switch variable in order to always keep iso1 > iso 2
                 if (iso2 < iso1)
                 {
-                    double temp = iso1;
-                    iso1 = iso2;
-                    iso2 = temp;
-                    Vector3 temp2 = grad1;
-                    grad1 = grad2;
-                    grad2 = temp2;
+                    (iso1, iso2) = (iso2, iso1);
+                    (grad1, grad2) = (grad2, grad1);
                 }
 
                 const double epsilon = 0.0000001;
 
                 return Math.Abs(iso1 - iso2) > epsilon
-                    ? grad1 + (grad2 - grad1) / (float) (iso2 - iso1) * (float) (isosurface - iso1)
+                    ? grad1 + (grad2 - grad1) / (iso2 - iso1) * (isosurface - iso1)
                     : grad1;
             }
 
-            Vector3 GradientForPoint(int x, int y, int z)
+            Vector3D<double> GradientForPoint(int x, int y, int z)
             {
                 int minx = x - 1;
                 int maxx = x + 1;
@@ -229,23 +225,23 @@ public partial class Cell
                 (int arr, int idx) pzmax = GetVoxelIndices(x, y, maxz);
                 double gradz = (cube[pzmax.arr][pzmax.idx] - cube[pzmin.arr][pzmin.idx]);
                 
-                return new Vector3((float) gradx , (float)grady, (float)gradz);
+                return new Vector3D<double>(gradx, grady, gradz);
             }
             
             // fig. 3.8(a) of the paper: 
-            List<Vector3> edgeVertices = new (12);
-            List<Vector3> edgeNormals = new (12);
+            List<Vector3D<double>> edgeVertices = new (12);
+            List<Vector3D<double>> edgeNormals = new (12);
 
-            List<Vector3> normalsVector = new List<Vector3>(Count * 6);
-            List<Vector3> trianglesVector = new List<Vector3>(Count * 6);
+            List<Vector3D<double>> normalsVector = new List<Vector3D<double>>(Count * 6);
+            List<Vector3D<double>> trianglesVector = new List<Vector3D<double>>(Count * 6);
 
             //sbyte[] corner = new sbyte[8];
             Stopwatch sw = Stopwatch.StartNew();
 
             (int arr, int idx)[] cornerIndices = new (int,int)[8];
-            Vector3[] cornerPositions = new Vector3[8];
+            Vector3D<double>[] cornerPositions = new Vector3D<double>[8];
 
-            Vector3 halfRes = new Vector3(HalfResolution, HalfResolution, HalfResolution);
+            Vector3D<double> halfRes = new Vector3D<double>(HalfResolution, HalfResolution, HalfResolution);
             
             // now that the neighborhood has been assigned, time to generate that mesh.
             // we need to loop through all the voxels of the grid.
@@ -261,7 +257,7 @@ public partial class Cell
                 
                 // in-cell position
                 AMath.To3D(voxel, Width, Height, out int x, out int y, out int z);
-                Vector3 offset = new Vector3(x - HalfResolution, y-HalfResolution, z-HalfResolution);
+                Vector3D<double> offset = new Vector3D<double>(x - HalfResolution, y-HalfResolution, z-HalfResolution);
 
                 // in-cube position
                 int cubeX = x + xOrigin;
@@ -292,14 +288,14 @@ public partial class Cell
                     RegularCellData cellData = Transvoxel.RegularCellData[cellClass];
                     ushort[] vertexData = Transvoxel.RegularVertexData[cubeIndex];
 
-                    cornerPositions[0] = new Vector3(x - 1.0F, y - 1.0F, z - 1.0F);
-                    cornerPositions[1] = new Vector3(x - 0.0F, y - 1.0F, z - 1.0F);
-                    cornerPositions[2] = new Vector3(x - 1.0F, y - 0.0F, z - 1.0F);
-                    cornerPositions[3] = new Vector3(x - 0.0F, y - 0.0F, z - 1.0F);
-                    cornerPositions[4] = new Vector3(x - 1.0F, y - 1.0F, z - 0.0F);
-                    cornerPositions[5] = new Vector3(x - 0.0F, y - 1.0F, z - 0.0F);
-                    cornerPositions[6] = new Vector3(x - 1.0F, y - 0.0F, z - 0.0F);
-                    cornerPositions[7] = new Vector3(x - 0.0F, y - 0.0F, z - 0.0F);
+                    cornerPositions[0] = new Vector3D<double>(x - 1.0F, y - 1.0F, z - 1.0F);
+                    cornerPositions[1] = new Vector3D<double>(x - 0.0F, y - 1.0F, z - 1.0F);
+                    cornerPositions[2] = new Vector3D<double>(x - 1.0F, y - 0.0F, z - 1.0F);
+                    cornerPositions[3] = new Vector3D<double>(x - 0.0F, y - 0.0F, z - 1.0F);
+                    cornerPositions[4] = new Vector3D<double>(x - 1.0F, y - 1.0F, z - 0.0F);
+                    cornerPositions[5] = new Vector3D<double>(x - 0.0F, y - 1.0F, z - 0.0F);
+                    cornerPositions[6] = new Vector3D<double>(x - 1.0F, y - 0.0F, z - 0.0F);
+                    cornerPositions[7] = new Vector3D<double>(x - 0.0F, y - 0.0F, z - 0.0F);
                     
                     for (int i = 0; i < cellData.GetVertexCount; i++)
                     {
@@ -311,14 +307,14 @@ public partial class Cell
                         double iso1 = cube[cornerIndices[corner1].arr][cornerIndices[corner1].idx];
                         double iso2 = cube[cornerIndices[corner2].arr][cornerIndices[corner2].idx];
                         
-                        Vector3 cornerPos1 = cornerPositions[corner1];
-                        Vector3 cornerPos2 = cornerPositions[corner2];
+                        Vector3D<double> cornerPos1 = cornerPositions[corner1];
+                        Vector3D<double> cornerPos2 = cornerPositions[corner2];
                         
                         float t = (float)(iso2 / (iso2 - iso1));
-                        Vector3 vertexPos = cornerPos1 * t + cornerPos2 * (1.0F-t);
+                        Vector3D<double> vertexPos = cornerPos1 * t + cornerPos2 * (1.0F-t);
                         
                         edgeVertices.Add(vertexPos);
-                        edgeNormals.Add(Vector3.Normalize(InterpolateNormal(cubeX,cubeY,cubeZ, _isosurface, corner1, corner2)));
+                        edgeNormals.Add(Vector3D.Normalize(InterpolateNormal(cubeX,cubeY,cubeZ, _isosurface, corner1, corner2)));
                     }
 
                     int totTriCount = cellData.GetTriangleCount * 3;
@@ -326,7 +322,7 @@ public partial class Cell
                     {
                         byte vertexIndex = cellData.VertexIndex[i];
 
-                        Vector3 vec = (edgeVertices[vertexIndex] - halfRes) * (float)Delta;
+                        Vector3D<double> vec = (edgeVertices[vertexIndex] - halfRes) * Delta;
                         trianglesVector.Add(vec);
                         normalsVector.Add(edgeNormals[vertexIndex]);
                     }
@@ -338,14 +334,14 @@ public partial class Cell
             sw.Stop();
             Console.WriteLine($"[{this._tag}] Build time: {sw.Elapsed.TotalMilliseconds:F2} ms");
 
-            Vector3[] vertices = new Vector3[trianglesVector.Count];
+            Vector3D<float>[] vertices = new Vector3D<float>[trianglesVector.Count];
             uint[] triangles = new uint[vertices.Length];
-            Vector3[] normals = new Vector3[normalsVector.Count];
+            Vector3D<float>[] normals = new Vector3D<float>[normalsVector.Count];
             
             for (int i = 0; i < vertices.Length; i++)
             {
-                vertices[i] = trianglesVector[i];
-                normals[i] = normalsVector[i];
+                vertices[i] = (Vector3D<float>)trianglesVector[i];
+                normals[i] = (Vector3D<float>)normalsVector[i];
                 triangles[i] = (uint)i;
             }
 

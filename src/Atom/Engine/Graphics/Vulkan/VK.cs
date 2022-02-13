@@ -31,7 +31,11 @@ public static class VK
     public static Version ApplicationVersion { get; private set; }
 
     public static unsafe void Initialize(
-        Version version,
+        string engineName,
+        Version engineVersion,
+        string gameName,
+        Version gameVersion,
+        
         string[] layers,
         string[] extensions)
     {
@@ -39,6 +43,8 @@ public static class VK
         API.EnumerateInstanceVersion(ref vk_api_version);
 
         Version api_version = new (name: "Vulkan", vk_api_version);
+
+        Version version = new ("Vulkan", Vk.Version12);
         
         Log.Info($"Using Vulkan {version.ToString("{M}.{m}")} (API {api_version.ToString("{M}.{m}.{p}")})");
 
@@ -59,10 +65,10 @@ public static class VK
 
         vk.ApplicationInfo app_info = new (
             apiVersion: version,
-            pEngineName: LowLevel.GetPointer(Engine.Name ?? throw new ArgumentNullException(nameof(Engine.Name))),
-            engineVersion: Version.GetApiVersion(Engine.Version),
-            pApplicationName: LowLevel.GetPointer(Game.Name ?? throw new ArgumentNullException(nameof(Game.Name))),
-            applicationVersion: Version.GetApiVersion(Game.Version)
+            pEngineName: LowLevel.GetPointer(engineName ?? throw new ArgumentNullException(nameof(engineName))),
+            engineVersion: Version.GetApiVersion(engineVersion),
+            pApplicationName: LowLevel.GetPointer(gameName ?? throw new ArgumentNullException(nameof(gameName))),
+            applicationVersion: Version.GetApiVersion(gameVersion)
         );
 
 

@@ -38,8 +38,10 @@ public static class Units
     
     
     
-    // Weights
+    // MASS
     public const double Kilogram  = Kilo*Metre;
     public const double Gram      = Unit;
     public const double Milligram = Milli*Metre;
+
+
 }

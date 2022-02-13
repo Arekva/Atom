@@ -132,16 +132,16 @@ public unsafe class NDCDrawer : IDisposable
 
                 info = new PipelineShaderStageCreateInfo(
                     pName: _pName,
-                    stage: stage
+                    stage: (vk.ShaderStageFlags)stage
                 );
                 VK.API.CreateShaderModule(device, in vertex_info, null, out info.Module);
             }
         }
         
         make_shader("Assets/Shaders/Engine/NDC/Modules/ndc.frag.spv", 
-            ShaderStageFlags.ShaderStageFragmentBit, out modules[0]); /* Fragment module */
+            ShaderStageFlags.Fragment, out modules[0]); /* Fragment module */
         make_shader("Assets/Shaders/Engine/NDC/Modules/ndc.vert.spv", 
-            ShaderStageFlags.ShaderStageVertexBit, out modules[1]);   /* Vertex   module */
+            ShaderStageFlags.Vertex, out modules[1]);   /* Vertex   module */
 
         DescriptorPoolCreateInfo pool_create_info = new(
             pPoolSizes: _combinedImageCount,
@@ -154,7 +154,7 @@ public unsafe class NDCDrawer : IDisposable
             binding: 0,
             descriptorCount: 1,
             descriptorType: DescriptorType.CombinedImageSampler,
-            stageFlags: ShaderStageFlags.ShaderStageFragmentBit
+            stageFlags: (vk.ShaderStageFlags)ShaderStageFlags.Fragment
         );
         DescriptorSetLayoutCreateInfo set_layout_create_info = new(
             bindingCount: 1U,

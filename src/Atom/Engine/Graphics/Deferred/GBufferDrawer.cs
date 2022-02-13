@@ -126,16 +126,16 @@ public unsafe class GBufferDrawer : IDisposable
 
                 info = new PipelineShaderStageCreateInfo(
                     pName: _pName,
-                    stage: stage
+                    stage: (vk.ShaderStageFlags)stage
                 );
                 VK.API.CreateShaderModule(device, in vertex_info, null, out info.Module);
             }
         }
         
         make_shader("Assets/Shaders/Engine/Deferred/Modules/deferred.frag.spv", 
-            ShaderStageFlags.ShaderStageFragmentBit, out modules[0]); /* Fragment module */
+            ShaderStageFlags.Fragment, out modules[0]); /* Fragment module */
         make_shader("Assets/Shaders/Engine/Deferred/Modules/deferred.vert.spv", 
-            ShaderStageFlags.ShaderStageVertexBit, out modules[1]);   /* Vertex   module */
+            ShaderStageFlags.Vertex, out modules[1]);   /* Vertex   module */
 
         DescriptorPoolCreateInfo pool_create_info = new(
             pPoolSizes: _descriptorImageCount,
@@ -151,7 +151,7 @@ public unsafe class GBufferDrawer : IDisposable
                 binding: (uint)i,
                 descriptorCount: 1,
                 descriptorType: DescriptorType.InputAttachment,
-                stageFlags: ShaderStageFlags.ShaderStageFragmentBit
+                stageFlags: (vk.ShaderStageFlags)ShaderStageFlags.Fragment
             );
         }
         

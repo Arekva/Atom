@@ -9,36 +9,35 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\SPIRV-Cross\SPIRV-Cross.csproj" />
+      <ProjectReference Include="Astro\Atom.Engine.Astro.csproj" />
       <ProjectReference Include="Core\Atom.Engine.Core.csproj" />
+      <ProjectReference Include="Graphics\Atom.Engine.Graphics.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Remove="Core\**" />
       <Compile Remove="Astro\**" />
+      <None Remove="Graphics\**" />
+      <Compile Remove="Graphics\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="Core\**" />
       <EmbeddedResource Remove="Astro\**" />
+      <EmbeddedResource Remove="Graphics\**" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Core\**" />
       <None Remove="Astro\**" />
+      <None Remove="Graphics\**" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Silk.NET.Core" Version="2.13.0" />
       <PackageReference Include="Silk.NET.GLFW" Version="2.13.0" />
       <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
-      <PackageReference Include="Silk.NET.Vulkan" Version="2.13.0" />
-      <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.13.0" />
-      <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.13.0" />
       <PackageReference Include="Silk.NET.Windowing" Version="2.13.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Vulkan\Objects" />
     </ItemGroup>
 
 </Project>

@@ -9,13 +9,13 @@
         Fragment = 4,
         Compute = 5,
         Kernel = 6,
-        NvidiaTask = 5267,
-        NvidiaMesh = 5268,
-        KhronosRayGeneration = 5313,
-        KhronosIntersection = 5314,
-        KhronosAnyHit = 5315,
-        KhronosClosestHit = 5316,
-        KhronosMiss = 5317,
-        KhronosCallable = 5318
+        Task_NV = 5267,
+        Mesh_NV = 5268,
+        RayGeneration_KHR = 5313,
+        Intersection_KHR = 5314,
+        AnyHit_KHR = 5315,
+        ClosestHit_KHR = 5316,
+        Miss_KHR = 5317,
+        Callable_KHR = 5318
     }
 }

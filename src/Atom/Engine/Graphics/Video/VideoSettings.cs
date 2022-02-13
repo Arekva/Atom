@@ -7,7 +7,7 @@ public static class Video
     // resolution 
     private static Vector2D<uint> _resolution = Resolutions.HD;
     public static event Action<Vector2D<uint>>? OnResolutionChanged;
-    internal static event Action<Vector2D<uint>>? OnResolutionManuallyChanged;
+    public static event Action<Vector2D<uint>>? OnResolutionManuallyChanged;
 
     public static Vector2D<uint> Resolution
     {
@@ -29,7 +29,7 @@ public static class Video
     /// This method calls <see cref="OnResolutionChanged"/> but not <see cref="OnResolutionManuallyChanged"/>.
     /// </summary>
     /// <param name="resolution">The new resolution to set.</param>
-    internal static void SetResolutionAutoChange(Vector2D<uint> resolution)
+    public static void SetResolutionAutoChange(Vector2D<uint> resolution)
     {
         _resolution = resolution;
         OnResolutionChanged?.Invoke(resolution);
@@ -107,7 +107,7 @@ public static class Video
 
     // window title
     // todo: probably move that out of the video settings, more like in the general game ones.
-    private static string _title = $"{Game.Name} {Game.Version}";
+    private static unsafe string _title = $"Atom Game x{sizeof(IntPtr)*8}";
     public static event Action<string>? OnTitleChanged;
     public static string Title
     {

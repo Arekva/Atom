@@ -2,7 +2,7 @@
     "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
 
     "Name": "Standard",
-    "Description": "TODO",
+    "Description": "Standard PBR deferred diffuse shader.",
     "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
 
     "Stages": 

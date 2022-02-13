@@ -1,4 +1,4 @@
-namespace Atom.Engine;
+namespace Atom.Engine.Astro;
 
 public interface ITrajectory
 {

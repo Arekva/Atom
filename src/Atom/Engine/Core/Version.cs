@@ -1,15 +1,10 @@
 ﻿using System.Globalization;
 using System.Text.Json.Serialization;
-using Silk.NET.Vulkan;
 
 namespace Atom.Engine;
 
 public struct Version : IComparable<Version>, IEquatable<Version>, IFormattable
 {
-    public static Version Vulkan10 { get; } = new("Vulkan", Vk.Version10);
-    public static Version Vulkan11 { get; } = new("Vulkan", Vk.Version11);
-    public static Version Vulkan12 { get; } = new("Vulkan", Vk.Version12);
-
     public static Version MajorRelease { get; } = new(1, 0, 0);
     public static Version MinorRelease { get; } = new(0, 1, 0);
     public static Version Fix { get; } = new(0, 0, 1);

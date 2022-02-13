@@ -1,0 +1,211 @@
+﻿using System.Reflection;
+using SPIRVCross;
+
+namespace Atom.Engine;
+
+public abstract class ShaderModule : IShaderModule
+{
+    private const string DEFAULT_ENTRY_POINT = "main";
+    
+    private vk.Device _device;
+    
+    private vk.ShaderModule _handle;
+    
+    vk.ShaderModule IShaderModule.Handle
+    {
+        get => _handle;
+        init => _handle = value;
+    }
+
+    public virtual unsafe void Dispose()
+    {
+        LowLevel.Free(_stageInfo.PName);
+        VK.API.DestroyShaderModule(_device, _handle, null);
+        GC.SuppressFinalize(this);
+    }
+
+    ~ShaderModule() => Dispose();
+
+    public string EntryPoint { get; } = DEFAULT_ENTRY_POINT;
+    
+    public abstract Silk.NET.Vulkan.ShaderStageFlags Stage { get; } // must be overriden by children
+    
+    private vk.PipelineShaderStageCreateInfo _stageInfo;
+    public vk.PipelineShaderStageCreateInfo StageInfo => _stageInfo;
+
+    private IDescriptor[] _descriptors;
+    public IEnumerable<IDescriptor> Descriptors => _descriptors;
+
+    /*private Dictionary<uint, DescriptorSetLayoutBinding> _layoutBindings = new ();
+    public IEnumerable<DescriptorSetLayoutBinding> DescriptorBindings => _layoutBindings.Values;*/
+
+    
+    
+    private ModuleBinding[] _bindings;
+    public IEnumerable<ModuleBinding> Bindings => _bindings;
+
+    public unsafe ShaderModule(vk.Device device, SPIRVCross.Program reflector)
+    {
+        _device = device;
+        
+        vk.ShaderStageFlags exec_model = reflector.ExecutionModel.ToVK();
+        vk.ShaderStageFlags this_model = Stage!;
+        if (exec_model != this_model)
+        {
+            throw new Exception($"The provided shader program is a {exec_model} shader but a {GetType().Name} requires a {this_model} shader program.");
+        }
+
+        fixed (byte* source = reflector.Source)
+        {
+            vk.ShaderModuleCreateInfo info = new(
+                codeSize: (uint)reflector.Source.Length,
+                pCode: (uint*)source
+            );
+            VK.API.CreateShaderModule(_device, in info, null, out _handle);
+        }
+
+        _stageInfo = CreateStageInfo();
+        
+        Reflect(reflector);
+    }
+    /*public Module(ShaderModule module)
+    {
+        _vkHandler = module ?? throw new ArgumentNullException(nameof(module));
+    }*/
+
+    private vk.PipelineShaderStageCreateInfo CreateStageInfo()
+    {
+        return _handle.CreateStage(Stage, EntryPoint);
+    }
+
+    public void SetDescriptorBindingType(uint binding, vk.DescriptorType type)
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual void Reflect(SPIRVCross.Program reflector)
+    {
+        LoadDescriptors(reflector);
+    }
+
+
+    /// <summary> Get all the descriptors of the shader and sets their properties. </summary>
+    /// <param name="reflector"></param>
+    /// <exception cref="NotImplementedException"></exception>
+    private void LoadDescriptors(SPIRVCross.Program reflector)
+    {
+        List<IDescriptor> descriptors = new ();
+
+        // retrieve all the descriptors of a certain resource type
+        IEnumerable<T> enumerate_descriptors<T>(ResourceType resType) where T : struct, IDescriptor
+        {
+            return reflector.GetResources(resType).Select(resource =>
+            {
+                uint dim_count = resource.GetArrayDimensionsCount();
+
+                // get if the resource is an array
+                uint array_elements = 1U;
+                uint[] dims_lengths = Array.Empty<uint>();
+                if (dim_count > 0)
+                {
+                    dims_lengths = new uint[dim_count];
+
+                    for (uint i = 0u; i < dim_count; i++)
+                    {
+                        uint length = resource.GetArrayLength(i);
+                        dims_lengths[i] = length;
+
+                        array_elements *= length;
+                    }
+                }
+
+                string name = resource.GetName();
+
+                // get the bit width of the resource
+                uint bit_width = resource.GetSizeOfBit() * // base size x
+                                Math.Max(1U, resource.GetMatrixColumns()) * // matrix columns x
+                                Math.Max(1U, resource.GetVectorSize()) * // vector size x
+                                array_elements; // number of elements in arrays
+                
+                return new T
+                {
+                    Name = name,
+                    Binding = resource.GetBinding(),
+                    Location = resource.GetLocation(),
+                    Offset = resource.GetOffset(),
+                    Vector = new VectorDescriptor
+                    {
+                        VectorLength = resource.GetVectorSize(),
+                        MatrixColumns = resource.GetMatrixColumns()
+                    },
+                    Array = new ArrayDescriptor
+                    {
+                        IsArray = resource.IsArray(),
+                        DimensionsCount = dim_count,
+                        DimensionsLengths = dims_lengths
+                    },
+
+                    ResourceType = resType,
+                    BitWidth = bit_width,
+                    BaseType = resource.GetBaseType(),
+                    Struct = new StructDescriptor
+                    {
+                        Types = resource.GetStructComponents().ToArray()
+                    }
+                };
+            });
+        }
+
+        descriptors.AddRange(enumerate_descriptors<UniformBuffer>(ResourceType.UniformBuffer)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<StorageBuffer>(ResourceType.StorageBuffer)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<StageInput>(ResourceType.StageInput)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<StageOutput>(ResourceType.StageOutput)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<SubpassInput>(ResourceType.SubpassInput)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<StorageImage>(ResourceType.StorageImage)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<SampledImage>(ResourceType.SampledImage)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<AtomicCounter>(ResourceType.AtomicCounter)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<PushConstant>(ResourceType.PushConstant)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<SeparateImage>(ResourceType.SeparateImage)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<SeparateSamplers>(ResourceType.SeparateSamplers)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<AccelerationStructure>(ResourceType.AccelerationStructure)
+            .Select(d => d as IDescriptor));
+        descriptors.AddRange(enumerate_descriptors<RayQuery>(ResourceType.RayQuery)
+            .Select(d => d as IDescriptor));
+
+        //Log.Info($"`\n===> {this.GetType().Name} descriptors:{String.Concat(descriptors.Select(desc => $"\n{desc.BeautifiedName()}"))}\n\n`");
+
+
+        _descriptors = descriptors.ToArray();
+        
+        List<ModuleBinding> bindings = new ();
+        foreach (IDescriptor desc in descriptors)
+        {
+            if(desc.ResourceType is ResourceType.UniformBuffer or ResourceType.SampledImage or
+               ResourceType.StorageImage or ResourceType.StorageBuffer)
+            bindings.Add(new ModuleBinding(
+                descriptor: desc, 
+                type: desc.ResourceType switch
+                {
+                    ResourceType.UniformBuffer => vk.DescriptorType.UniformBuffer,
+                    ResourceType.SampledImage => vk.DescriptorType.CombinedImageSampler,
+                    ResourceType.StorageImage => vk.DescriptorType.StorageImage,
+                    ResourceType.StorageBuffer => vk.DescriptorType.StorageBuffer
+                },
+                stages: Stage)
+            );
+        }
+
+        _bindings = bindings.ToArray();
+    }
+}

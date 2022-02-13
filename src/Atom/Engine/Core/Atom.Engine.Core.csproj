@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Silk.NET.Core" Version="2.13.0" />
       <PackageReference Include="Silk.NET.Maths" Version="2.13.0" />
     </ItemGroup>
 
