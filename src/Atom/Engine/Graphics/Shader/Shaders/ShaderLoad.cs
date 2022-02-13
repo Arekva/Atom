@@ -11,6 +11,9 @@ public abstract partial class Shader
     public const string ShaderPath = "Assets/Shaders/";
     /// <summary> The name of the shader descriptor JSON </summary>
     public const string DescriptorName = "shader.json";
+
+    /// <summary> Arbitrary set maximum materials per shader. Used for descriptor pool allocation. </summary>
+    public const uint MaxMaterialsPerShader = 1024; 
     
     
     private static readonly Version _maxSupportedFormatVersion = new (0,1,0);

@@ -8,9 +8,10 @@ public interface IShader : IDisposable
     
 #region Handles
 
-    /// <summary> The pipeline layout used by the shader. </summary>
+    /// <summary> The Vulkan pipeline layout used by the shader. </summary>
     public SlimPipelineLayout PipelineLayout { get; }
 
+    /// <summary> The Vulkan descriptor allocator. </summary>
     public SlimDescriptorPool DescriptorPool { get; }
     
     /// <summary> The Vulkan Device handle on which this shader has been created. </summary>

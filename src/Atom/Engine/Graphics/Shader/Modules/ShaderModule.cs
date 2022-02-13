@@ -115,7 +115,7 @@ public abstract class ShaderModule : IShaderModule
                 {
                     bindings[index] =  new DescriptorSetLayoutBinding(
                         binding: descriptor.Binding,
-                        descriptorType: _spirvToVkDescMap[resource_type],
+                        descriptorType: SpirvToVkDescMap[resource_type],
                         descriptorCount: descriptor.Array.IsArray ? descriptor.Array.DimensionsLengths[0] : 1U,
                         stageFlags: (vk.ShaderStageFlags)Stage
                     );
@@ -141,7 +141,7 @@ public abstract class ShaderModule : IShaderModule
         );
     }
     
-    private static Dictionary<ResourceType, DescriptorType> _spirvToVkDescMap = new ()
+    internal static Dictionary<ResourceType, DescriptorType> SpirvToVkDescMap = new ()
     {
         { ResourceType.UniformBuffer, DescriptorType.UniformBuffer },
         { ResourceType.SampledImage, DescriptorType.SampledImage },

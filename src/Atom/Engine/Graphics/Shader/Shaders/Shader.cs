@@ -7,14 +7,11 @@ public abstract partial class Shader : AtomObject, IShader
     
 #region Handles
 
-    /// <summary> The Vulkan pipeline layout handle this shader represents. </summary>
     public SlimPipelineLayout PipelineLayout { get; protected init; }
     
+    public SlimDescriptorPool DescriptorPool { get; protected init; }
     
-
-    /// <summary> Vulkan handle for the device owning this Shader. </summary>
     public Device Device { get; }
-    
 
 #endregion
     
@@ -52,6 +49,8 @@ public abstract partial class Shader : AtomObject, IShader
     public override void Delete()
     {
         // Dispose internal handles
+        DescriptorPool.Destroy(Device);
+        
         PipelineLayout.Destroy(Device);
         
         // Dispose all the sub modules
