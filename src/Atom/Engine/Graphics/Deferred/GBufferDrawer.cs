@@ -77,11 +77,11 @@ public unsafe class GBufferDrawer : IDisposable
     private Vector2D<uint> _extent;
 
     // destroyable resources
-    private PipelineLayout _layout;
+    private SlimPipelineLayout _layout;
     private WriteDescriptorSet[] _writeDescriptorSets;
-    private DescriptorPool _descriptorPool;
+    private SlimDescriptorPool _descriptorPool;
     private Pipeline _pipeline;
-    private DescriptorSetLayout _inTextureDescriptor;
+    private SlimDescriptorSetLayout _inTextureDescriptor;
     
     private DescriptorSet[] _descriptorSets;
     
@@ -136,15 +136,10 @@ public unsafe class GBufferDrawer : IDisposable
             ShaderStageFlags.Fragment, out modules[0]); /* Fragment module */
         make_shader("Assets/Shaders/Engine/Deferred/Modules/deferred.vert.spv", 
             ShaderStageFlags.Vertex, out modules[1]);   /* Vertex   module */
+        
+        _descriptorPool = new SlimDescriptorPool(device, maxImages, new(_descriptorImageCount, 1));
 
-        DescriptorPoolCreateInfo pool_create_info = new(
-            pPoolSizes: _descriptorImageCount,
-            poolSizeCount: 1,
-            maxSets: maxImages
-        );
-        VK.API.CreateDescriptorPool(device, in pool_create_info, null, out _descriptorPool);
-
-        DescriptorSetLayoutBinding* set_layout_bindings = stackalloc DescriptorSetLayoutBinding[4];
+        Span<DescriptorSetLayoutBinding> set_layout_bindings = stackalloc DescriptorSetLayoutBinding[4];
         for (int i = 0; i < 4; i++)
         {
             set_layout_bindings[i] = new(
@@ -154,27 +149,23 @@ public unsafe class GBufferDrawer : IDisposable
                 stageFlags: (vk.ShaderStageFlags)ShaderStageFlags.Fragment
             );
         }
-        
-        DescriptorSetLayoutCreateInfo set_layout_create_info = new(
-            bindingCount: 4U,
-            pBindings: set_layout_bindings
-        );
 
-        VK.API.CreateDescriptorSetLayout(device, in set_layout_create_info, null, out _inTextureDescriptor);
+        _inTextureDescriptor = new SlimDescriptorSetLayout(_device, set_layout_bindings);
         
-        Span<DescriptorSetLayout> descriptor_set_layouts = stackalloc DescriptorSetLayout[(int)maxImages];
+        
+        Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[(int)maxImages];
         for (int i = 0; i < maxImages; i++)
         {
             descriptor_set_layouts[i] = _inTextureDescriptor;
         }
 
         _descriptorSets = new DescriptorSet[maxImages];
-        fixed (DescriptorSetLayout* p_descriptor_set_layouts = descriptor_set_layouts)
+        fixed (SlimDescriptorSetLayout* p_descriptor_set_layouts = descriptor_set_layouts)
         {
             DescriptorSetAllocateInfo set_allocate_info = new(
                 descriptorPool: _descriptorPool,
                 descriptorSetCount: maxImages,
-                pSetLayouts: p_descriptor_set_layouts
+                pSetLayouts: (vk.DescriptorSetLayout*)p_descriptor_set_layouts
             );
             VK.API.AllocateDescriptorSets(device, &set_allocate_info, _descriptorSets.AsSpan());
         }
@@ -199,14 +190,10 @@ public unsafe class GBufferDrawer : IDisposable
             }
         }
 
-        DescriptorSetLayout gbuffer_layout = _inTextureDescriptor;
+        SlimDescriptorSetLayout gbuffer_layout = _inTextureDescriptor;
 
-        // CreatePipelineLayout()
-        PipelineLayoutCreateInfo pipeline_layout_create_info = new(
-            pSetLayouts: &gbuffer_layout,
-            setLayoutCount: 1
-        );
-        VK.API.CreatePipelineLayout(device, pipeline_layout_create_info, null, out _layout);
+
+        _layout = new SlimPipelineLayout(_device, new(&gbuffer_layout, 1), ReadOnlySpan<PushConstantRange>.Empty);
         
         CreatePipeline(modules);
         
@@ -287,13 +274,13 @@ public unsafe class GBufferDrawer : IDisposable
 
     public void Dispose()
     {
-        VK.API.DestroyPipelineLayout(_device, _layout, null);
+        _layout.Destroy(_device);
         
-        VK.API.DestroyDescriptorPool(_device, _descriptorPool, null);
+        _descriptorPool.Destroy(_device);
         
         VK.API.DestroyPipeline(_device, _pipeline, null);
-        
-        VK.API.DestroyDescriptorSetLayout(_device, _inTextureDescriptor, null);
+
+        _inTextureDescriptor.Destroy(_device);
         
         GC.SuppressFinalize(this);
     }

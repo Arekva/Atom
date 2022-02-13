@@ -12,6 +12,8 @@ public abstract class ShaderModule : IShaderModule
 
     public Device Device { get; }
     
+    public SlimDescriptorSetLayout DescriptorLayout { get; private set; }
+    
 #endregion
 
 #region Stage Information
@@ -48,12 +50,20 @@ public abstract class ShaderModule : IShaderModule
 
     public unsafe void Dispose()
     {
+        DescriptorLayout.Destroy(Device);
+        
         LowLevel.Free(StageInfo.PName);
         Handle.Destroy(Device);
         GC.SuppressFinalize(this);
     }
 
     ~ShaderModule() => Dispose();
+
+
+    private static readonly ResourceType[] _validDescriptorBindingResources =
+    {
+        ResourceType.UniformBuffer, ResourceType.SampledImage, ResourceType.StorageImage, ResourceType.StorageBuffer,
+    };
 
     protected virtual void Reflect(Program program)
     {
@@ -68,12 +78,13 @@ public abstract class ShaderModule : IShaderModule
                 value: program.GetResources(resourceType).Select(type => new Descriptor(type)).ToArray()
             );
         }
-
+        
         get_resources(ResourceType.UniformBuffer);
         get_resources(ResourceType.StorageBuffer);
         get_resources(ResourceType.StageInput);
         get_resources(ResourceType.StageOutput);
         get_resources(ResourceType.SubpassInput);
+        get_resources(ResourceType.StorageImage);
         get_resources(ResourceType.SampledImage);
         get_resources(ResourceType.AtomicCounter);
         get_resources(ResourceType.PushConstant);
@@ -81,6 +92,41 @@ public abstract class ShaderModule : IShaderModule
         get_resources(ResourceType.SeparateSamplers);
         get_resources(ResourceType.AccelerationStructure);
         get_resources(ResourceType.RayQuery);
+
+        int desc_count = 0;
+        for (int i = 0; i < _validDescriptorBindingResources.Length; i++)
+        {
+            desc_count += Descriptors[_validDescriptorBindingResources[i]].Length;
+        }
+
+        Span<DescriptorSetLayoutBinding> bindings = stackalloc DescriptorSetLayoutBinding[desc_count];
+
+        int index = 0;
+        for (int i = 0; i < _validDescriptorBindingResources.Length; i++)
+        {
+            ref readonly ResourceType resource_type = ref _validDescriptorBindingResources[i];
+            Descriptor[] descriptors = Descriptors[resource_type];
+
+            for (int j = 0; j < descriptors.Length; j++, index++)
+            {
+                ref readonly Descriptor descriptor = ref descriptors[j];
+                
+                unsafe
+                {
+                    bindings[index] =  new DescriptorSetLayoutBinding(
+                        binding: descriptor.Binding,
+                        descriptorType: _spirvToVkDescMap[resource_type],
+                        descriptorCount: descriptor.Array.IsArray ? descriptor.Array.DimensionsLengths[0] : 1U,
+                        stageFlags: (vk.ShaderStageFlags)Stage
+                    );
+                }
+            }
+        }
+        
+        DescriptorLayout = new SlimDescriptorSetLayout(
+            device: Device,
+            bindings: bindings, 
+            flags:0);
     }
 
     private unsafe void SetStageInfo(Program program)
@@ -94,4 +140,12 @@ public abstract class ShaderModule : IShaderModule
             pName: LowLevel.GetPointer(EntryPoint)
         );
     }
+    
+    private static Dictionary<ResourceType, DescriptorType> _spirvToVkDescMap = new ()
+    {
+        { ResourceType.UniformBuffer, DescriptorType.UniformBuffer },
+        { ResourceType.SampledImage, DescriptorType.SampledImage },
+        { ResourceType.StorageImage, DescriptorType.StorageImage },
+        { ResourceType.StorageBuffer, DescriptorType.StorageBuffer },
+    };
 }

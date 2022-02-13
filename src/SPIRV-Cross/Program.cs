@@ -100,6 +100,7 @@ public class Program : IDisposable
     public IEnumerable<Type> GetStageInputs() => GetResources(ResourceType.StageInput);
     public IEnumerable<Type> GetStageOutputs() => GetResources(ResourceType.StageOutput);
     public IEnumerable<Type> GetSubpassInputs() => GetResources(ResourceType.SubpassInput);
+    public IEnumerable<Type> GetStorageImages() => GetResources(ResourceType.StorageImage);
     public IEnumerable<Type> GetSampledImages() => GetResources(ResourceType.SampledImage);
     public IEnumerable<Type> GetAtomicCounters() => GetResources(ResourceType.AtomicCounter);
     public IEnumerable<Type> GetPushConstants() => GetResources(ResourceType.PushConstant);
@@ -114,6 +115,7 @@ public class Program : IDisposable
     .Concat(GetStageInputs           ())
     .Concat(GetStageOutputs          ())
     .Concat(GetSubpassInputs         ())
+    .Concat(GetStorageImages         ())
     .Concat(GetSampledImages         ())
     .Concat(GetAtomicCounters        ())
     .Concat(GetPushConstants         ())

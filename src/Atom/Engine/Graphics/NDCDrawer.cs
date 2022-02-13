@@ -80,13 +80,13 @@ public unsafe class NDCDrawer : IDisposable
     private uint _maxImages;
 
     // destroyable resources
-    private PipelineLayout _layout;
+    private SlimPipelineLayout _layout;
     private WriteDescriptorSet[] _writeDescriptorSets;
-    private DescriptorPool _descriptorPool;
+    private SlimDescriptorPool _descriptorPool;
     private Sampler _textureSampler;
     private Pipeline _pipeline;
     private Silk.NET.Vulkan.RenderPass _renderPass;
-    private DescriptorSetLayout _inTextureDescriptor;
+    private SlimDescriptorSetLayout _inTextureDescriptor;
     private Framebuffer[] _framebuffers;
     
     private DescriptorSet[] _descriptorSets;
@@ -143,12 +143,7 @@ public unsafe class NDCDrawer : IDisposable
         make_shader("Assets/Shaders/Engine/NDC/Modules/ndc.vert.spv", 
             ShaderStageFlags.Vertex, out modules[1]);   /* Vertex   module */
 
-        DescriptorPoolCreateInfo pool_create_info = new(
-            pPoolSizes: _combinedImageCount,
-            poolSizeCount: 1,
-            maxSets: maxImages
-        );
-        VK.API.CreateDescriptorPool(device, in pool_create_info, null, out _descriptorPool);
+        _descriptorPool = new SlimDescriptorPool(_device, maxImages, new (_combinedImageCount, 1));
 
         DescriptorSetLayoutBinding set_layout_binding = new(
             binding: 0,
@@ -156,28 +151,22 @@ public unsafe class NDCDrawer : IDisposable
             descriptorType: DescriptorType.CombinedImageSampler,
             stageFlags: (vk.ShaderStageFlags)ShaderStageFlags.Fragment
         );
-        DescriptorSetLayoutCreateInfo set_layout_create_info = new(
-            bindingCount: 1U,
-            pBindings: &set_layout_binding
-        );
 
-        DescriptorSetLayout inTextureDescriptor;
-        VK.API.CreateDescriptorSetLayout(device, in set_layout_create_info, null, out inTextureDescriptor);
-        _inTextureDescriptor = inTextureDescriptor;
-        
-        Span<DescriptorSetLayout> descriptor_set_layouts = stackalloc DescriptorSetLayout[(int)maxImages];
+        SlimDescriptorSetLayout inTextureDescriptor = _inTextureDescriptor = new SlimDescriptorSetLayout(device, new (&set_layout_binding, 1));
+
+        Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[(int)maxImages];
         for (int i = 0; i < maxImages; i++)
         {
-            descriptor_set_layouts[i] = _inTextureDescriptor;
+            descriptor_set_layouts[i] = inTextureDescriptor;
         }
 
         _descriptorSets = new DescriptorSet[maxImages];
-        fixed (DescriptorSetLayout* p_descriptor_set_layouts = descriptor_set_layouts)
+        fixed (SlimDescriptorSetLayout* p_descriptor_set_layouts = descriptor_set_layouts)
         {
             DescriptorSetAllocateInfo set_allocate_info = new(
                 descriptorPool: _descriptorPool,
                 descriptorSetCount: maxImages,
-                pSetLayouts: p_descriptor_set_layouts
+                pSetLayouts: (vk.DescriptorSetLayout*)p_descriptor_set_layouts
             );
             VK.API.AllocateDescriptorSets(device, &set_allocate_info, _descriptorSets.AsSpan());
         }
@@ -198,12 +187,11 @@ public unsafe class NDCDrawer : IDisposable
             );
         }
 
-        // CreatePipelineLayout()
-        PipelineLayoutCreateInfo pipeline_layout_create_info = new(
-            pSetLayouts: &inTextureDescriptor,
-            setLayoutCount: 1
-        );
-        VK.API.CreatePipelineLayout(device, pipeline_layout_create_info, null, out _layout);
+        
+        
+        _layout = new SlimPipelineLayout(device, 
+            new (&inTextureDescriptor, 1), 
+            ReadOnlySpan<PushConstantRange>.Empty);
 
         SamplerCreateInfo sampler_create_info = new(
             anisotropyEnable: false, maxAnisotropy: 16.0F,
@@ -361,9 +349,9 @@ public unsafe class NDCDrawer : IDisposable
 
     public void Dispose()
     {
-        VK.API.DestroyPipelineLayout(_device, _layout, null);
+        _layout.Destroy(_device);
         
-        VK.API.DestroyDescriptorPool(_device, _descriptorPool, null);
+        _descriptorPool.Destroy(_device);
         
         for (int i = 0; i < _imageCount; i++)
         {
@@ -376,7 +364,7 @@ public unsafe class NDCDrawer : IDisposable
         
         VK.API.DestroyRenderPass(_device, _renderPass, null);
         
-        VK.API.DestroyDescriptorSetLayout(_device, _inTextureDescriptor, null);
+        _inTextureDescriptor.Destroy(_device);
         
         GC.SuppressFinalize(this);
     }

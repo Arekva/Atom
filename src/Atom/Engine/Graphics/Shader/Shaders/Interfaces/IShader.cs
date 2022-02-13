@@ -8,8 +8,17 @@ public interface IShader : IDisposable
     
 #region Handles
 
+    /// <summary> The pipeline layout used by the shader. </summary>
+    public SlimPipelineLayout PipelineLayout { get; }
+
+    public SlimDescriptorPool DescriptorPool { get; }
+    
     /// <summary> The Vulkan Device handle on which this shader has been created. </summary>
     public Device Device { get; }
+
+#endregion
+
+#region General Properties
     
     /// <summary> The name of this shader. </summary>
     public string? Name { get; }
@@ -39,10 +48,6 @@ public interface IShader : IDisposable
     public IEnumerable<IShaderModule> Modules { get; }
     
 #endregion
-    
-    
-    
-    /// <summary> The pipeline layout used by the shader. </summary>
-    public PipelineLayout Layout { get; }
+
 }
 
