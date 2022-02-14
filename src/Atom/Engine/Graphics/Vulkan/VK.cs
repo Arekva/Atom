@@ -91,12 +91,14 @@ public static class VK
         LowLevel.Free(instance_info.PpEnabledLayerNames);
 
         AutoSelectGPU();
+
+        CameraData.Initialize();
     }
 
     public static unsafe void Terminate()
     {
         Log.Trace("Terminating Vulkan.");
-        //Camera.Clean();
+        CameraData.Cleanup();
         API.DestroyDevice(_device, null);
         API.DestroyInstance(_instance, null);
     } 
