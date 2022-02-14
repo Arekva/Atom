@@ -1,0 +1,13 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "Test",
+    "Description": "Test shader, supposed to be the Standard shader while being temporary used until instanciation is ready.",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+
+    "Stages": 
+    {
+        "Vertex": "Modules/test.vert.spv",
+        "Fragment": "Modules/test.frag.spv"
+    }
+}

@@ -74,6 +74,8 @@ public class RasterShader : Shader, IRasterShader
         Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[7];
 
         Dictionary<DescriptorType, uint> descriptors_counts = new Dictionary<DescriptorType, uint>();
+        
+        List<PushConstantRange> push_constants_list = new List<PushConstantRange>();
 
         int module_count = 0;
         foreach (IShaderModule shader_module in Modules)
@@ -81,6 +83,8 @@ public class RasterShader : Shader, IRasterShader
             IRasterModule raster_module = (IRasterModule) shader_module;
             
             descriptor_set_layouts[module_count] = raster_module.DescriptorLayout;
+            
+            push_constants_list.AddRange(raster_module.PushConstants.Values);
 
             foreach ((SPIRVCross.ResourceType type, Descriptor[] descriptors) in raster_module.Descriptors)
             {
@@ -92,7 +96,7 @@ public class RasterShader : Shader, IRasterShader
                         or SPIRVCross.ResourceType.StageOutput
                         or SPIRVCross.ResourceType.PushConstant
                     ) continue;
-                
+
                 DescriptorType desc_type = ShaderModule.SpirvToVkDescMap[type];
 
                 if (descriptors_counts.ContainsKey(desc_type))
@@ -117,11 +121,13 @@ public class RasterShader : Shader, IRasterShader
 
             pool_size_count++;
         }
+
+        PushConstantRange[] push_constants = push_constants_list.ToArray();
         
         PipelineLayout = new SlimPipelineLayout(
             device: Device, 
             setLayouts: descriptor_set_layouts[..module_count], 
-            pushConstantRanges: ReadOnlySpan<PushConstantRange>.Empty);
+            pushConstantRanges: push_constants);
 
         DescriptorPool = new SlimDescriptorPool(
             device: Device,

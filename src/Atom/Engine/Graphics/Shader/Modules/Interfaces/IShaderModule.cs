@@ -37,6 +37,8 @@ public interface IShaderModule : IDisposable
 
     public Dictionary<ResourceType, Descriptor[]> Descriptors { get; }
     
+    public Dictionary<string, PushConstantRange> PushConstants { get; }
+
 #endregion
 
 }

@@ -34,16 +34,16 @@ public struct SlimDescriptorPool
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator DescriptorPool(in SlimDescriptorPool fence)
-        => Unsafe.As<SlimDescriptorPool, DescriptorPool>(ref Unsafe.AsRef(in fence));
+    public static explicit operator DescriptorPool(in SlimDescriptorPool descriptorPool)
+        => Unsafe.As<SlimDescriptorPool, DescriptorPool>(ref Unsafe.AsRef(in descriptorPool));
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator SlimDescriptorPool(in DescriptorPool fence)
-        => Unsafe.As<DescriptorPool, SlimDescriptorPool>(ref Unsafe.AsRef(in fence));
+    public static implicit operator SlimDescriptorPool(in DescriptorPool descriptorPool)
+        => Unsafe.As<DescriptorPool, SlimDescriptorPool>(ref Unsafe.AsRef(in descriptorPool));
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Silk.NET.Vulkan.DescriptorPool(in SlimDescriptorPool fence)
-        => Unsafe.As<SlimDescriptorPool, Silk.NET.Vulkan.DescriptorPool>(ref Unsafe.AsRef(in fence));
+    public static implicit operator Silk.NET.Vulkan.DescriptorPool(in SlimDescriptorPool descriptorPool)
+        => Unsafe.As<SlimDescriptorPool, Silk.NET.Vulkan.DescriptorPool>(ref Unsafe.AsRef(in descriptorPool));
 
 #endregion
     

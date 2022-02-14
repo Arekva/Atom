@@ -32,16 +32,16 @@ public struct SlimDescriptorSetLayout
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator DescriptorSetLayout(in SlimDescriptorSetLayout fence)
-        => Unsafe.As<SlimDescriptorSetLayout, DescriptorSetLayout>(ref Unsafe.AsRef(in fence));
+    public static explicit operator DescriptorSetLayout(in SlimDescriptorSetLayout descriptorSetLayout)
+        => Unsafe.As<SlimDescriptorSetLayout, DescriptorSetLayout>(ref Unsafe.AsRef(in descriptorSetLayout));
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator SlimDescriptorSetLayout(in DescriptorSetLayout fence)
-        => Unsafe.As<DescriptorSetLayout, SlimDescriptorSetLayout>(ref Unsafe.AsRef(in fence));
+    public static implicit operator SlimDescriptorSetLayout(in DescriptorSetLayout descriptorSetLayout)
+        => Unsafe.As<DescriptorSetLayout, SlimDescriptorSetLayout>(ref Unsafe.AsRef(in descriptorSetLayout));
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Silk.NET.Vulkan.DescriptorSetLayout(in SlimDescriptorSetLayout fence)
-        => Unsafe.As<SlimDescriptorSetLayout, Silk.NET.Vulkan.DescriptorSetLayout>(ref Unsafe.AsRef(in fence));
+    public static implicit operator Silk.NET.Vulkan.DescriptorSetLayout(in SlimDescriptorSetLayout descriptorSetLayout)
+        => Unsafe.As<SlimDescriptorSetLayout, Silk.NET.Vulkan.DescriptorSetLayout>(ref Unsafe.AsRef(in descriptorSetLayout));
 
 #endregion
     

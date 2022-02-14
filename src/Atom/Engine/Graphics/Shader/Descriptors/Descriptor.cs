@@ -57,14 +57,15 @@ public class Descriptor
         Offset = resource.GetOffset();
         Vector = new VectorDescriptor
         {
-            VectorLength = resource.GetVectorSize(),
-            MatrixColumns = resource.GetMatrixColumns()
+            VectorLength = Math.Max(1, resource.GetVectorSize()),
+            MatrixColumns = Math.Max(1, resource.GetMatrixColumns())
         };
         Array = new ArrayDescriptor
         {
             IsArray = resource.IsArray(),
             DimensionsCount = dim_count,
-            DimensionsLengths = dims_lengths
+            DimensionsLengths = dims_lengths,
+            TotalElementCount = array_elements
         };
 
         BitWidth = bit_width;

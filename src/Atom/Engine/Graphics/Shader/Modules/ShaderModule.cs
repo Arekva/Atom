@@ -29,6 +29,8 @@ public abstract class ShaderModule : IShaderModule
 #region Descriptors
 
     public Dictionary<ResourceType, Descriptor[]> Descriptors { get; private set; }
+    
+    public Dictionary<string, PushConstantRange> PushConstants { get; private set; }
 
 #endregion
 
@@ -127,6 +129,25 @@ public abstract class ShaderModule : IShaderModule
             device: Device,
             bindings: bindings, 
             flags:0);
+
+        Descriptor[] push_constants = Descriptors[ResourceType.PushConstant];
+        PushConstants = new Dictionary<string, PushConstantRange>(capacity: push_constants.Length);
+        for (int i = 0; i < push_constants.Length; i++)
+        {
+            ref readonly Descriptor descriptor = ref push_constants[i];
+
+            long size_bit = 
+                descriptor.Struct.Types.Sum(t => t.GetSizeOfBit()) *
+                descriptor.Array.TotalElementCount * 
+                descriptor.Vector.VectorLength * descriptor.Vector.MatrixColumns;
+            
+            PushConstants.Add(descriptor.Name, new PushConstantRange(
+                    stageFlags: (vk.ShaderStageFlags)Stage,
+                    offset: descriptor.Offset,
+                    size: (uint)(size_bit/8)
+                )
+            );
+        }
     }
 
     private unsafe void SetStageInfo(Program program)

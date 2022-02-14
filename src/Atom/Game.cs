@@ -4,6 +4,8 @@ using Silk.NET.Vulkan;
 using Atom.Engine.Astro.Transvoxel;
 using Atom.Engine.Shader;
 using Silk.NET.Maths;
+using CommandBuffer = Atom.Engine.CommandBuffer;
+using CommandBufferLevel = Atom.Engine.CommandBufferLevel;
 
 namespace Atom.Game;
 
@@ -37,11 +39,20 @@ public class Game
                 Grid grid = planet.Grid;
                 (Vector3D<float>[] vert, uint[] indices, Vector3D<float>[] normals) verts = grid.Cells.First().Visit();*/
 
-                using IRasterShader shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard");
-
+                /*Device device = VK.Device;
+                
+                SlimCommandPool pool = new SlimCommandPool(device, 0);
                 {
+                    pool.AllocateCommandBuffer(device, CommandBufferLevel.Primary, out SlimCommandBuffer cmd);
                     
+                    using (IRasterShader shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard"))
+                    {
+                        using IRasterizedMaterial material = new RasterizedMaterial(shader);
+                        
+                        material.CmdBindMaterial(cmd, Video.Resolution, cameraIndex: 0);
+                    }
                 }
+                pool.Destroy(device);*/
 
                 /*using RasterShader shader = Shader.Load<RasterShader>("Engine", "Standard");
                 using RasterizedMaterial material = new(shader);

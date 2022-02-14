@@ -530,7 +530,7 @@ public class DeferredRenderer
         }
         VK.API.EndCommandBuffer(cmd);
     }
-    
+
     private void CreateViews(uint swapImageIndex)
     {
         uint view_index = GetViewBaseIndex(swapImageIndex);

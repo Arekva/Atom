@@ -29,16 +29,16 @@ public struct SlimShaderModule
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator ShaderModule(in SlimShaderModule fence)
-        => Unsafe.As<SlimShaderModule, ShaderModule>(ref Unsafe.AsRef(in fence));
+    public static explicit operator ShaderModule(in SlimShaderModule shaderModule)
+        => Unsafe.As<SlimShaderModule, ShaderModule>(ref Unsafe.AsRef(in shaderModule));
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator SlimShaderModule(in ShaderModule fence)
-        => Unsafe.As<ShaderModule, SlimShaderModule>(ref Unsafe.AsRef(in fence));
+    public static implicit operator SlimShaderModule(in ShaderModule shaderModule)
+        => Unsafe.As<ShaderModule, SlimShaderModule>(ref Unsafe.AsRef(in shaderModule));
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Silk.NET.Vulkan.ShaderModule(in SlimShaderModule fence)
-        => Unsafe.As<SlimShaderModule, Silk.NET.Vulkan.ShaderModule>(ref Unsafe.AsRef(in fence));
+    public static implicit operator Silk.NET.Vulkan.ShaderModule(in SlimShaderModule shaderModule)
+        => Unsafe.As<SlimShaderModule, Silk.NET.Vulkan.ShaderModule>(ref Unsafe.AsRef(in shaderModule));
 
 #endregion
     
