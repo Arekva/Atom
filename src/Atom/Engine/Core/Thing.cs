@@ -4,6 +4,7 @@ namespace Atom.Engine;
 public class Thing : AtomObject
 {
     private Location _location;
+    
     private List<Space> _spaces;
     
     

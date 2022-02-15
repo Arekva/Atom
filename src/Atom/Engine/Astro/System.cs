@@ -2,9 +2,9 @@
 
 public class System : Thing, ICelestialBody
 {
-    public bool IsStatic { get; } = true;
+    public bool IsStatic => true;
 
-    public Orbit? Orbit { get; } = null;
+    public Orbit? Orbit => null;
     
     
     

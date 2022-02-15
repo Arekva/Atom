@@ -4,6 +4,16 @@ namespace Atom.Engine;
 
 public static class AMath
 {
+    /// <summary> Conversion ratio from degrees to radians. </summary>
+    public const double DegToRad = Math.PI / 180D;
+    /// <summary> Conversion ratio from radians to degrees. </summary>
+    public const double RadToDeg = 180D / Math.PI;
+    
+    /// <summary> Conversion ratio from degrees to radians. </summary>
+    public const float DegToRadF = (float)DegToRad;
+    /// <summary> Conversion ratio from radians to degrees. </summary>
+    public const float RadToDegF = (float)RadToDeg;
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int To1D(int x, int y, int z, int width, int height) => x + width*y + width*height*z;
         

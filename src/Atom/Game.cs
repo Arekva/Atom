@@ -30,14 +30,16 @@ public class Game
 
             try
             {
-                /*using CelestialBody planet = new (
-                    name: "Terre", 
-                    radius: 6371000.0D, 
-                    mass: 5.972E+24
-                );
+                Camera camera = new ();
 
-                Grid grid = planet.Grid;
-                (Vector3D<float>[] vert, uint[] indices, Vector3D<float>[] normals) verts = grid.Cells.First().Visit();*/
+                // using CelestialBody planet = new (
+                //     name: "Terre", 
+                //     radius: 6371000.0D, 
+                //     mass: 5.972E+24
+                // );
+
+                //Grid grid = planet.Grid;
+                //(Vector3D<float>[] vert, uint[] indices, Vector3D<float>[] normals) verts = grid.Cells.First().Visit();
 
                 /*Device device = VK.Device;
                 

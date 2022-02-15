@@ -18,7 +18,7 @@ public interface IMaterial : IDisposable
 
 #region Commands
 
-    public void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex);
+    public void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex);
 
 #endregion
     

@@ -253,6 +253,10 @@ public class DeferredRenderer
 
         _fences[image_in_flight_fence_index] = frame_fence;
         frame_fence.Reset(_device);
+        
+        // save camera state for this frame
+        CameraData.UpdateFrame(_frameIndex);
+        
 
         PipelineStageFlags wait_dst_draw = PipelineStageFlags.PipelineStageColorAttachmentOutputBit;
         
@@ -502,13 +506,13 @@ public class DeferredRenderer
     
     private unsafe void BuildCommands(uint swapImageIndex, Silk.NET.Vulkan.Extent2D extent)
     {
-        Silk.NET.Vulkan.Rect2D area = new(extent: extent);
+        Rect2D area = new(extent: extent);
         SlimCommandBuffer cmd = _commands[swapImageIndex];
 
         CommandBufferBeginInfo begin = new(flags: 0);
         VK.API.BeginCommandBuffer(cmd, in begin);
         {
-            RenderPassBeginInfo pass_info = new RenderPassBeginInfo(
+            RenderPassBeginInfo pass_info = new (
                 renderPass: _renderPass,
                 renderArea: area,
                 framebuffer: _framebuffers[swapImageIndex],

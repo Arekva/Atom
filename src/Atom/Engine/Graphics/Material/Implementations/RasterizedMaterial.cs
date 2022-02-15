@@ -53,7 +53,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     
     public RasterizedMaterial Clone() => new (Shader, Pipeline);
     
-    public override void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex)
+    public override void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex)
     {
         vk.Viewport viewport = new(width: extent.X, height: extent.Y, minDepth: 0.0F, maxDepth: 1.0F);
         vk.Rect2D scissor = new(extent: new Extent2D(extent.X, extent.Y));
@@ -62,6 +62,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         VK.API.CmdSetViewport(cmd, 0U, 1U, in viewport);
         VK.API.CmdSetScissor(cmd, 0U, 1U, in scissor);
         VK.API.CmdPushConstants(cmd, Shader.PipelineLayout, (vk.ShaderStageFlags)ShaderStageFlags.Vertex, 0U, cameraIndex.AsSpan());
+        VK.API.CmdPushConstants(cmd, Shader.PipelineLayout, (vk.ShaderStageFlags)ShaderStageFlags.Vertex, sizeof(uint), frameIndex.AsSpan());
     }
     
 

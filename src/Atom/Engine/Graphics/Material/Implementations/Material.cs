@@ -30,7 +30,7 @@ public abstract class Material : AtomObject, IMaterial
     
 #region Commands
 
-    public abstract void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex);
+    public abstract void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex);
     
 #endregion
 }

@@ -14,7 +14,7 @@ public interface ICelestialBody
     
     
     
-    public string Name { get; }
+    public string? Name { get; }
     
     
     // Total mass of the CB, in kg
