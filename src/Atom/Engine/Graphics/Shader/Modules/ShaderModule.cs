@@ -12,7 +12,7 @@ public abstract class ShaderModule : IShaderModule
 
     public Device Device { get; }
     
-    public SlimDescriptorSetLayout DescriptorLayout { get; private set; }
+    public SlimDescriptorSetLayout DescriptorSetLayout { get; private set; }
     
 #endregion
 
@@ -52,7 +52,7 @@ public abstract class ShaderModule : IShaderModule
 
     public unsafe void Dispose()
     {
-        DescriptorLayout.Destroy(Device);
+        DescriptorSetLayout.Destroy(Device);
         
         LowLevel.Free(StageInfo.PName);
         Handle.Destroy(Device);
@@ -125,7 +125,7 @@ public abstract class ShaderModule : IShaderModule
             }
         }
         
-        DescriptorLayout = new SlimDescriptorSetLayout(
+        DescriptorSetLayout = new SlimDescriptorSetLayout(
             device: Device,
             bindings: bindings, 
             flags:0);

@@ -1,6 +1,6 @@
 ﻿namespace Atom.Engine.Astro;
 
-public class System : Thing, ICelestialBody
+public class CelestialSystem : Thing, ICelestialBody
 {
     public bool IsStatic => true;
 
@@ -15,4 +15,10 @@ public class System : Thing, ICelestialBody
 
     
     public double Mass { get; }
+
+
+    public CelestialSystem(Location location, string? name = "Star System") : base(location, name)
+    {
+        EquatorialSpace = new Space(this, name + " space");
+    }
 }

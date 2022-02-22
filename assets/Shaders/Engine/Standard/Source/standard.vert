@@ -9,9 +9,15 @@ layout(binding = 0) buffer InstanceData {
 #include <deferred_vertex_io.glsl>
 
 void main() {
-    set_gl_position(_instanceData.models[gl_InstanceIndex], in_position);
+    mat4 model_matrix = _instanceData.models[gl_InstanceIndex];
 
-    out_position = gl_Position;
+    vec4 world_normal = vec4(in_normal, 1.0) * model_matrix;
+    vec4 world_position = vec4(in_position, 1.0) * model_matrix;
+    
+
+    set_gl_position(model_matrix, in_position);
+
+    out_position = world_position;
     out_uv = in_uv;
-    out_normal = in_normal;
+    out_normal = world_normal.xyz;
 }

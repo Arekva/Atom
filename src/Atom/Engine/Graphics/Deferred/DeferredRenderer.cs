@@ -23,10 +23,12 @@ public class DeferredRenderer
 
     private struct RenderPassClear
     {
-        public ClearColorValue GBufferAlbedo = new ClearColorValue(0.0F, 0.0F, 0.0F, 0.0F);
-        public ClearColorValue GBufferNormal = new ClearColorValue(0.0F, 0.0F, 0.0F, 0.0F);
-        public ClearColorValue GBufferPosition = new ClearColorValue(0.0F, 0.0F, 0.0F, 0.0F);
-        public ClearDepthStencilValue GBufferDepth = new ClearDepthStencilValue(1.0F);
+        public ClearColorValue GBufferAlbedo        = new (0.0F, 0.0F, 0.0F, 0.0F);
+        public ClearColorValue GBufferNormal        = new (0.0F, 0.0F, 0.0F, 0.0F);
+        public ClearColorValue GBufferPosition      = new (0.0F, 0.0F, 0.0F, 0.0F);
+        public ClearDepthStencilValue GBufferDepth  = new (1.0F);
+        
+        public RenderPassClear() { }
     }
 
 #region Configuration
@@ -211,7 +213,7 @@ public class DeferredRenderer
         Graphics.MainRenderPass = _renderPass;
         _gbufferDrawer = new GBufferDrawer(MAX_FRAMES_IN_FLIGHT_COUNT, device);
 
-        _commandPool = new SlimCommandPool(device, renderFamily.Index);
+        _commandPool = new SlimCommandPool(device, renderFamily.Index, CommandPoolCreateFlags.ResetCommandBuffer);
         _commandPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, MAX_FRAMES_IN_FLIGHT_COUNT,
             _commands.AsSpan(0));
 
@@ -256,7 +258,14 @@ public class DeferredRenderer
         
         // save camera state for this frame
         CameraData.UpdateFrame(_frameIndex);
-        
+
+        if (Draw.HasUpdates(frameIndex: swap_image_index, cameraIndex: 0))
+        {
+            Log.Trace($"UPDATE [{swap_image_index}][{0}]");
+            Extent2D extent = new(_extent.X, _extent.Y);
+            BuildCommands(swap_image_index, extent, true);
+        }
+
 
         PipelineStageFlags wait_dst_draw = PipelineStageFlags.PipelineStageColorAttachmentOutputBit;
         
@@ -386,7 +395,7 @@ public class DeferredRenderer
             uint view_index = GetViewBaseIndex(i);
             CreateViews(i);
 
-            ReadOnlySpan<ImageView> framebuffer_views = _views.AsSpan((int)view_index + 1, (int)DEFERRED_VIEW_COUNT);
+            ReadOnlySpan<ImageView> framebuffer_views = _views.AsSpan((int)view_index, (int)DEFERRED_VIEW_COUNT);
 
             fixed (ImageView* p_attachments = framebuffer_views)
             {
@@ -406,7 +415,7 @@ public class DeferredRenderer
         Span<ImageView> swapchain_views = stackalloc ImageView[(int)new_swap_image_count];
         for (uint i = 0; i < new_swap_image_count; i++)
         {
-            swapchain_views[(int)i] = _views[GetViewBaseIndex(i)];
+            swapchain_views[(int)i] = _views[GetViewBaseIndex(i) + 5];
         }
 
         Extent2D vk_extent = new(extent.X, extent.Y);
@@ -503,11 +512,16 @@ public class DeferredRenderer
     {
         _swapchainExtension.DestroySwapchain(_device, swapchain.Value, null);
     }
-    
-    private unsafe void BuildCommands(uint swapImageIndex, Silk.NET.Vulkan.Extent2D extent)
+
+    private unsafe void BuildCommands(uint swapImageIndex, vk.Extent2D extent, bool doReset = false)
     {
         Rect2D area = new(extent: extent);
         SlimCommandBuffer cmd = _commands[swapImageIndex];
+
+        if (doReset)
+        {
+            cmd.Reset();
+        }
 
         CommandBufferBeginInfo begin = new(flags: 0);
         VK.API.BeginCommandBuffer(cmd, in begin);
@@ -521,16 +535,20 @@ public class DeferredRenderer
             );
             VK.API.CmdBeginRenderPass(cmd, in pass_info, SubpassContents.Inline);
             // draw meshes in gbuffer
+            // just consider 1 camera for now.
+            
+            Vector2D<uint> vec_extent = new(extent.Width, extent.Height);
+            Draw.UpdateFrame(cmd, vec_extent, cameraIndex: 0, frameIndex: swapImageIndex);
             
             VK.API.CmdNextSubpass(cmd, SubpassContents.Inline);
             // draw lit render
-            int gbuffer_views_index = (int)GetViewBaseIndex(swapImageIndex);
-            _gbufferDrawer.CmdComputeGBuffer(cmd, swapImageIndex, 
-                _views.AsSpan()[gbuffer_views_index..(gbuffer_views_index+4)]);
+            int view_index = (int)GetViewBaseIndex(swapImageIndex);
+            _gbufferDrawer.CmdComputeGBuffer(cmd, swapImageIndex,
+                _views.AsSpan()[view_index..(view_index+4)]);
             VK.API.CmdEndRenderPass(cmd);
             
             // draw on swapchain image as a fullscreen image
-            _screenDrawer.CmdDrawView(cmd, swapImageIndex, _views[GetViewBaseIndex(swapImageIndex) + DEFERRED_VIEW_COUNT]);
+            _screenDrawer.CmdDrawView(cmd, swapImageIndex, _views[GetViewBaseIndex(swapImageIndex) + 4]);
         }
         VK.API.EndCommandBuffer(cmd);
     }
@@ -557,7 +575,9 @@ public class DeferredRenderer
                     g: ComponentSwizzle.Identity,
                     b: ComponentSwizzle.Identity, 
                     a: ComponentSwizzle.Identity),
-                subresourceRange: new ImageSubresourceRange(aspectMask: aspect, baseMipLevel: 0, levelCount: 1,
+                subresourceRange: new ImageSubresourceRange(
+                    aspectMask: aspect,
+                    baseMipLevel: 0, levelCount: 1,
                     baseArrayLayer: layer, layerCount: 1)
             );
             return VK.API.CreateImageView(_device, in info, null, out view);
@@ -565,34 +585,37 @@ public class DeferredRenderer
 
         const Format GBUFFER_FORMAT = Format.R32G32B32A32Sfloat;
         
-        // final
-        create_view(
-            final_image,
-            _colorFormat, 
-            ImageAspectFlags.ImageAspectColorBit, 
-            out _views[view_index]
-        );
         // albedo / luminance | normal / roughness / metalness | position / translucency
         for (uint i = 0; i < 3; i++) // 3 views for the main g buffer
         {
             create_view(gbuffer_main_image, 
                 GBUFFER_FORMAT,
                 ImageAspectFlags.ImageAspectColorBit, 
-                out _views[view_index + 1 + i], 
+                out _views[view_index + i], 
                 layer: i
             );
         }
+
         // depth
         create_view(
             gbuffer_depth_image,
             _depthFormat,
             ImageAspectFlags.ImageAspectDepthBit, 
-            out _views[view_index + 4]
+            out _views[view_index + 3]
         );
-        // final
+        
+        // lit
         create_view(
             lit_image,
             GBUFFER_FORMAT,
+            ImageAspectFlags.ImageAspectColorBit, 
+            out _views[view_index + 4]
+        );
+        
+        // final
+        create_view(
+            final_image,
+            _colorFormat, 
             ImageAspectFlags.ImageAspectColorBit, 
             out _views[view_index + 5]
         );

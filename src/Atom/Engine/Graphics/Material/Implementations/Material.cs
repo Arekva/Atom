@@ -10,6 +10,12 @@ public abstract class Material : AtomObject, IMaterial
 #region Handles
 
     public Pipeline Pipeline { get; protected set; }
+    
+    //public Dictionary<string, DescriptorSetInfo> DescriptorSets { get; protected set; }
+    
+    
+
+    public Dictionary<ShaderStageFlags, DescriptorSet>[] DescriptorSets { get; protected set; }
 
     public Device Device { get; }
 

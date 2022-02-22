@@ -9,9 +9,11 @@ public abstract partial class Shader : AtomObject, IShader
 
     public SlimPipelineLayout PipelineLayout { get; protected init; }
     
-    public SlimDescriptorPool DescriptorPool { get; protected init; }
-    
     public Device Device { get; }
+
+    public SlimDescriptorPool DescriptorPool { get; protected init; }
+
+    public DescriptorPoolSize[] PoolSizes { get; protected init; }
 
 #endregion
     

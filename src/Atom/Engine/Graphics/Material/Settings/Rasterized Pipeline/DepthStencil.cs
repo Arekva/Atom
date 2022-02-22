@@ -5,7 +5,13 @@ namespace Atom.Engine;
 public class DepthStencil : IRasterSettings
 {
     public static DepthStencil Default { get; set; } 
-        = new() { DoDepthTest = true, DepthWriteEnable = true, DepthCompareOp = CompareOp.Less };
+        = new()
+        {
+            DoDepthTest = true,
+            DepthCompareOp = CompareOp.Less,
+            DepthWriteEnable = true,
+            DepthBounds = new Clamp<float>(0.0F, 1.0F)
+        };
     
     
     

@@ -93,11 +93,13 @@ public static class VK
         AutoSelectGPU();
 
         CameraData.Initialize();
+        Draw.Initialize();
     }
 
     public static unsafe void Terminate()
     {
         Log.Trace("Terminating Vulkan.");
+        Draw.Cleanup();
         CameraData.Cleanup();
         API.DestroyDevice(_device, null);
         API.DestroyInstance(_instance, null);

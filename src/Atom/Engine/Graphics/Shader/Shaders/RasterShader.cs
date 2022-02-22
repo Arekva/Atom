@@ -4,6 +4,9 @@ namespace Atom.Engine.Shader;
 
 public class RasterShader : Shader, IRasterShader
 {
+    public const uint MaxMaterialPerShaderCount = 1024;
+    
+    
 #region Modules
 
     public override IShaderModule? this[Type type]
@@ -82,7 +85,7 @@ public class RasterShader : Shader, IRasterShader
         {
             IRasterModule raster_module = (IRasterModule) shader_module;
             
-            descriptor_set_layouts[module_count] = raster_module.DescriptorLayout;
+            descriptor_set_layouts[module_count] = raster_module.DescriptorSetLayout;
             
             push_constants_list.AddRange(raster_module.PushConstants.Values);
 
@@ -112,14 +115,11 @@ public class RasterShader : Shader, IRasterShader
             module_count++;
         }
 
-        Span<DescriptorPoolSize> descriptor_sizes = stackalloc DescriptorPoolSize[16];
+        List<DescriptorPoolSize> descriptor_sizes = new (capacity: 16);
 
-        int pool_size_count = 0;
         foreach ((DescriptorType type, uint count) in descriptors_counts)
         {
-            descriptor_sizes[pool_size_count] = new DescriptorPoolSize(type, count);
-
-            pool_size_count++;
+            descriptor_sizes.Add(new DescriptorPoolSize(type, count));
         }
 
         PushConstantRange[] push_constants = push_constants_list.ToArray();
@@ -128,11 +128,14 @@ public class RasterShader : Shader, IRasterShader
             device: Device, 
             setLayouts: descriptor_set_layouts[..module_count], 
             pushConstantRanges: push_constants);
-
+        
+        PoolSizes = descriptor_sizes.ToArray();
+        
         DescriptorPool = new SlimDescriptorPool(
             device: Device,
-            maxSets: MaxMaterialsPerShader * Graphics.MaxFramesCount,
-            poolSizes: descriptor_sizes[..pool_size_count]
+            maxSets: Graphics.MaxFramesCount * MaxMaterialPerShaderCount,
+            poolSizes: PoolSizes,
+            flags: DescriptorPoolCreateFlags.DescriptorPoolCreateFreeDescriptorSetBit
         );
     }
 }

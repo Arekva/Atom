@@ -19,6 +19,9 @@ public static class AMath
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int To1D(int x, int y, int width) => x + width*y;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint To1D(uint x, uint y, uint width) => x + width*y;
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void To2D(int index, int width, out int x, out int y)
@@ -40,4 +43,23 @@ public static class AMath
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Map(float value, float oldLow, float oldHigh, float newLow, float newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong Align(ulong number, ulong alignment)
+    {
+        if (alignment == 0)
+        {
+            return number;
+        }
+
+        ulong remainder = number % alignment;
+        if (remainder == 0)
+        {
+            return number;
+        }
+        else
+        {
+            return number + alignment - remainder;
+        }
+    }
 }

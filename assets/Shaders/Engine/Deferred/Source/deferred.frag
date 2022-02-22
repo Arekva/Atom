@@ -20,7 +20,8 @@ void main()
     float luminance = gAlbedo.a;
 
     // gNormal: RG(Normal.xy)B(abs(Roughness) + sign(Normal.z))A(Metalness)
-    vec3 normal = normalize(vec3(gNormal.xy, 0.0)); // todo: retrieve xy components + z
+    vec3 normal = gNormal.xyz;
+    //normalize(vec3(gNormal.xy, 0.0)); // todo: retrieve xy components + z
     float roughness = abs(gNormal.z);
     float metalness = gNormal.a;
 
@@ -30,14 +31,19 @@ void main()
 
     float depth = gDepth.r;
 
-    // if there is nothing here, just apply background color
-    // (0-ed normals cannot exist if there is an object)
-    if(normal.r == 0 && normal.g == 0 && normal.b == 0)
-    {
-        outColor = vec4(24/255.0, 26/255.0, 28/255.0, 1.0);
-    }
-    else // set albedo for now.
-    {
-        outColor = vec4(albedo.rgb, 1.0);
-    }
+    
+    vec3 sun_dir = normalize(vec3(1.0,1.0,1.0));
+    float angle = dot(sun_dir, normal);
+
+    float faint_angle = dot(-sun_dir, normal);
+
+    vec3 full_albedo = albedo * max(angle, 0.0);
+
+    vec3 faint_light_color = vec3(255/255.0, 149/255.0, 0/255.0);
+    vec3 faint_albedo = albedo * faint_light_color * max(faint_angle, 0.0) * 0.5;
+    
+
+    outColor = vec4(full_albedo + faint_albedo, 1.0);
+
+    //outColor = vec4(vec3(depth), 1.0);
 }

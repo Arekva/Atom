@@ -13,6 +13,10 @@ public interface IMaterial : IDisposable
     
     /// <summary> The Vulkan device handle owning this material. </summary>
     public Device Device { get; }
+
+    public Dictionary<ShaderStageFlags, DescriptorSet>[] DescriptorSets { get; }
+    
+    //public Dictionary<string, DescriptorSetInfo> DescriptorSets { get; }
     
 #endregion
 

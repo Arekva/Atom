@@ -4,7 +4,7 @@ namespace Atom.Engine;
 
 public class Rasterizer : IRasterSettings
 {
-    public static Rasterizer Default { get; } = new() { CullMode = CullModeFlags.CullModeFrontBit, LineWidth = 1.0F };
+    public static Rasterizer Default { get; } = new() { CullMode = CullModeFlags.CullModeBackBit, LineWidth = 1.0F };
 
     
     

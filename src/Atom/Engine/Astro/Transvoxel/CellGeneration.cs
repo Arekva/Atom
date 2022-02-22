@@ -119,7 +119,7 @@ public partial class Cell
          *                                                                      *
          *                                                                      */
 
-        public (Vector3D<float>[], uint[], Vector3D<float>[]) Visit()
+        public (GVertex[], uint[]) Visit()
         {
             // first get all the required data to generate the cell.
             // we need all the neighbors of the current cell and the
@@ -334,18 +334,23 @@ public partial class Cell
             sw.Stop();
             Console.WriteLine($"[{this._tag}] Build time: {sw.Elapsed.TotalMilliseconds:F2} ms");
 
-            Vector3D<float>[] vertices = new Vector3D<float>[trianglesVector.Count];
+            GVertex[] vertices = new GVertex[trianglesVector.Count];
+
+            //Vector3D<float>[] vertices = new Vector3D<float>[trianglesVector.Count];
             uint[] triangles = new uint[vertices.Length];
-            Vector3D<float>[] normals = new Vector3D<float>[normalsVector.Count];
+            //Vector3D<float>[] normals = new Vector3D<float>[normalsVector.Count];
             
             for (int i = 0; i < vertices.Length; i++)
             {
-                vertices[i] = (Vector3D<float>)trianglesVector[i];
-                normals[i] = (Vector3D<float>)normalsVector[i];
+                vertices[i] = new GVertex ()
+                {
+                    Position = (Vector3D<float>)trianglesVector[i],
+                    Normal = (Vector3D<float>)normalsVector[i]
+                };
                 triangles[i] = (uint)i;
             }
 
-            return (vertices, triangles, normals);
+            return (vertices, triangles);
         }
         
         public static (int array, int index) TESTGetVoxelIndices(int x, int y, int z)

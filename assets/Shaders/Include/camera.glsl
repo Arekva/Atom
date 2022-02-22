@@ -22,8 +22,12 @@ layout( push_constant ) uniform Constants {
 
 // Standard gl_Position set with projection*view*model*in_Position
 void set_gl_position(mat4 model_matrix, vec3 vertex_position) {
+
     uint camera_index = _currentCameraIndex.value;
-    CameraVP vp = _cameraMatrices.matrices[camera_index * MAX_FRAMES_COUNT + _currentCameraIndex.frame];
+    uint current_frame = _currentCameraIndex.frame;
+
+    CameraVP vp = _cameraMatrices.matrices[camera_index * MAX_FRAMES_COUNT + current_frame];
+
     gl_Position = vp.projection * vp.view * model_matrix * vec4(vertex_position, 1.0);
 }
 

@@ -27,6 +27,8 @@ public unsafe class NDCDrawer : IDisposable
     private struct NDCDynamicStates
     {
         public DynamicState viewport = DynamicState.Viewport, scissor = DynamicState.Scissor;
+        
+        public NDCDynamicStates() { }
     }
     private static readonly Pin<NDCDynamicStates> _dynamicStates = new NDCDynamicStates();
 

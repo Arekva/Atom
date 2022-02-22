@@ -11,12 +11,18 @@ public interface IShader : IDisposable
     /// <summary> The Vulkan pipeline layout used by the shader. </summary>
     public SlimPipelineLayout PipelineLayout { get; }
 
-    /// <summary> The Vulkan descriptor allocator. </summary>
-    public SlimDescriptorPool DescriptorPool { get; }
-    
     /// <summary> The Vulkan Device handle on which this shader has been created. </summary>
     public Device Device { get; }
+    
+    /// <summary> The Vulkan descriptor allocator. </summary>
+    public SlimDescriptorPool DescriptorPool { get; }
 
+#endregion
+
+#region Other Vulkan
+
+    public DescriptorPoolSize[] PoolSizes { get; }
+    
 #endregion
 
 #region General Properties

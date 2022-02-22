@@ -83,16 +83,20 @@ public class Camera : Thing
             return;
         }
         
-        Location this_loc = Location;
-        Location main_loc = Main.Location;
+        //Location this_loc = Location;
+        //Location main_loc = Main.Location;
 
-        Location rel_loc = main_loc - this_loc;
-        Vector3D<double> position = rel_loc.UniversalCoordinates;
+        //Location rel_loc = main_loc - this_loc;
+        Vector3D<double> position = Location.UniversalCoordinates;
+        
+        position.X *= -1.0D;
 
         Vector3D<double> forward = Space.Forward;
         Vector3D<double> up = Space.Up;
 
         Matrix4X4<double> view_double = Matrix4X4.CreateWorld(position, forward, up);
+
+        view_double.M22 *= -1.0D;
 
         view = (Matrix4X4<float>)view_double;
     }
@@ -100,17 +104,17 @@ public class Camera : Thing
     private void ComputeProjectionMatrix(out Matrix4X4<float> projection)
     {
         projection = (Matrix4X4<float>)(Projection == Projection.Perspective
-            ? Matrix4X4.CreatePerspectiveFieldOfView(
-                FieldOfView,
-                AspectRatio,
-                NearPlane,
-                FarPlane)
-            : Matrix4X4.CreateOrthographic(
-                Width,
-                Height,
-                NearPlane,
-                FarPlane
-            ));
+        ? Matrix4X4.CreatePerspectiveFieldOfView(
+            FieldOfView,
+            AspectRatio,
+            NearPlane,
+            FarPlane)
+        : Matrix4X4.CreateOrthographic(
+            Width,
+            Height,
+            NearPlane,
+            FarPlane
+        ));
     }
 
     public void UpdateMatrices(uint frameIndex)

@@ -13,7 +13,7 @@ public class CameraData : IDisposable
     
     private static DeviceMemory Memory;
 
-    private static SlimBuffer VPMatrices;
+    public static SlimBuffer VPMatrices;
 
     private static Device Device;
     
@@ -54,7 +54,7 @@ public class CameraData : IDisposable
         {
             System.Buffer.MemoryCopy(
                 source: p_matrices,
-                destination: (Matrix4X4<float>*)MatricesMap + (Index * Graphics.MaxFramesCount + frameIndex), 
+                destination: (CameraVP*)MatricesMap + (Index * Graphics.MaxFramesCount + frameIndex), 
                 destinationSizeInBytes: Memory.Size,
                 sourceBytesToCopy: (ulong)sizeof(Matrix4X4<float>) * 2);
         }
@@ -68,7 +68,7 @@ public class CameraData : IDisposable
         VPMatrices = new SlimBuffer(
             device: used_device,
             size: (ulong)(MaxCameraCount * sizeof(CameraVP) * Graphics.MaxFramesCount),
-            usage: BufferUsageFlags.UniformBuffer,
+            usage: BufferUsageFlags.StorageBuffer,
             sharingMode: SharingMode.Exclusive, queue_family.AsSpan(), 
             flags: 0
         );

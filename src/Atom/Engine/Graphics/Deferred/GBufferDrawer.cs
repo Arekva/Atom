@@ -25,6 +25,8 @@ public unsafe class GBufferDrawer : IDisposable
     private struct NDCDynamicStates
     {
         public DynamicState viewport = DynamicState.Viewport, scissor = DynamicState.Scissor;
+        
+        public NDCDynamicStates() { }
     }
     private static readonly Pin<NDCDynamicStates> _dynamicStates = new NDCDynamicStates();
 
@@ -238,17 +240,18 @@ public unsafe class GBufferDrawer : IDisposable
     public void CmdComputeGBuffer(SlimCommandBuffer cmd, uint swapImageIndex, ReadOnlySpan<ImageView> gbuffer)
     {
         DescriptorSet set = _descriptorSets[swapImageIndex];
-        
-        Span<WriteDescriptorSet> sets = _writeDescriptorSets.AsSpan()[((int)swapImageIndex * 4)..((int)swapImageIndex * 4 + 4)];
+
+        int write_index = (int)swapImageIndex * 4; 
+        Span<WriteDescriptorSet> sets = _writeDescriptorSets.AsSpan()[write_index..(write_index + 4)];
+        DescriptorImageInfo* descriptor_infos = stackalloc DescriptorImageInfo[4];
         for (int i = 0; i < 4; i++)
         {
-            
             ref WriteDescriptorSet img_set = ref sets[i];
-            DescriptorImageInfo descriptor_info = new(
+            descriptor_infos[i] = new DescriptorImageInfo(
                 imageView: gbuffer[i],
                 imageLayout: ImageLayout.ShaderReadOnlyOptimal
             );
-            img_set.PImageInfo = &descriptor_info;
+            img_set.PImageInfo = &descriptor_infos[i];
         }
 
         VK.API.UpdateDescriptorSets(_device, 4U, sets, 0, ReadOnlySpan<CopyDescriptorSet>.Empty);

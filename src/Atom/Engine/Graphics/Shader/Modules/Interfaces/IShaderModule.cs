@@ -16,7 +16,7 @@ public interface IShaderModule : IDisposable
     
     /// <summary> The Vulkan handle for the module descriptor layout this ShaderModule's API contains. </summary>
     /// This is basically: "for x binding, how many resource of y type is there?" 
-    public SlimDescriptorSetLayout DescriptorLayout { get; }
+    public SlimDescriptorSetLayout DescriptorSetLayout { get; }
     
 #endregion
 

@@ -33,7 +33,7 @@ public struct SlimCommandBuffer
 #region Standard API Proxying
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly vk.Result Reset(vk.CommandBufferResetFlags flags) => VK.API.ResetCommandBuffer(Handle, flags);
+    public readonly vk.Result Reset(vk.CommandBufferResetFlags flags = 0) => VK.API.ResetCommandBuffer(Handle, flags);
 
 #endregion
 

@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Core\Atom.Engine.Core.csproj" />
+      <ProjectReference Include="..\Graphics\Atom.Engine.Graphics.csproj" />
     </ItemGroup>
 
 </Project>

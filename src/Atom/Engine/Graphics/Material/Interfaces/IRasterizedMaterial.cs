@@ -6,8 +6,8 @@ public interface IRasterizedMaterial : IMaterial
 {
     /// <summary> The shader used by this material's pipeline. </summary>
     public IRasterShader Shader { get; }
-    
-    
+
+
 #region Settings
     
     public Topology Topology { get; set; }
