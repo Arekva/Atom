@@ -38,11 +38,6 @@ public partial class Cell
         private double _isosurface = 0.0;
         public double Isosurface => _isosurface;
 
-        public static List<(double x, double y, double z, double rad)> debug_spheres = new()
-        {
-            (0.0, 0.0, 0.0, 1.0)
-        };
-
         public void FillData()
         {
             const double MinClamp = (double) (sbyte.MinValue + 0x01);
@@ -119,7 +114,7 @@ public partial class Cell
          *                                                                      *
          *                                                                      */
 
-        public (GVertex[], uint[]) Visit()
+        public (GVertex[], uint[]) Visit(bool smooth)
         {
             // first get all the required data to generate the cell.
             // we need all the neighbors of the current cell and the

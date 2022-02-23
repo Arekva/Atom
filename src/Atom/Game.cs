@@ -32,10 +32,7 @@ public class Game
 
             try
             {
-                Camera camera = new ();
-                //camera.Location = new Location(Vector3D<double>.UnitY * 5.0D);
-                camera.NearPlane = 0.01D;
-                camera.FarPlane = 100.0D;
+                Mouse.Mode = CursorMode.Raw;
 
                 using CelestialSystem sun_system = new (location: default);
                 
@@ -49,53 +46,85 @@ public class Game
                         sun_system
                     );
 
+                    double rad = planet.Radius;
+                    
+                    Camera camera = new ();
+                    camera.Location = new Location(-Vector3D<double>.UnitZ * rad);
+                    camera.Space.Rotation = Quaternion<double>.CreateFromYawPitchRoll(Math.PI, 0.0, 0.0);
+                    camera.NearPlane = 0.01D;
+                    camera.FarPlane = double.PositiveInfinity;
+                    
+                    double speed = 2.5D * rad;
+                    double mouse_speed = 20.0D;
+                    double rot_speed = 90.0;
 
-                    /*Random r = new Random(0);
-                    for (int i = 0; i < 1000000000; i++)
-                    {
-                        double x = r.NextDouble();
-                        double y = r.NextDouble();
-                        double z = r.NextDouble();
-                        camera.Space.Forward = Vector3D.Normalize(new Vector3D<double>(x, y, z));
-                    }*/
-
-                    double speed = 5.0D;
-                    double rot_speed = 15.0;
-
+                    
+                    double angle_x = 0.0D;
                     double angle_y = 0.0D;
+                    double angle_z = 0.0D;
                     
                     Stopwatch sw = Stopwatch.StartNew();
                     double last_time = 0.0D;
-                    for (int i = 0; i < 50000000; i++)
+                    while (Engine.Engine.IsRunning)
                     {
                         double elapsed = sw.Elapsed.TotalSeconds;
                         double delta_time = elapsed - last_time;
                         last_time = elapsed;
 
-                        Vector3D<double> dir = Vector3D<double>.Zero;
-                        if (Keyboard.IsPressed(Key.W))
+                        if (Keyboard.IsPressed(Key.Escape))
                         {
-                            dir += Vector3D<double>.UnitZ;
+                            Mouse.Mode = CursorMode.Normal;
                         }
-                        if (Keyboard.IsPressed(Key.S))
-                        {
-                            dir -= Vector3D<double>.UnitZ;
-                        }
-                        if (Keyboard.IsPressed(Key.A))
-                        {
-                            dir -= Vector3D<double>.UnitX;
-                        }
-                        if (Keyboard.IsPressed(Key.D))
-                        {
-                            dir += Vector3D<double>.UnitX;
-                        }
+
+                        angle_y += Mouse.Delta.X * mouse_speed * delta_time;
+
+                        angle_x += Mouse.Delta.Y * mouse_speed * delta_time;
                         if (Keyboard.IsPressed(Key.Q))
                         {
-                            dir -= Vector3D<double>.UnitY;
+                            angle_z += rot_speed * delta_time;
                         }
                         if (Keyboard.IsPressed(Key.E))
                         {
-                            dir += Vector3D<double>.UnitY;
+                            angle_z -= rot_speed * delta_time;
+                        }
+
+
+                        camera.Space.LocalRotation =
+                            Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitY, angle_y * AMath.DegToRad) *
+                            Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitX, angle_x * AMath.DegToRad); //*
+                            //Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitZ, angle_z * AMath.DegToRad) ;
+                        
+                        
+                        
+                        Vector3D<double> dir = Vector3D<double>.Zero;
+                        
+                        Vector3D<double> right = camera.Space.Right;
+                        Vector3D<double> up = camera.Space.Up;
+                        Vector3D<double> forward = camera.Space.Forward;
+
+                        if (Keyboard.IsPressed(Key.W))
+                        {
+                            dir += forward;
+                        }
+                        if (Keyboard.IsPressed(Key.S))
+                        {
+                            dir -= forward;
+                        }
+                        if (Keyboard.IsPressed(Key.A))
+                        {
+                            dir -= right;
+                        }
+                        if (Keyboard.IsPressed(Key.D))
+                        {
+                            dir += right;
+                        }
+                        if (Keyboard.IsPressed(Key.R))
+                        {
+                            dir += up;
+                        }
+                        if (Keyboard.IsPressed(Key.F))
+                        {
+                            dir -= up;
                         }
 
                         if (dir != Vector3D<double>.Zero)
@@ -105,19 +134,7 @@ public class Game
                         
                         camera.Location.Coordinates += dir * delta_time * speed;
 
-
-                        if (Keyboard.IsPressed(Key.Left))
-                        {
-                            angle_y -= rot_speed * delta_time;
-                        }
-                        if (Keyboard.IsPressed(Key.Right))
-                        {
-                            angle_y += rot_speed * delta_time;
-                        }
-
-                        camera.Space.LocalRotation = Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitY, angle_y);
-
-                        Log.Info(camera.Location.UniversalCoordinates + " / " + camera.Space.Forward);
+                        Log.Info(camera.Location.UniversalCoordinates);
                     }
                 }
                 

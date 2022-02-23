@@ -21,6 +21,8 @@ public static class Keyboard
                 keyboard.KeyDown += OnKeyDown;
                 keyboard.KeyUp += OnKeyUp;
             }
+
+            Mouse.Context = value;
         }
     }
 

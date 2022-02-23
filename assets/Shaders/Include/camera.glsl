@@ -26,9 +26,9 @@ void set_gl_position(mat4 model_matrix, vec3 vertex_position) {
     uint camera_index = _currentCameraIndex.value;
     uint current_frame = _currentCameraIndex.frame;
 
-    CameraVP vp = _cameraMatrices.matrices[camera_index * MAX_FRAMES_COUNT + current_frame];
-
-    gl_Position = vp.projection * vp.view * model_matrix * vec4(vertex_position, 1.0);
+    CameraVP cam = _cameraMatrices.matrices[camera_index * MAX_FRAMES_COUNT + current_frame];
+ 
+    gl_Position = cam.projection * cam.view * model_matrix * vec4(vertex_position, 1.0);
 }
 
 /* End of camera.glsl */

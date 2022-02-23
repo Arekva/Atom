@@ -8,7 +8,7 @@ public class DepthStencil : IRasterSettings
         = new()
         {
             DoDepthTest = true,
-            DepthCompareOp = CompareOp.Less,
+            DepthCompareOp = CompareOp.Greater,
             DepthWriteEnable = true,
             DepthBounds = new Clamp<float>(0.0F, 1.0F)
         };

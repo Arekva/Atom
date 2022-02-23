@@ -88,22 +88,36 @@ public class ViewportWindow : IDisposable
             if (doLimit) framerate = limit;
             Window!.FramesPerSecond = framerate;
         }
-        
+
         // todo: everything under: move in other classes (vk stuff in engine and deferredrenderer, inputs in its own input setting class + action listeners)
         
         Window = Silk.NET.Windowing.Window.Create(options);
         Window.Update += delta_time =>
         {
             Keyboard.NextFrame();
+            Mouse.NextFrame();
             ManageKeys();
         };
+
+        Window.FocusChanged += state =>
+        {
+            if (state)
+            {
+                Mouse.Mode = CursorMode.Raw;
+            }
+        };
         
-        Window.Load += () => Keyboard.Context = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
+        Window.Load += () =>
+        {
+            Keyboard.Context = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
+        };
         
         Window.Closing += () =>
         {
             _renderer!.WaitForRenders();
             Dispose();
+            
+            Engine.Quit();
         };
         
         Window.Resize += resolution =>

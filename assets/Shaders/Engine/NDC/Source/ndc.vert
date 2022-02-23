@@ -10,8 +10,7 @@ vec4[3] vertices = vec4[3]
 );
 
 void main() {
-    outUv = (vertices[gl_VertexIndex].xy + vec2(1.0)) / 2.0;
-    outUv.y = outUv.y; 
+    outUv = 1.0 - ((vertices[gl_VertexIndex].xy + vec2(1.0)) / 2.0);
     
     gl_Position = vertices[gl_VertexIndex];
 }

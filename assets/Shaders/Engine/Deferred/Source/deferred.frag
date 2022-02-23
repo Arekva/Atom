@@ -42,8 +42,7 @@ void main()
     vec3 faint_light_color = vec3(255/255.0, 149/255.0, 0/255.0);
     vec3 faint_albedo = albedo * faint_light_color * max(faint_angle, 0.0) * 0.5;
     
+    vec3 min_albedo = vec3(0.05);
 
     outColor = vec4(full_albedo + faint_albedo, 1.0);
-
-    //outColor = vec4(vec3(depth), 1.0);
 }

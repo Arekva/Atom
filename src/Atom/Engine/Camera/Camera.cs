@@ -61,6 +61,8 @@ public class Camera : Thing
         
         _data = new CameraData(Index);
         _data.OnFrameUpdate += UpdateFrameData;
+        
+        
         /*if (_cameraCount >= CameraData.MaxCameraCount)
         {
             ++_cameraCount;
@@ -83,38 +85,59 @@ public class Camera : Thing
             return;
         }
         
-        //Location this_loc = Location;
-        //Location main_loc = Main.Location;
+        /*Location this_loc = Location;
+        Location main_loc = Main.Location;
 
-        //Location rel_loc = main_loc - this_loc;
-        Vector3D<double> position = Location.UniversalCoordinates;
+        Location rel_loc = main_loc - this_loc;*/
         
-        position.X *= -1.0D;
+        Vector3D<double> position = /*rel_loc*/Location.UniversalCoordinates;
+        //position.X *= -1.0D; // Invert X position
+        //position.Y *= -1.0D;
 
         Vector3D<double> forward = Space.Forward;
         Vector3D<double> up = Space.Up;
+        
+        Matrix4X4<double> view_double = Matrix4X4.CreateLookAt(
+            cameraPosition: position,
+            cameraTarget:   position + forward,
+            cameraUpVector: up);
 
-        Matrix4X4<double> view_double = Matrix4X4.CreateWorld(position, forward, up);
+        Matrix4X4<double> world_axis = Matrix4X4<double>.Identity with
+        {
+            // M11 = -1.0D,
+            // M22 = -1.0D,
+            M33 = -1.0D
+        };
+        
+        // view_double.M33 *= -1.0D; // From -Y up to +Y up
 
-        view_double.M22 *= -1.0D;
-
-        view = (Matrix4X4<float>)view_double;
+        view = (Matrix4X4<float>) Matrix4X4.Multiply(world_axis, view_double);
     }
     
     private void ComputeProjectionMatrix(out Matrix4X4<float> projection)
     {
-        projection = (Matrix4X4<float>)(Projection == Projection.Perspective
-        ? Matrix4X4.CreatePerspectiveFieldOfView(
-            FieldOfView,
-            AspectRatio,
-            NearPlane,
-            FarPlane)
-        : Matrix4X4.CreateOrthographic(
-            Width,
-            Height,
-            NearPlane,
-            FarPlane
-        ));
+        if (Projection == Projection.Orthographic)
+        {
+            projection = (Matrix4X4<float>)Matrix4X4.CreateOrthographic(
+                Width,
+                Height,
+                NearPlane,
+                FarPlane
+            );
+        }
+        else
+        {
+            float f = (float) (1.0 / Math.Tan(FieldOfView / 2.0D));
+            float r = (float) (f / AspectRatio);
+            float n = (float) NearPlane;
+            
+            projection = new Matrix4X4<float>(
+                r, 0, 0, 0,
+                0, f, 0, 0,
+                0, 0, 0,-1,
+                0, 0, n, 0
+            );
+        }
     }
 
     public void UpdateMatrices(uint frameIndex)

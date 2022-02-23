@@ -68,6 +68,12 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
 
         Grid = new Grid(5U);
         Grid.Init();
+
+        Grid.Generator = (x, y, z) =>
+        {
+            return x * x + y * y + z * z - 1.0F;
+            //return Math.Max(Math.Max(x, y), z);
+        };
         
         DebugTerrainMaterial = new RasterizedMaterial(debugTerrainShader);
 
@@ -78,9 +84,11 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
 
     public unsafe void DebugTerrainAll()
     {
-        //(GVertex[] vert, uint[] indices) verts = Grid.Cells.First().Visit();
-
-        (GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/Suzanne.obj");
+        Cell cell = Grid.Cells.First();
+        cell.FillData();
+        (GVertex[] vert, uint[] indices) verts = cell.Visit(true);
+        
+        //(GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SuzanneAxis.obj");
 
         /*(GVertex[] vert, uint[] indices) verts = new (
             new GVertex[3]
@@ -141,7 +149,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
 
         Matrix4X4<float> model_matrix = Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
             Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromYawPitchRoll(0.0F, 0.0F, 0.0F)),
-            Matrix4X4.CreateScale(Vector3D<float>.One)),
+            Matrix4X4.CreateScale(Vector3D<float>.One * (float)Radius)),
             Matrix4X4.CreateTranslation(Vector3D<float>.Zero)), 
             Matrix4X4<float>.Identity);
 

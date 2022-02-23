@@ -26,7 +26,7 @@ public class DeferredRenderer
         public ClearColorValue GBufferAlbedo        = new (0.0F, 0.0F, 0.0F, 0.0F);
         public ClearColorValue GBufferNormal        = new (0.0F, 0.0F, 0.0F, 0.0F);
         public ClearColorValue GBufferPosition      = new (0.0F, 0.0F, 0.0F, 0.0F);
-        public ClearDepthStencilValue GBufferDepth  = new (1.0F);
+        public ClearDepthStencilValue GBufferDepth  = new (0.0F);
         
         public RenderPassClear() { }
     }
