@@ -6,7 +6,7 @@ namespace Atom.Engine.Astro.Transvoxel;
 
 public partial class Cell
     {
-        public const int Resolution = 16;
+        public const int Resolution = 128;
         public const int HalfResolution = Resolution / 2;
         public const int MaxIndex = Resolution-1;
         
@@ -227,8 +227,8 @@ public partial class Cell
             List<Vector3D<double>> edgeVertices = new (12);
             List<Vector3D<double>> edgeNormals = new (12);
 
-            List<Vector3D<double>> normalsVector = new List<Vector3D<double>>(Count * 6);
-            List<Vector3D<double>> trianglesVector = new List<Vector3D<double>>(Count * 6);
+            List<Vector3D<double>> normalsVector = new (Count * 6);
+            List<Vector3D<double>> trianglesVector = new (Count * 6);
 
             //sbyte[] corner = new sbyte[8];
             Stopwatch sw = Stopwatch.StartNew();
@@ -323,21 +323,16 @@ public partial class Cell
                     }
                 }
             }
-            
-            
-            
+
             sw.Stop();
             Console.WriteLine($"[{this._tag}] Build time: {sw.Elapsed.TotalMilliseconds:F2} ms");
 
             GVertex[] vertices = new GVertex[trianglesVector.Count];
-
-            //Vector3D<float>[] vertices = new Vector3D<float>[trianglesVector.Count];
             uint[] triangles = new uint[vertices.Length];
-            //Vector3D<float>[] normals = new Vector3D<float>[normalsVector.Count];
             
             for (int i = 0; i < vertices.Length; i++)
             {
-                vertices[i] = new GVertex ()
+                vertices[i] = new GVertex
                 {
                     Position = (Vector3D<float>)trianglesVector[i],
                     Normal = (Vector3D<float>)normalsVector[i]
@@ -347,29 +342,6 @@ public partial class Cell
 
             return (vertices, triangles);
         }
-        
-        public static (int array, int index) TESTGetVoxelIndices(int x, int y, int z)
-        {
-            int cellx = x / Width;
-            int celly = y / Height;
-            int cellz = z / Depth;
-            int cell = AMath.To1D(cellx, celly, cellz, 3, 3);
-
-            int voxelx = x % Width;
-            int voxely = y % Height;
-            int voxelz = z % Depth;
-            int voxel = AMath.To1D(voxelx, voxely, voxelz, Width, Height);
-
-            return (cell, voxel);
-        }
-
-        /*private Vector3 CalculateNormal(Vector3[] vertices, int v0, int v1, int v2)
-        {
-            Vector3 v0pos = vertices[v0];
-            Vector3 v1pos = vertices[v1];
-            Vector3 v2pos = vertices[v2];
-            return Vector3.Normalize(Vector3.Cross(v1pos - v0pos, v2pos - v1pos));
-        }*/
         
         public static Dictionary<int, Vector3D<double>> RegularCellVertexLocation = new (12)
         {

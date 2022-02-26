@@ -62,4 +62,13 @@ public static class AMath
             return number + alignment - remainder;
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double LinearInterpolation(double a, double b, double t) => (1.0D - t) * a + t * b;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double SCurve3(double a) => a*a*(3.0 - 2.0*a);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double SCurve5(double a) => a*a*a*(a*(a*6.0 - 15.0) + 10.0);
 }

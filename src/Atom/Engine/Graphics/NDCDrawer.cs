@@ -284,7 +284,7 @@ public unsafe class NDCDrawer : IDisposable
         }
     }
     
-    public void Resize(Vector2D<uint> extent, ReadOnlySpan<ImageView> swapchainViews)
+    public void Resize(Vector2D<uint> extent, ReadOnlySpan<SlimImageView> swapchainViews)
     {
         _extent = extent;
 
@@ -296,14 +296,14 @@ public unsafe class NDCDrawer : IDisposable
             VK.API.DestroyFramebuffer(_device, _framebuffers[i], null);
         }
 
-        fixed (ImageView* p_views = swapchainViews)
+        fixed (SlimImageView* p_views = swapchainViews)
         {
             for (uint i = 0; i < new_images_count; i++)
             {
                 FramebufferCreateInfo info = new(
                     renderPass: _renderPass,
                     attachmentCount: 1,
-                    pAttachments: p_views + i,
+                    pAttachments: (vk.ImageView*)(p_views + i),
                     width: extent.X,
                     height: extent.Y,
                     layers: 1
@@ -313,7 +313,7 @@ public unsafe class NDCDrawer : IDisposable
         }
     }
 
-    public void CmdDrawView(SlimCommandBuffer cmd, uint swapImageIndex, ImageView source)
+    public void CmdDrawView(SlimCommandBuffer cmd, uint swapImageIndex, SlimImageView source)
     {
         DescriptorSet set = _descriptorSets[swapImageIndex];
         

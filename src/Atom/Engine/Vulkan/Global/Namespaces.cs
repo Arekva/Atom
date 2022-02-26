@@ -1,0 +1,1 @@
+global using vk = Silk.NET.Vulkan;

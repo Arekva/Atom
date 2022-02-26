@@ -62,9 +62,7 @@ public struct SlimBuffer
     
 #region User defined
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly vk.Result BindMemory(MemorySegment memory)
-        => BindMemory(memory.Memory.Device, memory.Memory, memory.Offset);
+    
 
 #endregion
 

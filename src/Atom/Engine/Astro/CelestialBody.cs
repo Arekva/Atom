@@ -57,7 +57,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         string name, 
         double radius, double mass,
         IRasterShader debugTerrainShader,
-        ICelestialBody parent/*, Orbit? orbit = null*/)
+        ICelestialBody parent, Func<double, double, double, double> generator/*, Orbit? orbit = null*/)
     {
         Name = name;
         
@@ -69,11 +69,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         Grid = new Grid(5U);
         Grid.Init();
 
-        Grid.Generator = (x, y, z) =>
-        {
-            return x * x + y * y + z * z - 1.0F;
-            //return Math.Max(Math.Max(x, y), z);
-        };
+        Grid.Generator = generator;
         
         DebugTerrainMaterial = new RasterizedMaterial(debugTerrainShader);
 
@@ -86,23 +82,10 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
     {
         Cell cell = Grid.Cells.First();
         cell.FillData();
-        (GVertex[] vert, uint[] indices) verts = cell.Visit(true);
+        //(GVertex[] vert, uint[] indices) verts = cell.Visit(smooth: false);
         
-        //(GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SuzanneAxis.obj");
+        (GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SuzanneAxis.obj");
 
-        /*(GVertex[] vert, uint[] indices) verts = new (
-            new GVertex[3]
-            {
-                new GVertex() { Position = new (-1.0F,-3.0F, 0.0F) },
-                new GVertex() { Position = new (-1.0F, 1.0F, 0.0F) },
-                new GVertex() { Position = new ( 3.0F, 1.0F, 0.0F) },
-            },
-            new uint[3]
-            {
-                0, 1, 2
-            }
-        );*/
-        
         _indexCount = (uint)verts.indices.Length;
 
         ulong vert_size = _vertexSize = (ulong)verts.vert.Length * (ulong)sizeof(GVertex);

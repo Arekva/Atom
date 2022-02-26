@@ -1,0 +1,13 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "Classic Sky",
+    "Description": "Standard classic sky renderer for grounded scenes.",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+
+    "Stages": 
+    {
+        "Vertex": "Modules/classic.vert.spv",
+        "Fragment": "Modules/classic.frag.spv"
+    }
+}

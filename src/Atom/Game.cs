@@ -38,12 +38,24 @@ public class Game
                 
                 using (IRasterShader terrain_shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard"))
                 {
+                    ImprovedPerlinGenerator noise = new ImprovedPerlinGenerator();
+                    noise.Frequency = 5.0D;
+                    
+                    Func<double, double, double, double> generator = (x, y, z) =>
+                    {
+                        double sphere = x * x + y * y + z * z - 1.0;
+                        
+                        return sphere + noise.SampleDeformation(x, y, z) * 0.1;
+                    };
+
+
                     using CelestialBody planet = new (
                         name: "Terre", 
                         radius: 6371000.0D, 
                         mass: 5.972E+24,
                         terrain_shader,
-                        sun_system
+                        sun_system,
+                        generator
                     );
 
                     double rad = planet.Radius;
@@ -134,7 +146,7 @@ public class Game
                         
                         camera.Location.Coordinates += dir * delta_time * speed;
 
-                        Log.Info(camera.Location.UniversalCoordinates);
+                        Log.Info("Camera universal coordinates: " + camera.Location.UniversalCoordinates);
                     }
                 }
                 

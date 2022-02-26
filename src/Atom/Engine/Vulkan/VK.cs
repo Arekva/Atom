@@ -30,6 +30,11 @@ public static class VK
     
     public static Version ApplicationVersion { get; private set; }
 
+
+    public static event Action? OnInit;
+
+    public static event Action? OnTerminate; 
+
     public static unsafe void Initialize(
         string engineName,
         Version engineVersion,
@@ -92,18 +97,18 @@ public static class VK
 
         AutoSelectGPU();
 
-        CameraData.Initialize();
-        Draw.Initialize();
+        OnInit?.Invoke();
     }
 
     public static unsafe void Terminate()
     {
         Log.Trace("Terminating Vulkan.");
-        Draw.Cleanup();
-        CameraData.Cleanup();
+
+        OnTerminate?.Invoke();
+        
         API.DestroyDevice(_device, null);
         API.DestroyInstance(_instance, null);
-    } 
+    }
 
     private static unsafe void SanitizeExtensionsAvailability(string[] extensions)
     {
@@ -164,10 +169,10 @@ public static class VK
             {
                 throw new LayerNotFoundException($"Layer {layer} is not available on this host. " 
 #if DEBUG
-                                                 + "Try to make sure the layer name is valid.");
+                + "Try to make sure the layer name is valid.");
 #else
-                             + "Please check if your GPU does support it on https://vulkan.gpuinfo.org/. If yes, update"
-                             + " your drivers and if the error still happen please contact me.");
+                + "Please check if your GPU does support it on https://vulkan.gpuinfo.org/. If yes, update"
+                + " your drivers and if the error still happen please contact me.");
 #endif
             }
         }

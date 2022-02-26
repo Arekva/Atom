@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Atom.Engine.Global;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
@@ -73,22 +74,22 @@ public class DeferredRenderer
     private KhrSwapchain _swapchainExtension;
     
     // framebuffer
-    private Image[] _images = new Image[MAX_IMAGE_COUNT];
-    private ImageView[] _views = new ImageView[MAX_VIEW_COUNT];
+    private SlimImage[] _images = new SlimImage[MAX_IMAGE_COUNT];
+    private SlimImageView[] _views = new SlimImageView[MAX_VIEW_COUNT];
     private Framebuffer[] _framebuffers = new Framebuffer[MAX_FRAMES_IN_FLIGHT_COUNT];
     
     // synchronisation
     // 0..7: fences in flight, 8..15: images in flight
     private SlimFence[] _fences = new SlimFence[MAX_FRAMES_IN_FLIGHT_COUNT * 2]; 
     // 0..7: image available, 8..15: render finished
-    private Semaphore[] _semaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT_COUNT * 2];
+    private SlimSemaphore[] _semaphores = new SlimSemaphore[MAX_FRAMES_IN_FLIGHT_COUNT * 2];
     
     // commands
     private SlimCommandPool _commandPool;
     private SlimCommandBuffer[] _commands = new SlimCommandBuffer[MAX_FRAMES_IN_FLIGHT_COUNT];
     
     // memory storage for all the framebuffers
-    private vk.DeviceMemory _framebuffersMemory;
+    private DeviceMemory _framebuffersMemory;
     
     // surface
     private Vector2D<uint> _extent;
@@ -197,16 +198,15 @@ public class DeferredRenderer
 
         ColorFormat = _colorFormat;
 
-        SemaphoreCreateInfo semaphore_info = new(flags: 0);
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++)
         {
             _fences[i] = new SlimFence(_device, signaled: true);
-            VK.API.CreateSemaphore(_device, in semaphore_info, null, out _semaphores[i]);
+            _semaphores[i] = new SlimSemaphore(_device);
         }
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++) // 2x more semaphores than frames in flight.
         {
-            VK.API.CreateSemaphore(_device, in semaphore_info, null, out _semaphores[i + MAX_FRAMES_IN_FLIGHT_COUNT]);
+            _semaphores[i + MAX_FRAMES_IN_FLIGHT_COUNT] = new SlimSemaphore(_device);
         }
         
         DeferredRenderPass.CreateRenderPass(_device, _physicalDevice, out _renderPass, out _depthFormat);
@@ -233,8 +233,8 @@ public class DeferredRenderer
         if (_extent.X == 0 || _extent.Y == 0) return;
 
         SlimFence frame_fence = _fences[GetFrameInFlightFenceIndex(_frameIndex)];
-        Semaphore image_availability_semaphore = _semaphores[GetImageAvailableSemaphoreIndex(_frameIndex)];
-        Semaphore render_finished_semaphore = _semaphores[GetRenderFinishedSemaphoreIndex(_frameIndex)];
+        SlimSemaphore image_availability_semaphore = _semaphores[GetImageAvailableSemaphoreIndex(_frameIndex)];
+        SlimSemaphore render_finished_semaphore = _semaphores[GetRenderFinishedSemaphoreIndex(_frameIndex)];
 
         frame_fence.Wait(_device);
         
@@ -272,9 +272,9 @@ public class DeferredRenderer
         SubmitInfo draw_submit = new(
             pWaitDstStageMask: &wait_dst_draw,
             waitSemaphoreCount: 1,
-            pWaitSemaphores: &image_availability_semaphore,
+            pWaitSemaphores: (vk.Semaphore*)&image_availability_semaphore,
             signalSemaphoreCount: 1,
-            pSignalSemaphores: &render_finished_semaphore,
+            pSignalSemaphores: (vk.Semaphore*)&render_finished_semaphore,
             commandBufferCount: 1,
             pCommandBuffers: (vk.CommandBuffer*)&command
         );
@@ -289,7 +289,7 @@ public class DeferredRenderer
         
         PresentInfoKHR present_info = new(
             waitSemaphoreCount: 1,
-            pWaitSemaphores: &render_finished_semaphore,
+            pWaitSemaphores: (vk.Semaphore*)&render_finished_semaphore,
             swapchainCount: 1,
             pSwapchains: &swapchain,
             pImageIndices: &swap_image_index
@@ -354,7 +354,7 @@ public class DeferredRenderer
 
         uint swap_image_count = 0;
         _swapchainExtension.GetSwapchainImages(_device, _swapchain, ref swap_image_count, null);
-        Span<Image> swap_images = stackalloc Image[(int)swap_image_count];
+        Span<vk.Image> swap_images = stackalloc vk.Image[(int)swap_image_count];
         _swapchainExtension.GetSwapchainImages(_device, _swapchain, &swap_image_count, swap_images);
 
         if (previous_swap_image_count != 0)
@@ -377,11 +377,7 @@ public class DeferredRenderer
             for (int j = 0; j < DEFERRED_IMAGE_COUNT; j++)
             {
                 int requirements_index = (int)(i * DEFERRED_IMAGE_COUNT) + j;
-                VK.API.GetImageMemoryRequirements(
-                    _device, 
-                    _images[image_index + 1 + j], 
-                    out requirements[requirements_index]
-                );
+                _images[image_index + 1 + j].GetMemoryRequirements(_device, out requirements[requirements_index]);
                 ref MemoryRequirements reqs = ref requirements[requirements_index];
                 required_bytes_to_allocate += reqs.Size;
             }
@@ -395,13 +391,13 @@ public class DeferredRenderer
             uint view_index = GetViewBaseIndex(i);
             CreateViews(i);
 
-            ReadOnlySpan<ImageView> framebuffer_views = _views.AsSpan((int)view_index, (int)DEFERRED_VIEW_COUNT);
+            ReadOnlySpan<SlimImageView> framebuffer_views = _views.AsSpan((int)view_index, (int)DEFERRED_VIEW_COUNT);
 
-            fixed (ImageView* p_attachments = framebuffer_views)
+            fixed (SlimImageView* p_attachments = framebuffer_views)
             {
                 FramebufferCreateInfo framebuffer_create_info = new(
                     attachmentCount: DEFERRED_VIEW_COUNT,
-                    pAttachments: p_attachments,
+                    pAttachments: (vk.ImageView*)p_attachments,
                     renderPass: _renderPass,
                     width: extent.X,
                     height: extent.Y,
@@ -412,7 +408,7 @@ public class DeferredRenderer
             }
         }
 
-        Span<ImageView> swapchain_views = stackalloc ImageView[(int)new_swap_image_count];
+        Span<SlimImageView> swapchain_views = stackalloc SlimImageView[(int)new_swap_image_count];
         for (uint i = 0; i < new_swap_image_count; i++)
         {
             swapchain_views[(int)i] = _views[GetViewBaseIndex(i) + 5];
@@ -444,8 +440,8 @@ public class DeferredRenderer
         CleanImages(count);
         CleanMemory();
     }
-    
-    private void ResetCommandBuffers() => VK.API.ResetCommandPool(_device, _commandPool, 0);
+
+    private void ResetCommandBuffers() => _commandPool.Reset(_device);
 
     private void CleanMemory() => VK.API.FreeMemory(_device, _framebuffersMemory, ReadOnlySpan<AllocationCallbacks>.Empty);
     
@@ -461,7 +457,7 @@ public class DeferredRenderer
     {
         for (uint i = 0; i < count * (RESULT_VIEW_COUNT + DEFERRED_VIEW_COUNT); i++)
         {
-            VK.API.DestroyImageView(_device, _views[i], ReadOnlySpan<AllocationCallbacks>.Empty);
+            _views[i].Destroy(_device);
         }
     }
     
@@ -473,7 +469,7 @@ public class DeferredRenderer
             if (i % (RESULT_IMAGE_COUNT + DEFERRED_IMAGE_COUNT) > 0)
             {
                 // memory is one unique allocation for all images, it requires to be deleted in another call.
-                VK.API.DestroyImage(_device, _images[i], ReadOnlySpan<AllocationCallbacks>.Empty);
+                _images[i].Destroy(_device);
             }
         }
     } 
@@ -486,17 +482,16 @@ public class DeferredRenderer
 
         CleanRenderObjects(_swapchainImageCount);
         
-        VK.API.DestroyCommandPool(_device, _commandPool, ReadOnlySpan<AllocationCallbacks>.Empty);
+        _commandPool.Destroy(_device);
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++)
         {
             _fences[i].Destroy(_device);
-            //VK.API.DestroyFence(_device, _fences[i], ReadOnlySpan<AllocationCallbacks>.Empty);
-            VK.API.DestroySemaphore(_device, _semaphores[i], ReadOnlySpan<AllocationCallbacks>.Empty);
+            _semaphores[i].Destroy(_device);
         }
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++) // actually 16 semaphores to destroy.
         {
-            VK.API.DestroySemaphore(_device, _semaphores[i + MAX_FRAMES_IN_FLIGHT_COUNT], ReadOnlySpan<AllocationCallbacks>.Empty);
+            _semaphores[i + MAX_FRAMES_IN_FLIGHT_COUNT].Destroy(_device);
         }
         
         DestroySwapchain(_swapchain);
@@ -555,32 +550,26 @@ public class DeferredRenderer
 
     private void CreateViews(uint swapImageIndex)
     {
-        uint view_index = GetViewBaseIndex(swapImageIndex);
+        uint view_index  = GetViewBaseIndex (swapImageIndex);
         uint image_index = GetImageBaseIndex(swapImageIndex);
 
-        Image final_image = _images[image_index];
-        Image gbuffer_main_image = _images[image_index + 1];
-        Image gbuffer_depth_image = _images[image_index + 2];
-        Image lit_image = _images[image_index + 3];
+        SlimImage final_image           = _images[image_index    ];
+        SlimImage gbuffer_main_image    = _images[image_index + 1];
+        SlimImage gbuffer_depth_image   = _images[image_index + 2];
+        SlimImage lit_image             = _images[image_index + 3];
 
-        unsafe Result create_view(Image image, Format format, ImageAspectFlags aspect, out ImageView view, uint layer = 0)
+        void create_view(SlimImage image, Format format, ImageAspectFlags aspect, out SlimImageView view, uint layer = 0)
         {
-            ImageViewCreateInfo info = new(
-                flags: 0,
-                image: image,
-                format: format,
+            view = new SlimImageView(
+                _device,  image,
                 viewType: ImageViewType.ImageViewType2D,
-                components: new ComponentMapping(
-                    r: ComponentSwizzle.Identity,
-                    g: ComponentSwizzle.Identity,
-                    b: ComponentSwizzle.Identity, 
-                    a: ComponentSwizzle.Identity),
-                subresourceRange: new ImageSubresourceRange(
-                    aspectMask: aspect,
-                    baseMipLevel: 0, levelCount: 1,
+                format:   format,
+                components: ComponentMapping.Identity,
+                subresourceRange: new vk.ImageSubresourceRange(
+                    aspectMask:     (vk.ImageAspectFlags)aspect,
+                    baseMipLevel:   0    , levelCount: 1,
                     baseArrayLayer: layer, layerCount: 1)
             );
-            return VK.API.CreateImageView(_device, in info, null, out view);
         }
 
         const Format GBUFFER_FORMAT = Format.R32G32B32A32Sfloat;
@@ -589,57 +578,47 @@ public class DeferredRenderer
         for (uint i = 0; i < 3; i++) // 3 views for the main g buffer
         {
             create_view(gbuffer_main_image, 
-                GBUFFER_FORMAT,
-                ImageAspectFlags.ImageAspectColorBit, 
+                GBUFFER_FORMAT, ImageAspectFlags.Color, 
                 out _views[view_index + i], 
                 layer: i
             );
         }
 
         // depth
-        create_view(
-            gbuffer_depth_image,
-            _depthFormat,
-            ImageAspectFlags.ImageAspectDepthBit, 
+        create_view(gbuffer_depth_image,
+            _depthFormat, ImageAspectFlags.Depth, 
             out _views[view_index + 3]
         );
         
         // lit
-        create_view(
-            lit_image,
-            GBUFFER_FORMAT,
-            ImageAspectFlags.ImageAspectColorBit, 
+        create_view(lit_image,
+            GBUFFER_FORMAT, ImageAspectFlags.Color, 
             out _views[view_index + 4]
         );
         
         // final
-        create_view(
-            final_image,
-            _colorFormat, 
-            ImageAspectFlags.ImageAspectColorBit, 
+        create_view(final_image, 
+            _colorFormat, ImageAspectFlags.Color, 
             out _views[view_index + 5]
         );
     }
     
-    private unsafe void AllocateImagesMemory(uint swap_image_count, ulong size, ReadOnlySpan<MemoryRequirements> requirements)
+    private void AllocateImagesMemory(uint swapImageCount, ulong size, ReadOnlySpan<MemoryRequirements> requirements)
     {
-        uint fam_index = _renderFamily.Index;
-        
         // allocate the memory required for all the framebuffers
-        MemoryAllocateInfo alloc_info = new(
-            allocationSize: size,
+        _framebuffersMemory = new DeviceMemory(
+            _device,
+            size: size,
             memoryTypeIndex: VK.FindMemoryType(
                 physicalDevice: _physicalDevice, 
                 typeFilter: requirements[0].MemoryTypeBits, // consider [0] as all other memory representation
                 properties: MemoryPropertyFlags.DeviceLocal
             )
         );
-        VK.API.AllocateMemory(_device, in alloc_info, null, out _framebuffersMemory);
-
-
+        
         ulong offset = 0UL;
         // assign images memories
-        for (uint i = 0; i < swap_image_count; i++)
+        for (uint i = 0; i < swapImageCount; i++)
         {
             uint image_base_index = GetImageBaseIndex(i);
             
@@ -650,12 +629,12 @@ public class DeferredRenderer
                 MemoryRequirements reqs = requirements[requirements_index];
 
                 ulong mem_size = reqs.Size;
-                VK.API.BindImageMemory(_device, _images[image_index], _framebuffersMemory, offset);
+                _images[image_index].BindMemory(_device, _framebuffersMemory, offset);
                 offset += mem_size;
             }
         }
     }
-    private unsafe void CreateImages(uint swapImageIndex, Vector2D<uint> extent, Image swapImage)
+    private void CreateImages(uint swapImageIndex, Vector2D<uint> extent, SlimImage swapImage)
     {
         uint image_index = GetImageBaseIndex(swapImageIndex);
         ref uint width = ref extent.X;
@@ -665,25 +644,18 @@ public class DeferredRenderer
 
         uint fam_index = _renderFamily.Index;
 
-        Result create_image(Format format, uint arrayLayers, ImageUsageFlags usages, out Image image)
+        void create_image(Format format, uint arrayLayers, ImageUsageFlags usages, out SlimImage image)
         {
             uint f = fam_index;
-            ImageCreateInfo gbuffer_main = new ImageCreateInfo( /* gBufferMainImage */ 
-                flags: 0,
-                imageType: ImageType.ImageType2D,
-                format: format,
-                extent: size,
-                mipLevels: 1,
-                arrayLayers: arrayLayers,
+            image = new SlimImage(
+                _device, flags: 0,
+                type: ImageType.ImageType2D, format: format, extent: size,
+                mipLevels: 1, arrayLayers: arrayLayers,
                 samples: SampleCountFlags.SampleCount1Bit,
                 tiling: ImageTiling.Optimal,
-                usage: usages,
-                initialLayout: ImageLayout.Undefined,
-                queueFamilyIndexCount: 1,
-                pQueueFamilyIndices: &f,
-                sharingMode: SharingMode.Exclusive // only used for rendering
+                usage: usages, initialLayout: ImageLayout.Undefined,
+                queueFamilyIndices: f.AsSpan(), sharingMode: SharingMode.Exclusive // only used for rendering
             );
-            return VK.API.CreateImage(_device, in gbuffer_main, null, out image);
         }
         
         // create images

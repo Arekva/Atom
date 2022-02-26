@@ -8,7 +8,7 @@ void main() {
     vec3 position = in_position.xyz;
     vec2 uv = in_uv;
 
-    float luminance = 1.0;
+    float luminance = 0.0;
     float roughness = 1.0;
     float metalness = 1.0;
     float translucency = 1.0;

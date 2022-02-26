@@ -237,7 +237,7 @@ public unsafe class GBufferDrawer : IDisposable
     
     public void Resize(Vector2D<uint> extent) => _extent = extent;
 
-    public void CmdComputeGBuffer(SlimCommandBuffer cmd, uint swapImageIndex, ReadOnlySpan<ImageView> gbuffer)
+    public void CmdComputeGBuffer(SlimCommandBuffer cmd, uint swapImageIndex, ReadOnlySpan<SlimImageView> gbuffer)
     {
         DescriptorSet set = _descriptorSets[swapImageIndex];
 

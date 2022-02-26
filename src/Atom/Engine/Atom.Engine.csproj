@@ -17,20 +17,22 @@
     <ItemGroup>
       <Compile Remove="Core\**" />
       <Compile Remove="Astro\**" />
-      <None Remove="Graphics\**" />
       <Compile Remove="Graphics\**" />
+      <Compile Remove="Vulkan\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="Core\**" />
       <EmbeddedResource Remove="Astro\**" />
       <EmbeddedResource Remove="Graphics\**" />
+      <EmbeddedResource Remove="Vulkan\**" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Core\**" />
       <None Remove="Astro\**" />
       <None Remove="Graphics\**" />
+      <None Remove="Vulkan\**" />
     </ItemGroup>
 
     <ItemGroup>

@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Astro", "src\At
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Graphics", "src\Atom\Engine\Graphics\Atom.Engine.Graphics.csproj", "{182B5524-F422-4197-A0C1-DA17CDDC6ED8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Vulkan", "src\Atom\Engine\Vulkan\Atom.Engine.Vulkan.csproj", "{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -48,5 +50,9 @@ Global
 		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Debug|x64.Build.0 = Debug|x64
 		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Release|x64.ActiveCfg = Release|x64
 		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Release|x64.Build.0 = Release|x64
+		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Debug|x64.ActiveCfg = Debug|x64
+		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Debug|x64.Build.0 = Debug|x64
+		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Release|x64.ActiveCfg = Release|x64
+		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 EndGlobal

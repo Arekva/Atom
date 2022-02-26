@@ -35,6 +35,17 @@ public static class Engine
 
         IsRunning = true;
         
+        VK.OnInit += () =>
+        {
+            CameraData.Initialize();
+            Draw.Initialize();
+        };
+        VK.OnTerminate += () =>
+        {
+            Draw.Cleanup();
+            CameraData.Cleanup();
+        };
+        
         try
         {
             Initialize();
