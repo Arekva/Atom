@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 public struct DescriptorPool
 {

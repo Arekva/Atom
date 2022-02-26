@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 public struct CommandPool
 { 

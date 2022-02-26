@@ -1,5 +1,5 @@
-﻿using Silk.NET.Vulkan;
-using SPIRVCross;
+﻿using SPIRVCross;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Shader;
 
@@ -10,7 +10,7 @@ public abstract class ShaderModule : IShaderModule
 
     public SlimShaderModule Handle { get; }
 
-    public Device Device { get; }
+    public vk.Device Device { get; }
     
     public SlimDescriptorSetLayout DescriptorSetLayout { get; private set; }
     
@@ -22,7 +22,7 @@ public abstract class ShaderModule : IShaderModule
     
     public abstract ShaderStageFlags Stage { get; }
     
-    public PipelineShaderStageCreateInfo StageInfo { get; private set; }
+    public vk.PipelineShaderStageCreateInfo StageInfo { get; private set; }
     
 #endregion
 
@@ -30,11 +30,11 @@ public abstract class ShaderModule : IShaderModule
 
     public Dictionary<ResourceType, Descriptor[]> Descriptors { get; private set; }
     
-    public Dictionary<string, PushConstantRange> PushConstants { get; private set; }
+    public Dictionary<string, vk.PushConstantRange> PushConstants { get; private set; }
 
 #endregion
 
-    public unsafe ShaderModule(Program program, Device? device = null)
+    public unsafe ShaderModule(Program program, vk.Device? device = null)
     {
         this.Device = device ?? VK.Device;
 
@@ -101,7 +101,7 @@ public abstract class ShaderModule : IShaderModule
             desc_count += Descriptors[_validDescriptorBindingResources[i]].Length;
         }
 
-        Span<DescriptorSetLayoutBinding> bindings = stackalloc DescriptorSetLayoutBinding[desc_count];
+        Span<vk.DescriptorSetLayoutBinding> bindings = stackalloc vk.DescriptorSetLayoutBinding[desc_count];
 
         int index = 0;
         for (int i = 0; i < _validDescriptorBindingResources.Length; i++)
@@ -115,7 +115,7 @@ public abstract class ShaderModule : IShaderModule
                 
                 unsafe
                 {
-                    bindings[index] =  new DescriptorSetLayoutBinding(
+                    bindings[index] = new vk.DescriptorSetLayoutBinding(
                         binding: descriptor.Binding,
                         descriptorType: SpirvToVkDescMap[resource_type],
                         descriptorCount: descriptor.Array.IsArray ? descriptor.Array.DimensionsLengths[0] : 1U,
@@ -131,7 +131,7 @@ public abstract class ShaderModule : IShaderModule
             flags:0);
 
         Descriptor[] push_constants = Descriptors[ResourceType.PushConstant];
-        PushConstants = new Dictionary<string, PushConstantRange>(capacity: push_constants.Length);
+        PushConstants = new Dictionary<string, vk.PushConstantRange>(capacity: push_constants.Length);
         for (int i = 0; i < push_constants.Length; i++)
         {
             ref readonly Descriptor descriptor = ref push_constants[i];
@@ -141,7 +141,7 @@ public abstract class ShaderModule : IShaderModule
                 descriptor.Array.TotalElementCount * 
                 descriptor.Vector.VectorLength * descriptor.Vector.MatrixColumns;
             
-            PushConstants.Add(descriptor.Name, new PushConstantRange(
+            PushConstants.Add(descriptor.Name, new vk.PushConstantRange(
                     stageFlags: (vk.ShaderStageFlags)Stage,
                     offset: descriptor.Offset,
                     size: (uint)(size_bit/8)
@@ -155,18 +155,18 @@ public abstract class ShaderModule : IShaderModule
         // assume there is an entry point, and that it is the right execution model.
         // this may not be true, but enough for now (one file per module design) 
         EntryPoint = program.GetEntryPoint().Name; 
-        StageInfo = new PipelineShaderStageCreateInfo(
+        StageInfo = new vk.PipelineShaderStageCreateInfo(
             stage: (vk.ShaderStageFlags)Stage, 
             module: this.Handle,
             pName: LowLevel.GetPointer(EntryPoint)
         );
     }
     
-    internal static Dictionary<ResourceType, DescriptorType> SpirvToVkDescMap = new ()
+    internal static Dictionary<ResourceType, vk.DescriptorType> SpirvToVkDescMap = new ()
     {
-        { ResourceType.UniformBuffer, DescriptorType.UniformBuffer },
-        { ResourceType.SampledImage, DescriptorType.SampledImage },
-        { ResourceType.StorageImage, DescriptorType.StorageImage },
-        { ResourceType.StorageBuffer, DescriptorType.StorageBuffer },
+        { ResourceType.UniformBuffer, vk.DescriptorType.UniformBuffer },
+        { ResourceType.SampledImage , vk.DescriptorType.SampledImage },
+        { ResourceType.StorageImage , vk.DescriptorType.StorageImage },
+        { ResourceType.StorageBuffer, vk.DescriptorType.StorageBuffer },
     };
 }

@@ -10,6 +10,8 @@ using Silk.NET.Core.Native;
 using Silk.NET.Input;
 using Silk.NET.Vulkan;
 
+using Atom.Engine.Vulkan;
+
 namespace Atom.Engine;
 
 public class ViewportWindow : IDisposable

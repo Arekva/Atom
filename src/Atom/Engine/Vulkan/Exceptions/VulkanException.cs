@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 /// <summary> Base exception type for all the exceptions related to Vulkan. </summary>
 [Serializable]

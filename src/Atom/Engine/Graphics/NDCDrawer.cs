@@ -1,7 +1,10 @@
+using Atom.Engine.Global;
 using Atom.Engine.RenderPass;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using DependencyInfo = Atom.Engine.RenderPass.DependencyInfo;
+
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -89,7 +92,7 @@ public unsafe class NDCDrawer : IDisposable
     private Pipeline _pipeline;
     private Silk.NET.Vulkan.RenderPass _renderPass;
     private SlimDescriptorSetLayout _inTextureDescriptor;
-    private Framebuffer[] _framebuffers;
+    private SlimFramebuffer[] _framebuffers;
     
     private DescriptorSet[] _descriptorSets;
     
@@ -173,7 +176,7 @@ public unsafe class NDCDrawer : IDisposable
             VK.API.AllocateDescriptorSets(device, &set_allocate_info, _descriptorSets.AsSpan());
         }
 
-        _framebuffers = new Framebuffer[maxImages];
+        _framebuffers = new SlimFramebuffer[maxImages];
         _writeDescriptorSets = new WriteDescriptorSet[maxImages];
 
         for (int i = 0; i < maxImages; i++)
@@ -295,21 +298,22 @@ public unsafe class NDCDrawer : IDisposable
         {
             VK.API.DestroyFramebuffer(_device, _framebuffers[i], null);
         }
+        
+        for (int i = 0; i < new_images_count; i++)
+        {
+            SlimImageView view = swapchainViews[i];
+            _framebuffers[i] = new SlimFramebuffer(_device,
+                renderPass: _renderPass,
+                attachments: view.AsSpan(),
+                width: extent.X,
+                height: extent.Y,
+                layers: 1
+            );
+        }
 
         fixed (SlimImageView* p_views = swapchainViews)
         {
-            for (uint i = 0; i < new_images_count; i++)
-            {
-                FramebufferCreateInfo info = new(
-                    renderPass: _renderPass,
-                    attachmentCount: 1,
-                    pAttachments: (vk.ImageView*)(p_views + i),
-                    width: extent.X,
-                    height: extent.Y,
-                    layers: 1
-                );
-                VK.API.CreateFramebuffer(_device, in info, null, out _framebuffers[i]);
-            }
+            
         }
     }
 

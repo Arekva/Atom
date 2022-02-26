@@ -1,5 +1,5 @@
-﻿using Silk.NET.Maths;
-using Silk.NET.Vulkan;
+﻿using Atom.Engine.Vulkan;
+using Silk.NET.Maths;
 
 namespace Atom.Engine;
 
@@ -9,12 +9,12 @@ public interface IMaterial : IDisposable
 #region Handle
 
     /// <summary> The Vulkan graphic pipeline handle of this material. </summary>
-    public Pipeline Pipeline { get; }
+    public vk.Pipeline Pipeline { get; }
     
     /// <summary> The Vulkan device handle owning this material. </summary>
-    public Device Device { get; }
+    public vk.Device Device { get; }
 
-    public Dictionary<ShaderStageFlags, DescriptorSet>[] DescriptorSets { get; }
+    public Dictionary<ShaderStageFlags, vk.DescriptorSet>[] DescriptorSets { get; }
     
     //public Dictionary<string, DescriptorSetInfo> DescriptorSets { get; }
     

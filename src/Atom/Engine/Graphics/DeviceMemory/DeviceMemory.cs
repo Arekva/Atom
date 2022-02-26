@@ -1,5 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
-using Silk.NET.Vulkan;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -25,11 +25,11 @@ public class DeviceMemory : IDisposable
     
 
     // todo: user friendly API, just pass a memorytype object/struct and get its type index
-    public unsafe DeviceMemory(Device device, ulong size, uint memoryTypeIndex)
+    public unsafe DeviceMemory(vk.Device device, ulong size, uint memoryTypeIndex)
     {
         Device = device;
         
-        MemoryAllocateInfo mem = new (allocationSize: size, memoryTypeIndex: memoryTypeIndex);
+        vk.MemoryAllocateInfo mem = new (allocationSize: size, memoryTypeIndex: memoryTypeIndex);
         VK.API.AllocateMemory(
             device,
             pAllocateInfo: in mem, 
@@ -70,7 +70,7 @@ public class DeviceMemory : IDisposable
         
         void* handle = null;
         
-        Result result = VK.API.MapMemory(
+        vk.Result result = VK.API.MapMemory(
             Device, 
             _handle, 
             segment.Offset,
@@ -79,15 +79,15 @@ public class DeviceMemory : IDisposable
             ref handle
         );
         
-        if (result != Result.Success)
+        if (result != vk.Result.Success)
         {
             // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
             throw result switch
             {
-                Result.ErrorOutOfHostMemory => new OutOfHostMemoryException("Host ran out of memory."),
-                Result.ErrorOutOfDeviceMemory => new OutOfDeviceMemoryException("Device ran out of memory."),
-                Result.ErrorMemoryMapFailed => new MemoryMapFailedException($"Memory mapping failed."),
-                Result.ErrorValidationFailedExt => new ValidationFailedException("Incorrect memory mapping, more information in the Vulkan output."),
+                vk.Result.ErrorOutOfHostMemory => new OutOfHostMemoryException("Host ran out of memory."),
+                vk.Result.ErrorOutOfDeviceMemory => new OutOfDeviceMemoryException("Device ran out of memory."),
+                vk.Result.ErrorMemoryMapFailed => new MemoryMapFailedException($"Memory mapping failed."),
+                vk.Result.ErrorValidationFailedExt => new ValidationFailedException("Incorrect memory mapping, more information in the Vulkan output."),
                 _ => throw new NotImplementedException($"Unexpected result: {result}")
             };
         }
@@ -145,7 +145,7 @@ public class DeviceMemory : IDisposable
                                            "disposing ");
         }
         
-        VK.API.FreeMemory(Device, _handle, ReadOnlySpan<AllocationCallbacks>.Empty);
+        vk.VkOverloads.FreeMemory(VK.API, Device, _handle, ReadOnlySpan<vk.AllocationCallbacks>.Empty);
         
         GC.SuppressFinalize(this);
     }

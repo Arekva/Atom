@@ -1,4 +1,4 @@
-﻿using Silk.NET.Vulkan;
+﻿using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -47,33 +47,33 @@ public sealed class LinearHostImage2D<T> : StandardImage2D,
 
     public LinearHostImage2D(
         uint width, uint height,
-        ImageUsageFlags usages = ImageUsageFlags.ImageUsageTransferSrcBit,
-        Device? device = null) : 
+        vk.ImageUsageFlags usages = vk.ImageUsageFlags.ImageUsageTransferSrcBit,
+        vk.Device? device = null) : 
         this (width, height, queueFamilies: new[] { 0U } , usages, device) 
     { }
 
     public LinearHostImage2D(uint width, uint height,
         ReadOnlySpan<uint> queueFamilies,
 
-        ImageUsageFlags usages = ImageUsageFlags.ImageUsageTransferSrcBit,
-        Device? device = null)
+        vk.ImageUsageFlags usages = vk.ImageUsageFlags.ImageUsageTransferSrcBit,
+        vk.Device? device = null)
     {
-        Device used_device = device ?? VK.Device;
+        vk.Device used_device = device ?? VK.Device;
         Device = used_device;
         
         Handle = new SlimImage(
             used_device,
-            type: ImageType.ImageType2D,
-            format: (Format)ImageFormatMapper.Map(typeof(T)),
-            new Extent3D(width, height, 1U),
+            type: vk.ImageType.ImageType2D,
+            format: (vk.Format)ImageFormatMapper.Map(typeof(T)),
+            new vk.Extent3D(width, height, 1U),
             mipLevels: 1U,
             arrayLayers: 1U,
-            samples: SampleCountFlags.SampleCount1Bit,
-            ImageTiling.Linear,
+            samples: vk.SampleCountFlags.SampleCount1Bit,
+            vk.ImageTiling.Linear,
             usages,
-            SharingMode.Exclusive,
+            vk.SharingMode.Exclusive,
             queueFamilies,
-            ImageLayout.Undefined
+            vk.ImageLayout.Undefined
         );
 
         CreateDedicatedMemory(properties: MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);

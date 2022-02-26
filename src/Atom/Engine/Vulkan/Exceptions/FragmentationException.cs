@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 [Serializable] 
 public sealed class FragmentationException : VulkanException

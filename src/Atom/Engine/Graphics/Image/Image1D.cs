@@ -1,4 +1,6 @@
-﻿namespace Atom.Engine;
+﻿using Atom.Engine.Vulkan;
+
+namespace Atom.Engine;
 
 
 // Standard

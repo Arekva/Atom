@@ -1,4 +1,4 @@
-﻿using Silk.NET.Vulkan;
+﻿using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Shader;
 
@@ -9,11 +9,11 @@ public abstract partial class Shader : AtomObject, IShader
 
     public SlimPipelineLayout PipelineLayout { get; protected init; }
     
-    public Device Device { get; }
+    public vk.Device Device { get; }
 
     public SlimDescriptorPool DescriptorPool { get; protected init; }
 
-    public DescriptorPoolSize[] PoolSizes { get; protected init; }
+    public vk.DescriptorPoolSize[] PoolSizes { get; protected init; }
 
 #endregion
     
@@ -44,7 +44,7 @@ public abstract partial class Shader : AtomObject, IShader
 
     public Shader(
         string @namespace, string name, string? description, Version version,
-        Device? device = null) 
+        vk.Device? device = null) 
         => (Device, Namespace, Name, Description, Version) 
         =  (device ?? VK.Device, @namespace, name, description, version);
 

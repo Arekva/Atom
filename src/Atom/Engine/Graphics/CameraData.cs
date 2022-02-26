@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using Atom.Engine.Global;
 using Silk.NET.Maths;
-using Silk.NET.Vulkan;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -15,7 +15,7 @@ public class CameraData : IDisposable
 
     public static SlimBuffer VPMatrices;
 
-    private static Device Device;
+    private static vk.Device Device;
     
 #endregion
 
@@ -60,20 +60,20 @@ public class CameraData : IDisposable
         }
     }
 
-    public static unsafe void Initialize(Device? device = null)
+    public static unsafe void Initialize(vk.Device? device = null)
     {
-        Device used_device = Device = device ?? VK.Device;
+        vk.Device used_device = Device = device ?? VK.Device;
 
         uint queue_family = 0U;
         VPMatrices = new SlimBuffer(
             device: used_device,
             size: (ulong)(MaxCameraCount * sizeof(CameraVP) * Graphics.MaxFramesCount),
             usage: BufferUsageFlags.StorageBuffer,
-            sharingMode: SharingMode.Exclusive, queue_family.AsSpan(), 
+            sharingMode: vk.SharingMode.Exclusive, queue_family.AsSpan(), 
             flags: 0
         );
 
-        VPMatrices.GetMemoryRequirements(used_device, out MemoryRequirements reqs);
+        VPMatrices.GetMemoryRequirements(used_device, out vk.MemoryRequirements reqs);
 
         Memory = new DeviceMemory(
             device: used_device,

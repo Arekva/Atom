@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Reflection;
 using Silk.NET.GLFW;
-using Silk.NET.Vulkan;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 

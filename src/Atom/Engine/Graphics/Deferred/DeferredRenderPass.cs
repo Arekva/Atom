@@ -1,6 +1,5 @@
 ﻿using Atom.Engine.RenderPass;
-using Silk.NET.Vulkan;
-using DependencyInfo = Atom.Engine.RenderPass.DependencyInfo;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -42,30 +41,30 @@ internal static class DeferredRenderPass
 #region Configuration
     
     // G-Buffer
-    private const Format ALBEDO_LUMINANCE_FORMAT = Format.R32G32B32A32Sfloat;
-    private const Format NORMAL_ROUGHNESS_METALNESS_FORMAT = Format.R32G32B32A32Sfloat;
-    private const Format POSITION_TRANSLUCENCY_FORMAT = Format.R32G32B32A32Sfloat;
-    private static readonly Format[] DEPTH_FORMATS =
+    private const vk.Format ALBEDO_LUMINANCE_FORMAT = vk.Format.R32G32B32A32Sfloat;
+    private const vk.Format NORMAL_ROUGHNESS_METALNESS_FORMAT = vk.Format.R32G32B32A32Sfloat;
+    private const vk.Format POSITION_TRANSLUCENCY_FORMAT = vk.Format.R32G32B32A32Sfloat;
+    private static readonly vk.Format[] DEPTH_FORMATS =
     {
-        Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint
+        vk.Format.D32Sfloat, vk.Format.D32SfloatS8Uint, vk.Format.D24UnormS8Uint
     };
     
     // Lit
-    private const Format LIT_FORMAT = Format.R32G32B32A32Sfloat; 
+    private const vk.Format LIT_FORMAT = vk.Format.R32G32B32A32Sfloat; 
     
 #endregion
 
 
-    public static Result CreateRenderPass(
-        Device device,
-        PhysicalDevice physicalDevice, 
-        out Silk.NET.Vulkan.RenderPass renderPass, out Format depthFormat)
+    public static vk.Result CreateRenderPass(
+        vk.Device device,
+        vk.PhysicalDevice physicalDevice, 
+        out Silk.NET.Vulkan.RenderPass renderPass, out vk.Format depthFormat)
     {
         depthFormat = VK.FirstSupportedFormat(
             physicalDevice,
             candidates: DEPTH_FORMATS,
-            ImageTiling.Optimal,
-            features: FormatFeatureFlags.FormatFeatureDepthStencilAttachmentBit
+            vk.ImageTiling.Optimal,
+            features: vk.FormatFeatureFlags.FormatFeatureDepthStencilAttachmentBit
         );
 
 
@@ -75,41 +74,41 @@ internal static class DeferredRenderPass
         Attachment gAlbedoLuminanceAttachment = new(
             format: ALBEDO_LUMINANCE_FORMAT,
             operators: new AttachmentOperator(
-                load: AttachmentLoadOp.Clear, 
-                store: AttachmentStoreOp.Store),
+                load: vk.AttachmentLoadOp.Clear, 
+                store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
-                initial: ImageLayout.Undefined,
-                final: ImageLayout.ColorAttachmentOptimal
+                initial: vk.ImageLayout.Undefined,
+                final: vk.ImageLayout.ColorAttachmentOptimal
             )
         );
         Attachment gNormalRoughnessMetalnessAttachment = new(
             format: NORMAL_ROUGHNESS_METALNESS_FORMAT,
             operators: new AttachmentOperator(
-                load: AttachmentLoadOp.Clear, 
-                store: AttachmentStoreOp.Store),
+                load: vk.AttachmentLoadOp.Clear, 
+                store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
-                initial: ImageLayout.Undefined,
-                final: ImageLayout.ColorAttachmentOptimal
+                initial: vk.ImageLayout.Undefined,
+                final: vk.ImageLayout.ColorAttachmentOptimal
             )
         );
         Attachment gPositionTranslucencyAttachment = new(
             format: POSITION_TRANSLUCENCY_FORMAT,
             operators: new AttachmentOperator(
-                load: AttachmentLoadOp.Clear, 
-                store: AttachmentStoreOp.Store),
+                load: vk.AttachmentLoadOp.Clear, 
+                store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
-                initial: ImageLayout.Undefined,
-                final: ImageLayout.ColorAttachmentOptimal
+                initial: vk.ImageLayout.Undefined,
+                final: vk.ImageLayout.ColorAttachmentOptimal
             )
         );
         Attachment gDepthAttachment = new(
             format: depthFormat,
             operators: new AttachmentOperator(
-                load: AttachmentLoadOp.Clear, 
-                store: AttachmentStoreOp.Store),
+                load: vk.AttachmentLoadOp.Clear, 
+                store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
-                initial: ImageLayout.Undefined,
-                final: ImageLayout.DepthStencilAttachmentOptimal
+                initial: vk.ImageLayout.Undefined,
+                final: vk.ImageLayout.DepthStencilAttachmentOptimal
             )
         );
     #endregion
@@ -118,11 +117,11 @@ internal static class DeferredRenderPass
         Attachment litAttachment = new(
             format: LIT_FORMAT,
             operators: new AttachmentOperator(
-                load: AttachmentLoadOp.DontCare, 
-                store: AttachmentStoreOp.Store),
+                load: vk.AttachmentLoadOp.DontCare, 
+                store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
-                initial: ImageLayout.Undefined,
-                final: ImageLayout.ShaderReadOnlyOptimal // read from the fullscreen shader
+                initial: vk.ImageLayout.Undefined,
+                final: vk.ImageLayout.ShaderReadOnlyOptimal // read from the fullscreen shader
             )
         );
     #endregion
@@ -160,22 +159,22 @@ internal static class DeferredRenderPass
 #region Dependencies
         DependencyInfo externalInfo = new(
             subpass: Subpass.External,
-            stageMask: PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                       PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
-            accessMask: AccessFlags.AccessNoneKhr
+            stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
+                       vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            accessMask: vk.AccessFlags.AccessNoneKhr
         );
         DependencyInfo gBufferInfo = new(
             subpass: gBufferSubpass,
-            stageMask: PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                       PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
-            accessMask: AccessFlags.AccessColorAttachmentWriteBit | 
-                        AccessFlags.AccessDepthStencilAttachmentWriteBit
+            stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
+                       vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit | 
+                        vk.AccessFlags.AccessDepthStencilAttachmentWriteBit
         );
         DependencyInfo litInfo = new(
             subpass: litSubpass,
-            stageMask: PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                       PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
-            accessMask: AccessFlags.AccessColorAttachmentWriteBit
+            stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
+                       vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit
         );
         
         Dependency gBufferDependency = new(

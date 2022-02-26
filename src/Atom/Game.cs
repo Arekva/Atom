@@ -6,8 +6,6 @@ using Atom.Engine.Astro.Transvoxel;
 using Atom.Engine.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using CommandBuffer = Atom.Engine.CommandBuffer;
-using CommandBufferLevel = Atom.Engine.CommandBufferLevel;
 
 namespace Atom.Game;
 

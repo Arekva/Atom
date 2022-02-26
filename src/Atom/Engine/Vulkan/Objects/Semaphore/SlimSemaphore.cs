@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 public struct SlimSemaphore
 {
@@ -45,13 +45,55 @@ public struct SlimSemaphore
 #region Standard API Proxying 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Destroy(Device device) => VK.API.DestroySemaphore(device, Handle, ReadOnlySpan<AllocationCallbacks>.Empty);
+    public void Destroy(Device device) 
+        => VK.API.DestroySemaphore(device, Handle, ReadOnlySpan<AllocationCallbacks>.Empty);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe Result Signal(Device device, ulong value)
+    {
+        vk.SemaphoreSignalInfo signal_info = new(
+            semaphore: Handle,
+            value: value
+        );
+        return VK.API.SignalSemaphore(device, in signal_info);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Result Signal(Device device, out ulong value)
+        => VK.API.GetSemaphoreCounterValue(device, Handle, out value);
+
+    public unsafe Result Wait(Device device, ulong value, ulong timeout = ulong.MaxValue)
+    {
+        vk.Semaphore semaphore = Handle;
+        SemaphoreWaitInfo wait_info = new(
+            flags: 0,
+            semaphoreCount: 1U,
+            pSemaphores: &semaphore,
+            pValues: &value
+        );
+        return VK.API.WaitSemaphores(device, in wait_info, timeout);
+    }
+    
 #endregion
 
 #region User defined
 
-
+    public static unsafe Result Wait(Device device,
+        ReadOnlySpan<SlimSemaphore> semaphores, ReadOnlySpan<ulong> values, 
+        ulong timeout = ulong.MaxValue)
+    {
+        fixed (SlimSemaphore* p_semaphores = semaphores)
+        fixed (ulong* p_values = values)
+        {
+            SemaphoreWaitInfo wait_info = new(
+                flags: 0,
+                semaphoreCount: 1U,
+                pSemaphores: (vk.Semaphore*)p_semaphores,
+                pValues: p_values
+            );
+            return VK.API.WaitSemaphores(device, in wait_info, timeout);
+        }
+    }
     
 #endregion
 }

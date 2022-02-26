@@ -1,4 +1,5 @@
 using Silk.NET.Maths;
+using Atom.Engine.Vulkan;
 using Silk.NET.Vulkan;
 
 namespace Atom.Engine;
@@ -17,14 +18,14 @@ public unsafe class GBufferDrawer : IDisposable
         minDepth: 0.0F, maxDepth: 0.0F
     );
     
-    private static readonly Pin<Rect2D> _dummyScissor = new Rect2D(default, new Extent2D(1, 1));
+    private static readonly Pin<vk.Rect2D> _dummyScissor = new vk.Rect2D(default, new vk.Extent2D(1, 1));
 
-    private static readonly Pin<PipelineColorBlendAttachmentState> _colorBlendAttachment = 
-        new PipelineColorBlendAttachmentState();
+    private static readonly Pin<vk.PipelineColorBlendAttachmentState> _colorBlendAttachment = 
+        new vk.PipelineColorBlendAttachmentState();
 
     private struct NDCDynamicStates
     {
-        public DynamicState viewport = DynamicState.Viewport, scissor = DynamicState.Scissor;
+        public vk.DynamicState viewport = vk.DynamicState.Viewport, scissor = vk.DynamicState.Scissor;
         
         public NDCDynamicStates() { }
     }
@@ -32,60 +33,60 @@ public unsafe class GBufferDrawer : IDisposable
 
 
 
-    private static readonly Pin<PipelineVertexInputStateCreateInfo> _vertexInput = 
-        new PipelineVertexInputStateCreateInfo(StructureType.PipelineVertexInputStateCreateInfo);
+    private static readonly Pin<vk.PipelineVertexInputStateCreateInfo> _vertexInput = 
+        new vk.PipelineVertexInputStateCreateInfo(vk.StructureType.PipelineVertexInputStateCreateInfo);
 
-    private static readonly Pin<PipelineInputAssemblyStateCreateInfo> _inputAssembly = 
-        new PipelineInputAssemblyStateCreateInfo(topology: PrimitiveTopology.TriangleList);
+    private static readonly Pin<vk.PipelineInputAssemblyStateCreateInfo> _inputAssembly = 
+        new vk.PipelineInputAssemblyStateCreateInfo(topology: vk.PrimitiveTopology.TriangleList);
     
-    private static readonly Pin<PipelineTessellationStateCreateInfo> _tessellation = 
-        new PipelineTessellationStateCreateInfo();
+    private static readonly Pin<vk.PipelineTessellationStateCreateInfo> _tessellation = 
+        new vk.PipelineTessellationStateCreateInfo();
 
-    private static readonly Pin<PipelineViewportStateCreateInfo> _viewport = new 
-        PipelineViewportStateCreateInfo(
+    private static readonly Pin<vk.PipelineViewportStateCreateInfo> _viewport = new 
+        vk.PipelineViewportStateCreateInfo(
         viewportCount: 1, pViewports: _dummyViewport,
         scissorCount: 1, pScissors: _dummyScissor
     );
 
-    private static readonly Pin<PipelineRasterizationStateCreateInfo> _rasterization = 
-        new PipelineRasterizationStateCreateInfo(
+    private static readonly Pin<vk.PipelineRasterizationStateCreateInfo> _rasterization = 
+        new vk.PipelineRasterizationStateCreateInfo(
         lineWidth: 1.0F,
-        cullMode: CullModeFlags.CullModeBackBit
+        cullMode: vk.CullModeFlags.CullModeBackBit
     );
 
-    private static readonly Pin<PipelineMultisampleStateCreateInfo> _multisample = 
-        new PipelineMultisampleStateCreateInfo(rasterizationSamples: SampleCountFlags.SampleCount1Bit);
+    private static readonly Pin<vk.PipelineMultisampleStateCreateInfo> _multisample = 
+        new vk.PipelineMultisampleStateCreateInfo(rasterizationSamples: vk.SampleCountFlags.SampleCount1Bit);
 
-    private static readonly Pin<PipelineDepthStencilStateCreateInfo> _depthStencil = 
-        new PipelineDepthStencilStateCreateInfo();
+    private static readonly Pin<vk.PipelineDepthStencilStateCreateInfo> _depthStencil = 
+        new vk.PipelineDepthStencilStateCreateInfo();
 
-    private static readonly Pin<PipelineColorBlendStateCreateInfo> _colorBlend = 
-        new PipelineColorBlendStateCreateInfo(attachmentCount: 1 /* other properties set in static constructor */);
+    private static readonly Pin<vk.PipelineColorBlendStateCreateInfo> _colorBlend = 
+        new vk.PipelineColorBlendStateCreateInfo(attachmentCount: 1 /* other properties set in static constructor */);
 
-    private static readonly Pin<PipelineDynamicStateCreateInfo> _dynamicState = 
-        new PipelineDynamicStateCreateInfo(
+    private static readonly Pin<vk.PipelineDynamicStateCreateInfo> _dynamicState = 
+        new vk.PipelineDynamicStateCreateInfo(
             dynamicStateCount: 2,  pDynamicStates: (Silk.NET.Vulkan.DynamicState*)(NDCDynamicStates*)_dynamicStates
     );
 
 #endregion
 
-    private static readonly Pin<DescriptorPoolSize> _descriptorImageCount = 
-        new DescriptorPoolSize(DescriptorType.InputAttachment,  descriptorCount: 4U);
+    private static readonly Pin<vk.DescriptorPoolSize> _descriptorImageCount = 
+        new vk.DescriptorPoolSize(vk.DescriptorType.InputAttachment,  descriptorCount: 4U);
 
 
     
-    private Device _device;
+    private vk.Device _device;
     private uint _maxImages;
     private Vector2D<uint> _extent;
 
     // destroyable resources
     private SlimPipelineLayout _layout;
-    private WriteDescriptorSet[] _writeDescriptorSets;
+    private vk.WriteDescriptorSet[] _writeDescriptorSets;
     private SlimDescriptorPool _descriptorPool;
-    private Pipeline _pipeline;
+    private vk.Pipeline _pipeline;
     private SlimDescriptorSetLayout _inTextureDescriptor;
     
-    private DescriptorSet[] _descriptorSets;
+    private vk.DescriptorSet[] _descriptorSets;
     
     static GBufferDrawer() // Setup constant objects
     {
@@ -95,23 +96,23 @@ public unsafe class GBufferDrawer : IDisposable
         _colorBlend.Data.BlendConstants[2] = 
         _colorBlend.Data.BlendConstants[3] = 1.0F;
 
-        _colorBlendAttachment.Data.ColorWriteMask = ColorComponentFlags.ColorComponentRBit |
-                                                    ColorComponentFlags.ColorComponentGBit |
-                                                    ColorComponentFlags.ColorComponentBBit |
-                                                    ColorComponentFlags.ColorComponentABit;
+        _colorBlendAttachment.Data.ColorWriteMask = vk.ColorComponentFlags.ColorComponentRBit |
+                                                    vk.ColorComponentFlags.ColorComponentGBit |
+                                                    vk.ColorComponentFlags.ColorComponentBBit |
+                                                    vk.ColorComponentFlags.ColorComponentABit;
         
         _colorBlend.Data.PAttachments = _colorBlendAttachment;
     }
 
-    public unsafe GBufferDrawer(uint maxImages, Device device)
+    public unsafe GBufferDrawer(uint maxImages, vk.Device device)
     {
         _device = device;
         _maxImages = maxImages;
         
         // Load Pipeline Stages
-        Span<PipelineShaderStageCreateInfo> modules = stackalloc PipelineShaderStageCreateInfo[2];
+        Span<vk.PipelineShaderStageCreateInfo> modules = stackalloc vk.PipelineShaderStageCreateInfo[2];
         
-        void make_shader(string path, ShaderStageFlags stage, out PipelineShaderStageCreateInfo info)
+        void make_shader(string path, ShaderStageFlags stage, out vk.PipelineShaderStageCreateInfo info)
         {
             using FileStream stream = File.OpenRead(path);
 
@@ -121,12 +122,12 @@ public unsafe class GBufferDrawer : IDisposable
             
             fixed (byte* p_spv = spv)
             {
-                ShaderModuleCreateInfo vertex_info = new(
+                vk.ShaderModuleCreateInfo vertex_info = new(
                     codeSize: (uint)spv_size,
                     pCode: (uint*)p_spv
                 );
 
-                info = new PipelineShaderStageCreateInfo(
+                info = new vk.PipelineShaderStageCreateInfo(
                     pName: _pName,
                     stage: (vk.ShaderStageFlags)stage
                 );
@@ -141,13 +142,13 @@ public unsafe class GBufferDrawer : IDisposable
         
         _descriptorPool = new SlimDescriptorPool(device, maxImages, new(_descriptorImageCount, 1));
 
-        Span<DescriptorSetLayoutBinding> set_layout_bindings = stackalloc DescriptorSetLayoutBinding[4];
+        Span<vk.DescriptorSetLayoutBinding> set_layout_bindings = stackalloc vk.DescriptorSetLayoutBinding[4];
         for (int i = 0; i < 4; i++)
         {
             set_layout_bindings[i] = new(
                 binding: (uint)i,
                 descriptorCount: 1,
-                descriptorType: DescriptorType.InputAttachment,
+                descriptorType: vk.DescriptorType.InputAttachment,
                 stageFlags: (vk.ShaderStageFlags)ShaderStageFlags.Fragment
             );
         }
@@ -161,10 +162,10 @@ public unsafe class GBufferDrawer : IDisposable
             descriptor_set_layouts[i] = _inTextureDescriptor;
         }
 
-        _descriptorSets = new DescriptorSet[maxImages];
+        _descriptorSets = new vk.DescriptorSet[maxImages];
         fixed (SlimDescriptorSetLayout* p_descriptor_set_layouts = descriptor_set_layouts)
         {
-            DescriptorSetAllocateInfo set_allocate_info = new(
+            vk.DescriptorSetAllocateInfo set_allocate_info = new(
                 descriptorPool: _descriptorPool,
                 descriptorSetCount: maxImages,
                 pSetLayouts: (vk.DescriptorSetLayout*)p_descriptor_set_layouts
@@ -172,7 +173,7 @@ public unsafe class GBufferDrawer : IDisposable
             VK.API.AllocateDescriptorSets(device, &set_allocate_info, _descriptorSets.AsSpan());
         }
 
-        _writeDescriptorSets = new WriteDescriptorSet[maxImages*4];
+        _writeDescriptorSets = new vk.WriteDescriptorSet[maxImages*4];
 
         for (int i = 0; i < maxImages; i++)
         {
@@ -180,11 +181,11 @@ public unsafe class GBufferDrawer : IDisposable
             {
                 int index = i * 4 + j;
                 
-                _writeDescriptorSets[index] = new WriteDescriptorSet(
+                _writeDescriptorSets[index] = new vk.WriteDescriptorSet(
                     dstSet: _descriptorSets[i],
                     dstBinding: (uint)j,
                     dstArrayElement: 0,
-                    descriptorType: DescriptorType.InputAttachment,
+                    descriptorType: vk.DescriptorType.InputAttachment,
                     descriptorCount: 1
                 
                     // set ImageInfo later, in CmdDrawView() 
@@ -195,7 +196,8 @@ public unsafe class GBufferDrawer : IDisposable
         SlimDescriptorSetLayout gbuffer_layout = _inTextureDescriptor;
 
 
-        _layout = new SlimPipelineLayout(_device, new(&gbuffer_layout, 1), ReadOnlySpan<PushConstantRange>.Empty);
+        _layout = new SlimPipelineLayout(_device, new(&gbuffer_layout, 1), 
+            ReadOnlySpan<vk.PushConstantRange>.Empty);
         
         CreatePipeline(modules);
         
@@ -205,11 +207,11 @@ public unsafe class GBufferDrawer : IDisposable
         }
     }
 
-    private void CreatePipeline(ReadOnlySpan<PipelineShaderStageCreateInfo> stages)
+    private void CreatePipeline(ReadOnlySpan<vk.PipelineShaderStageCreateInfo> stages)
     {
-        fixed(PipelineShaderStageCreateInfo* p_stages = stages)
+        fixed(vk.PipelineShaderStageCreateInfo* p_stages = stages)
         {
-            GraphicsPipelineCreateInfo info = new(
+            vk.GraphicsPipelineCreateInfo info = new(
                 flags: 0,
                 stageCount: 2,
                 pStages: p_stages,
@@ -229,7 +231,7 @@ public unsafe class GBufferDrawer : IDisposable
                 basePipelineIndex: 0
             );
             
-            Pipeline pipeline = default;
+            vk.Pipeline pipeline = default;
             VK.API.CreateGraphicsPipelines(_device, default, 1, &info, null, &pipeline);
             _pipeline = pipeline;
         }
@@ -239,30 +241,30 @@ public unsafe class GBufferDrawer : IDisposable
 
     public void CmdComputeGBuffer(SlimCommandBuffer cmd, uint swapImageIndex, ReadOnlySpan<SlimImageView> gbuffer)
     {
-        DescriptorSet set = _descriptorSets[swapImageIndex];
+        vk.DescriptorSet set = _descriptorSets[swapImageIndex];
 
         int write_index = (int)swapImageIndex * 4; 
-        Span<WriteDescriptorSet> sets = _writeDescriptorSets.AsSpan()[write_index..(write_index + 4)];
-        DescriptorImageInfo* descriptor_infos = stackalloc DescriptorImageInfo[4];
+        Span<vk.WriteDescriptorSet> sets = _writeDescriptorSets.AsSpan()[write_index..(write_index + 4)];
+        vk.DescriptorImageInfo* descriptor_infos = stackalloc vk.DescriptorImageInfo[4];
         for (int i = 0; i < 4; i++)
         {
-            ref WriteDescriptorSet img_set = ref sets[i];
-            descriptor_infos[i] = new DescriptorImageInfo(
+            ref vk.WriteDescriptorSet img_set = ref sets[i];
+            descriptor_infos[i] = new vk.DescriptorImageInfo(
                 imageView: gbuffer[i],
-                imageLayout: ImageLayout.ShaderReadOnlyOptimal
+                imageLayout: vk.ImageLayout.ShaderReadOnlyOptimal
             );
             img_set.PImageInfo = &descriptor_infos[i];
         }
 
-        VK.API.UpdateDescriptorSets(_device, 4U, sets, 0, ReadOnlySpan<CopyDescriptorSet>.Empty);
+        VK.API.UpdateDescriptorSets(_device, 4U, sets, 0, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
 
         Silk.NET.Vulkan.Viewport viewport = new(width: _extent.X, height: _extent.Y);
 
-        Rect2D scissor = new(extent: new Extent2D(_extent.X, _extent.Y));
+        vk.Rect2D scissor = new(extent: new vk.Extent2D(_extent.X, _extent.Y));
         
-        VK.API.CmdBindPipeline(cmd, PipelineBindPoint.Graphics, _pipeline);
+        VK.API.CmdBindPipeline(cmd, vk.PipelineBindPoint.Graphics, _pipeline);
         
-        VK.API.CmdBindDescriptorSets(cmd, PipelineBindPoint.Graphics,
+        VK.API.CmdBindDescriptorSets(cmd, vk.PipelineBindPoint.Graphics,
             _layout, 
             firstSet: 0U, 
             1U, 

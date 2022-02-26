@@ -1,5 +1,5 @@
 // ReSharper disable InconsistentNaming
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 [Flags]
 public enum MemoryPropertyFlags : uint

@@ -3,7 +3,7 @@
 using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 public static class VK
 {

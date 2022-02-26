@@ -2,8 +2,7 @@ using Atom.Engine.Astro.Transvoxel;
 using Atom.Engine.Global;
 using Atom.Engine.Shader;
 using Silk.NET.Maths;
-using Silk.NET.Vulkan;
-using SPIRVCross;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Astro;
 
@@ -102,7 +101,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
 
         uint queue_fam = 0U;
 
-        Device device = DebugTerrainMaterial.Device;
+        vk.Device device = DebugTerrainMaterial.Device;
         
         _meshBuffer = new SlimBuffer(device, 
             buffer_size, 
@@ -110,9 +109,9 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
                    BufferUsageFlags.IndexBuffer         | 
                    BufferUsageFlags.StorageBuffer       |
                    BufferUsageFlags.TransferDestination ,
-            sharingMode: SharingMode.Exclusive, queue_fam.AsSpan()
+            sharingMode: vk.SharingMode.Exclusive, queue_fam.AsSpan()
         );
-        _meshBuffer.GetMemoryRequirements(device, out MemoryRequirements reqs);
+        _meshBuffer.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
         
         _meshMemory = new DeviceMemory(
             device: device,
@@ -193,33 +192,33 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
     {
         Log.Trace($"Draw {Name} (Camera {cameraIndex}) [{frameIndex}]");
         
-        DescriptorBufferInfo instance_buffer_info = new(
+        vk.DescriptorBufferInfo instance_buffer_info = new(
             _meshBuffer,
             offset: _instanceDataOffset,
             range: (ulong)sizeof(Matrix4X4<float>)
         );
-        DescriptorBufferInfo camera_buffer_info = new(
+        vk.DescriptorBufferInfo camera_buffer_info = new(
             CameraData.VPMatrices,
             offset: 0,
             range: CameraData.MaxCameraCount * (ulong)sizeof(CameraVP)
         );
         
         // update instance data
-        Span<WriteDescriptorSet> write_sets = stackalloc WriteDescriptorSet[2];
-        write_sets[0] = /* write instance data buffer */ new WriteDescriptorSet(
+        Span<vk.WriteDescriptorSet> write_sets = stackalloc vk.WriteDescriptorSet[2];
+        write_sets[0] = /* write instance data buffer */ new vk.WriteDescriptorSet(
             dstSet: DebugTerrainMaterial.DescriptorSets[frameIndex][ShaderStageFlags.Vertex],
             dstBinding: 0,
             dstArrayElement: 0,
             descriptorCount: 1,
-            descriptorType: DescriptorType.StorageBuffer,
+            descriptorType: vk.DescriptorType.StorageBuffer,
             pBufferInfo: &instance_buffer_info
         );
-        write_sets[1] = /* write camera data buffer */ new WriteDescriptorSet(
+        write_sets[1] = /* write camera data buffer */ new vk.WriteDescriptorSet(
             dstSet: DebugTerrainMaterial.DescriptorSets[frameIndex][ShaderStageFlags.Vertex],
             dstBinding: 1,
             dstArrayElement: 0,
             descriptorCount: 1,
-            descriptorType: DescriptorType.StorageBuffer,
+            descriptorType: vk.DescriptorType.StorageBuffer,
             pBufferInfo: &camera_buffer_info
         );
 
@@ -227,11 +226,11 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         DebugTerrainMaterial.CmdBindMaterial(cmd, extent, cameraIndex, frameIndex);
         
         VK.API.CmdBindVertexBuffers(cmd, 0U, 1U, _meshBuffer, 0U);
-        VK.API.CmdBindIndexBuffer(cmd, _meshBuffer, _vertexSize, IndexType.Uint32);
+        VK.API.CmdBindIndexBuffer(cmd, _meshBuffer, _vertexSize, vk.IndexType.Uint32);
         
-        VK.API.UpdateDescriptorSets(DebugTerrainMaterial.Device, 
+        vk.VkOverloads.UpdateDescriptorSets(VK.API, DebugTerrainMaterial.Device, 
             2U, write_sets, 
-            0U, ReadOnlySpan<CopyDescriptorSet>.Empty);
+            0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
 
         VK.API.CmdDrawIndexed(cmd, _indexCount, 1U, 0U, 0, 0U);
     }

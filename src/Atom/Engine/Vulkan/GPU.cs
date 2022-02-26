@@ -1,6 +1,6 @@
 ﻿using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
 public class GPU
 {

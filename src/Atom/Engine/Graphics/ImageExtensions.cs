@@ -1,18 +1,19 @@
 ﻿using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
-using Silk.NET.Vulkan;
+
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
 public static class ImageExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void BindMemory(this SlimImage Handle, Device device, MemorySegment segment)
+    public static void BindMemory(this SlimImage Handle, vk.Device device, MemorySegment segment)
         => VK.API.BindImageMemory(device, Handle, segment.Memory, segment.Offset);
     
-    public static MemorySegment CreateDedicatedMemory(this SlimImage Handle, Device device, MemoryPropertyFlags properties)
+    public static MemorySegment CreateDedicatedMemory(this SlimImage Handle, vk.Device device, MemoryPropertyFlags properties)
     {
-        Handle.GetMemoryRequirements(device, out MemoryRequirements reqs);
+        Handle.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
 
         DeviceMemory memory = new (
             device,

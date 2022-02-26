@@ -1,5 +1,5 @@
-﻿using Silk.NET.Vulkan;
-using SPIRVCross;
+﻿using SPIRVCross;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Shader;
 
@@ -12,7 +12,7 @@ public interface IShaderModule : IDisposable
     public SlimShaderModule Handle { get; }
     
     /// <summary> The Vulkan handle for the device where this ShaderModule has been created. </summary>
-    public Device Device { get; }
+    public vk.Device Device { get; }
     
     /// <summary> The Vulkan handle for the module descriptor layout this ShaderModule's API contains. </summary>
     /// This is basically: "for x binding, how many resource of y type is there?" 
@@ -29,7 +29,7 @@ public interface IShaderModule : IDisposable
     public ShaderStageFlags Stage { get; }
 
     /// <summary> The Vulkan information to create  </summary>
-    public PipelineShaderStageCreateInfo StageInfo { get; }
+    public vk.PipelineShaderStageCreateInfo StageInfo { get; }
     
 #endregion
 
@@ -37,7 +37,7 @@ public interface IShaderModule : IDisposable
 
     public Dictionary<ResourceType, Descriptor[]> Descriptors { get; }
     
-    public Dictionary<string, PushConstantRange> PushConstants { get; }
+    public Dictionary<string, vk.PushConstantRange> PushConstants { get; }
 
 #endregion
 

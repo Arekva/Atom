@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Silk.NET.Vulkan;
 using SPIRVCross;
+
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Shader;
 
@@ -23,7 +24,7 @@ public abstract partial class Shader
         = new() { Converters = { new JsonStringEnumConverter() } };
         
     
-    public static T Load<T>(string @namespace, string name, Device? device = null) where T : class, IShader
+    public static T Load<T>(string @namespace, string name, vk.Device? device = null) where T : class, IShader
     {
         string namespace_path = Path.Combine(@namespace.Split('.'));
         string full_path = Path.Combine(ShaderPath, namespace_path, name, DescriptorName);
@@ -45,7 +46,7 @@ public abstract partial class Shader
     }
     
     
-    private static RasterShader LoadRasterShader(string path, string @namespace, ShaderDescriptor descriptor, Device device)
+    private static RasterShader LoadRasterShader(string path, string @namespace, ShaderDescriptor descriptor, vk.Device device)
     {
         if (descriptor.Stages.Count > 2)
         {

@@ -1,4 +1,4 @@
-﻿using Silk.NET.Vulkan;
+﻿using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Shader;
 
@@ -63,7 +63,7 @@ public class RasterShader : Shader, IRasterShader
         IGeometryModule? geometry = null,
         ITessellationControlModule? tessControl = null, ITessellationEvaluationModule? tessEval = null, 
         ITaskModule? task = null, IMeshModule? mesh = null,
-        Device? device = null
+        vk.Device? device = null
     ) : base(@namespace, name, description, version, device)
     {
         VertexModule = vertex ?? throw new ArgumentNullException(nameof(vertex));
@@ -76,9 +76,9 @@ public class RasterShader : Shader, IRasterShader
         
         Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[7];
 
-        Dictionary<DescriptorType, uint> descriptors_counts = new Dictionary<DescriptorType, uint>();
+        Dictionary<vk.DescriptorType, uint> descriptors_counts = new Dictionary<vk.DescriptorType, uint>();
         
-        List<PushConstantRange> push_constants_list = new List<PushConstantRange>();
+        List<vk.PushConstantRange> push_constants_list = new List<vk.PushConstantRange>();
 
         int module_count = 0;
         foreach (IShaderModule shader_module in Modules)
@@ -100,7 +100,7 @@ public class RasterShader : Shader, IRasterShader
                         or SPIRVCross.ResourceType.PushConstant
                     ) continue;
 
-                DescriptorType desc_type = ShaderModule.SpirvToVkDescMap[type];
+                vk.DescriptorType desc_type = ShaderModule.SpirvToVkDescMap[type];
 
                 if (descriptors_counts.ContainsKey(desc_type))
                 {
@@ -115,14 +115,14 @@ public class RasterShader : Shader, IRasterShader
             module_count++;
         }
 
-        List<DescriptorPoolSize> descriptor_sizes = new (capacity: 16);
+        List<vk.DescriptorPoolSize> descriptor_sizes = new (capacity: 16);
 
-        foreach ((DescriptorType type, uint count) in descriptors_counts)
+        foreach ((vk.DescriptorType type, uint count) in descriptors_counts)
         {
-            descriptor_sizes.Add(new DescriptorPoolSize(type, count));
+            descriptor_sizes.Add(new vk.DescriptorPoolSize(type, count));
         }
 
-        PushConstantRange[] push_constants = push_constants_list.ToArray();
+        vk.PushConstantRange[] push_constants = push_constants_list.ToArray();
         
         PipelineLayout = new SlimPipelineLayout(
             device: Device, 
@@ -135,7 +135,7 @@ public class RasterShader : Shader, IRasterShader
             device: Device,
             maxSets: Graphics.MaxFramesCount * MaxMaterialPerShaderCount,
             poolSizes: PoolSizes,
-            flags: DescriptorPoolCreateFlags.DescriptorPoolCreateFreeDescriptorSetBit
+            flags: vk.DescriptorPoolCreateFlags.DescriptorPoolCreateFreeDescriptorSetBit
         );
     }
 }

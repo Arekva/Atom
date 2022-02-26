@@ -1,9 +1,8 @@
-﻿using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using Atom.Engine.Global;
-using Atom.Engine.Shader;
+﻿using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
-using Silk.NET.Vulkan;
+
+using Atom.Engine.Vulkan;
+using Atom.Engine.Shader;
 
 namespace Atom.Engine;
 
@@ -32,12 +31,12 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 #region Dynamic State Configuration
 
     private static readonly Pin<int> DynamicStates 
-        = new int[] { (int)DynamicState.Viewport, (int)DynamicState.Scissor };
+        = new int[] { (int)vk.DynamicState.Viewport, (int)vk.DynamicState.Scissor };
 
-    private static readonly unsafe PipelineDynamicStateCreateInfo DynamicStateInfo = new(
+    private static readonly unsafe vk.PipelineDynamicStateCreateInfo DynamicStateInfo = new(
         flags: 0,
         dynamicStateCount: (uint)DynamicStates.Size,
-        pDynamicStates: (DynamicState*)DynamicStates.Pointer
+        pDynamicStates: (vk.DynamicState*)DynamicStates.Pointer
     );
 
 #endregion
@@ -45,13 +44,13 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     private uint _moduleCount;
 
 
-    public RasterizedMaterial(IRasterShader shader, Device? device = null) : this(shader, default, device) { }
+    public RasterizedMaterial(IRasterShader shader, vk.Device? device = null) : this(shader, default, device) { }
  
-    private RasterizedMaterial(IRasterShader shader, Pipeline basePipeline, Device? device = null) : base(device)
+    private RasterizedMaterial(IRasterShader shader, vk.Pipeline basePipeline, vk.Device? device = null) : base(device)
     {
         Shader = shader ?? throw new ArgumentNullException(nameof(shader));
 
-        DescriptorSets = new Dictionary<ShaderStageFlags, DescriptorSet>[Graphics.MaxFramesCount];
+        DescriptorSets = new Dictionary<ShaderStageFlags, vk.DescriptorSet>[Graphics.MaxFramesCount];
 
         Span<ShaderStageFlags> descriptor_set_stages = stackalloc ShaderStageFlags[7];
         Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[7];
@@ -69,7 +68,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         {
             fixed (SlimDescriptorSetLayout* p_desc_layouts = descriptor_set_layouts)
             {
-                DescriptorSetAllocateInfo desc_alloc_info = new(
+                vk.DescriptorSetAllocateInfo desc_alloc_info = new(
                     descriptorPool: shader.DescriptorPool,
                     descriptorSetCount: (uint)module_count,
                     pSetLayouts: (vk.DescriptorSetLayout*)p_desc_layouts
@@ -77,12 +76,12 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 
                 for (int i = 0; i < Graphics.MaxFramesCount; i++)
                 {
-                    Dictionary<ShaderStageFlags, DescriptorSet> stage_sets = new (capacity: module_count);
+                    Dictionary<ShaderStageFlags, vk.DescriptorSet> stage_sets = new (capacity: module_count);
                     DescriptorSets[i] = stage_sets;
 
-                    DescriptorSet* p_sets = stackalloc DescriptorSet[module_count];
+                    vk.DescriptorSet* p_sets = stackalloc vk.DescriptorSet[module_count];
                     
-                    Result result = VK.API.AllocateDescriptorSets(shader.Device, in desc_alloc_info, p_sets);
+                    vk.Result result = VK.API.AllocateDescriptorSets(shader.Device, in desc_alloc_info, p_sets);
 
                     for (int j = 0; j < module_count; j++)
                     {
@@ -101,11 +100,11 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 
         uint total_sets_count = Graphics.MaxFramesCount * _moduleCount;
         
-        Span<DescriptorSet> sets = stackalloc DescriptorSet[(int)total_sets_count];
+        Span<vk.DescriptorSet> sets = stackalloc vk.DescriptorSet[(int)total_sets_count];
         for (uint i = 0; i < Graphics.MaxFramesCount; i++)
         {
             uint j = 0;
-            foreach (DescriptorSet set in DescriptorSets[i].Values)
+            foreach (vk.DescriptorSet set in DescriptorSets[i].Values)
             {
                 uint index = AMath.To1D(j, i, _moduleCount);
                 sets[(int) index] = set;
@@ -113,7 +112,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
             }
         }
         
-        VK.API.FreeDescriptorSets(Device, Shader.DescriptorPool, total_sets_count, sets);
+        vk.VkOverloads.FreeDescriptorSets(VK.API, Device, Shader.DescriptorPool, total_sets_count, sets);
     }
 
     public RasterizedMaterial Clone() => new (Shader, Pipeline);
@@ -121,9 +120,9 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     public override unsafe void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex)
     {
         vk.Viewport viewport = new(width: extent.X, height: extent.Y, minDepth: 0.0F, maxDepth: 1.0F);
-        vk.Rect2D scissor = new(extent: new Extent2D(extent.X, extent.Y));
+        vk.Rect2D scissor = new(extent: new vk.Extent2D(extent.X, extent.Y));
 
-        VK.API.CmdBindPipeline(cmd, PipelineBindPoint.Graphics, Pipeline);
+        VK.API.CmdBindPipeline(cmd, vk.PipelineBindPoint.Graphics, Pipeline);
         VK.API.CmdSetViewport(cmd, 0U, 1U, in viewport);
         VK.API.CmdSetScissor(cmd, 0U, 1U, in scissor);
 
@@ -133,10 +132,10 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         // set camera & frame index
         VK.API.CmdPushConstants(cmd, Shader.PipelineLayout, (vk.ShaderStageFlags)ShaderStageFlags.Vertex, 0U, pushs);
 
-        Span<DescriptorSet> sets = stackalloc DescriptorSet[(int)_moduleCount];
+        Span<vk.DescriptorSet> sets = stackalloc vk.DescriptorSet[(int)_moduleCount];
 
         int desc_index = 0;
-        foreach (DescriptorSet set in DescriptorSets[frameIndex].Values)
+        foreach (vk.DescriptorSet set in DescriptorSets[frameIndex].Values)
         {
             sets[desc_index] = set;
             ++desc_index;
@@ -144,7 +143,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         
         VK.API.CmdBindDescriptorSets(
             cmd, 
-            PipelineBindPoint.Graphics, 
+            vk.PipelineBindPoint.Graphics, 
             Shader.PipelineLayout,
             firstSet: 0U,
             sets, 
@@ -154,28 +153,28 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     
     
 
-    private unsafe void CreatePipeline(Device device, Pipeline basePipeline)
+    private unsafe void CreatePipeline(vk.Device device, vk.Pipeline basePipeline)
     {
-        PipelineShaderStageCreateInfo[] stages = Shader.Modules.Select(module => module.StageInfo).ToArray();
+        vk.PipelineShaderStageCreateInfo[] stages = Shader.Modules.Select(module => module.StageInfo).ToArray();
 
 
-        List<VertexInputAttributeDescription> attribs_list = new();
-        List<VertexInputBindingDescription> bindings_list = new();
+        List<vk.VertexInputAttributeDescription> attribs_list = new();
+        List<vk.VertexInputBindingDescription> bindings_list = new();
         foreach ((uint _, VertexInput input) in Shader.VertexModule.VertexInputs)
         {
             bindings_list.Add(input.Binding);
             attribs_list.AddRange(input.Attributes.Values.Select(a => a.Description));
         }
 
-        VertexInputAttributeDescription[] attribs = attribs_list.ToArray();
-        VertexInputBindingDescription[] bindings = bindings_list.ToArray();
+        vk.VertexInputAttributeDescription[] attribs = attribs_list.ToArray();
+        vk.VertexInputBindingDescription[] bindings = bindings_list.ToArray();
 
-        PipelineDynamicStateCreateInfo dynamic_state = DynamicStateInfo;
+        vk.PipelineDynamicStateCreateInfo dynamic_state = DynamicStateInfo;
         
-        fixed (VertexInputAttributeDescription* p_attribs = attribs)
-        fixed (VertexInputBindingDescription* p_bindings = bindings)
+        fixed (vk.VertexInputAttributeDescription* p_attribs = attribs)
+        fixed (vk.VertexInputBindingDescription* p_bindings = bindings)
         {
-            PipelineVertexInputStateCreateInfo input_state_info = new(
+            vk.PipelineVertexInputStateCreateInfo input_state_info = new(
                 flags: 0,
                 vertexAttributeDescriptionCount: (uint)attribs.Length,
                 pVertexAttributeDescriptions: p_attribs,
@@ -184,20 +183,20 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
                 pVertexBindingDescriptions: p_bindings
             );
 
-            fixed (PipelineShaderStageCreateInfo* p_stages = stages)
+            fixed (vk.PipelineShaderStageCreateInfo* p_stages = stages)
             {
-                GraphicsPipelineCreateInfo info = new(
+                vk.GraphicsPipelineCreateInfo info = new(
                     flags:               0,
                     stageCount:          (uint)stages.Length,
                     pStages:             p_stages,
                     pVertexInputState:   &input_state_info,
-                    pInputAssemblyState: (PipelineInputAssemblyStateCreateInfo*)Unsafe.AsPointer(ref Topology.State),
-                    pTessellationState:  (PipelineTessellationStateCreateInfo*)Unsafe.AsPointer(ref Tessellation.State),
-                    pViewportState:      (PipelineViewportStateCreateInfo*)Unsafe.AsPointer(ref Viewport.State),
-                    pRasterizationState: (PipelineRasterizationStateCreateInfo*)Unsafe.AsPointer(ref Rasterizer.State),
-                    pMultisampleState:   (PipelineMultisampleStateCreateInfo*)Unsafe.AsPointer(ref Multisampling.State),
-                    pDepthStencilState:  (PipelineDepthStencilStateCreateInfo*)Unsafe.AsPointer(ref DepthStencil.State),
-                    pColorBlendState:    (PipelineColorBlendStateCreateInfo*)Unsafe.AsPointer(ref ColorBlending.State),
+                    pInputAssemblyState: (vk.PipelineInputAssemblyStateCreateInfo*)Unsafe.AsPointer(ref Topology.State),
+                    pTessellationState:  (vk.PipelineTessellationStateCreateInfo*)Unsafe.AsPointer(ref Tessellation.State),
+                    pViewportState:      (vk.PipelineViewportStateCreateInfo*)Unsafe.AsPointer(ref Viewport.State),
+                    pRasterizationState: (vk.PipelineRasterizationStateCreateInfo*)Unsafe.AsPointer(ref Rasterizer.State),
+                    pMultisampleState:   (vk.PipelineMultisampleStateCreateInfo*)Unsafe.AsPointer(ref Multisampling.State),
+                    pDepthStencilState:  (vk.PipelineDepthStencilStateCreateInfo*)Unsafe.AsPointer(ref DepthStencil.State),
+                    pColorBlendState:    (vk.PipelineColorBlendStateCreateInfo*)Unsafe.AsPointer(ref ColorBlending.State),
                     pDynamicState:       &dynamic_state,
                     layout:              Shader.PipelineLayout,
                     renderPass:          Graphics.MainRenderPass,
@@ -206,10 +205,10 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
                     basePipelineIndex:   0
                 );
 
-                Result result = VK.API.CreateGraphicsPipelines(
+                vk.Result result = VK.API.CreateGraphicsPipelines(
                    device, default,
                    1U, in info,
-                   null, out Pipeline pipeline);
+                   null, out vk.Pipeline pipeline);
 
                 Pipeline = pipeline;
             }

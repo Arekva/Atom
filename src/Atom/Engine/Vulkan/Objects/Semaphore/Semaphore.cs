@@ -2,34 +2,27 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.Vulkan;
 
-public struct ImageView
+public struct Semaphore
 {
-    private static ConcurrentDictionary<SlimImageView, Device> _views = new();
+    private static ConcurrentDictionary<SlimSemaphore, Device> _semaphores = new();
 
-    public SlimImageView Handle;
+    public SlimSemaphore Handle;
     
-    public Device Device => _views[Handle];
+    public Device Device => _semaphores[Handle];
     
 #region Creation & Non-API stuff
 
-    public ImageView(
-        SlimImage image,
-        ImageViewType viewType, Format format,
-        ComponentMapping components,
-        vk.ImageSubresourceRange subresourceRange,
-        ImageViewCreateFlags flags = 0,
+    public Semaphore(
+        SemaphoreCreateFlags flags = 0,
         Device? device = null)
     {
         Device used_device = device ?? VK.Device;
 
-        Handle = new SlimImageView(used_device, image,
-            viewType, format,
-            components, subresourceRange, 
-            flags);
+        Handle = new SlimSemaphore(used_device, flags);
 
-        _views.TryAdd(Handle, used_device);
+        _semaphores.TryAdd(Handle, used_device);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -42,7 +35,7 @@ public struct ImageView
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Destroy()
     {
-        if(_views.TryRemove(Handle, out Device device))
+        if(_semaphores.TryRemove(Handle, out Device device))
         {
             Handle.Destroy(device);
         }

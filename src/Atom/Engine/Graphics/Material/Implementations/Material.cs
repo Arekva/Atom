@@ -1,6 +1,5 @@
-﻿using Atom.Engine.Shader;
-using Silk.NET.Maths;
-using Silk.NET.Vulkan;
+﻿using Silk.NET.Maths;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -9,19 +8,19 @@ public abstract class Material : AtomObject, IMaterial
     
 #region Handles
 
-    public Pipeline Pipeline { get; protected set; }
+    public vk.Pipeline Pipeline { get; protected set; }
     
     //public Dictionary<string, DescriptorSetInfo> DescriptorSets { get; protected set; }
     
     
 
-    public Dictionary<ShaderStageFlags, DescriptorSet>[] DescriptorSets { get; protected set; }
+    public Dictionary<ShaderStageFlags, vk.DescriptorSet>[] DescriptorSets { get; protected set; }
 
-    public Device Device { get; }
+    public vk.Device Device { get; }
 
 #endregion
 
-    public Material(Device? device = null)
+    public Material(vk.Device? device = null)
     {
         Device = device ?? VK.Device;
     }
@@ -31,7 +30,7 @@ public abstract class Material : AtomObject, IMaterial
         base.Delete();
         
         // Handle destroying
-        VK.API.DestroyPipeline(Device, Pipeline, ReadOnlySpan<AllocationCallbacks>.Empty);
+        vk.VkOverloads.DestroyPipeline(VK.API, Device, Pipeline, ReadOnlySpan<vk.AllocationCallbacks>.Empty);
     }
     
 #region Commands

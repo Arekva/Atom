@@ -1,4 +1,4 @@
-﻿using Silk.NET.Vulkan;
+﻿using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.Shader;
 
@@ -12,7 +12,7 @@ public interface IShader : IDisposable
     public SlimPipelineLayout PipelineLayout { get; }
 
     /// <summary> The Vulkan Device handle on which this shader has been created. </summary>
-    public Device Device { get; }
+    public vk.Device Device { get; }
     
     /// <summary> The Vulkan descriptor allocator. </summary>
     public SlimDescriptorPool DescriptorPool { get; }
@@ -21,7 +21,7 @@ public interface IShader : IDisposable
 
 #region Other Vulkan
 
-    public DescriptorPoolSize[] PoolSizes { get; }
+    public vk.DescriptorPoolSize[] PoolSizes { get; }
     
 #endregion
 

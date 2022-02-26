@@ -1,4 +1,4 @@
-using Silk.NET.Vulkan;
+using Atom.Engine.Vulkan;
 
 namespace Atom.Engine.RenderPass;
 
@@ -29,8 +29,8 @@ public class RenderPassBuilder
         }
     }
 
-    public unsafe Result Build(Device device, out Silk.NET.Vulkan.RenderPass renderPass,
-        RenderPassCreateFlags flags = 0)
+    public unsafe vk.Result Build(vk.Device device, out Silk.NET.Vulkan.RenderPass renderPass,
+        vk.RenderPassCreateFlags flags = 0)
     {
         Attachment[] all_attachments =
             _attachments
@@ -38,7 +38,7 @@ public class RenderPassBuilder
                     .SelectMany(pass => pass.Attachments))
                 .Distinct().ToArray();
         Dictionary<Attachment, uint> attachments = new(all_attachments.Length);
-        AttachmentDescription* vk_attachments = stackalloc AttachmentDescription[all_attachments.Length];
+        vk.AttachmentDescription* vk_attachments = stackalloc vk.AttachmentDescription[all_attachments.Length];
 
         uint i = 0U;
         foreach (Attachment attachment in all_attachments)
@@ -47,36 +47,36 @@ public class RenderPassBuilder
             attachments.Add(attachment, i++);
         }
 
-        SubpassDescription* vk_subpasses = stackalloc SubpassDescription[_subpasses.Count];
+        vk.SubpassDescription* vk_subpasses = stackalloc vk.SubpassDescription[_subpasses.Count];
         Dictionary<Subpass, uint> subpasses = new(_subpasses.Count);
 
-        AttachmentReference* depth_attachments = stackalloc AttachmentReference[_subpasses.Count];
+        vk.AttachmentReference* depth_attachments = stackalloc vk.AttachmentReference[_subpasses.Count];
         i = 0U;
         foreach (Subpass subpass in _subpasses.Values)
         {
 #pragma warning disable CA2014
             uint j = 0U;
             int input_count = subpass.InputAttachments.Count;
-            AttachmentReference* inputs = stackalloc AttachmentReference[input_count];
-            foreach ((Attachment attach, ImageLayout layout) in subpass.InputAttachments)
+            vk.AttachmentReference* inputs = stackalloc vk.AttachmentReference[input_count];
+            foreach ((Attachment attach, vk.ImageLayout layout) in subpass.InputAttachments)
             {
-                inputs[j++] = new AttachmentReference(attachments[attach], layout);
+                inputs[j++] = new vk.AttachmentReference(attachments[attach], layout);
             }
 
             j = 0U;
             int color_count = subpass.ColorAttachments.Count;
-            AttachmentReference* colors = stackalloc AttachmentReference[color_count];
-            foreach ((Attachment attach, ImageLayout layout) in subpass.ColorAttachments)
+            vk.AttachmentReference* colors = stackalloc vk.AttachmentReference[color_count];
+            foreach ((Attachment attach, vk.ImageLayout layout) in subpass.ColorAttachments)
             {
-                colors[j++] = new AttachmentReference(attachments[attach], layout);
+                colors[j++] = new vk.AttachmentReference(attachments[attach], layout);
             }
             
             j = 0U;
             int resolves_count = subpass.ResolveAttachments.Count;
-            AttachmentReference* resolves = stackalloc AttachmentReference[resolves_count];
-            foreach ((Attachment attach, ImageLayout layout) in subpass.ResolveAttachments)
+            vk.AttachmentReference* resolves = stackalloc vk.AttachmentReference[resolves_count];
+            foreach ((Attachment attach, vk.ImageLayout layout) in subpass.ResolveAttachments)
             {
-                resolves[j++] = new AttachmentReference(attachments[attach], layout);
+                resolves[j++] = new vk.AttachmentReference(attachments[attach], layout);
             }
 
             j = 0U;
@@ -87,7 +87,7 @@ public class RenderPassBuilder
                 preserve[j++] = attachments[attach];
             }
 
-            vk_subpasses[(int)i] = new SubpassDescription(
+            vk_subpasses[(int)i] = new vk.SubpassDescription(
                 flags: subpass.Flags,
                 pipelineBindPoint: subpass.BindPoint,
                 inputAttachmentCount: (uint)input_count,
@@ -103,7 +103,7 @@ public class RenderPassBuilder
             // Set depth (if exists)
             if (subpass.DepthStencilAttachment != null)
             {
-                depth_attachments[i] = new AttachmentReference(
+                depth_attachments[i] = new vk.AttachmentReference(
                     attachments[subpass.DepthStencilAttachment.Value.Item1],
                     layout: subpass.DepthStencilAttachment.Value.Item2
                 );
@@ -117,15 +117,15 @@ public class RenderPassBuilder
 
         int dependency_count = _dependencies.Count;
         i = 0;
-        SubpassDependency* vk_dependencies = stackalloc SubpassDependency[dependency_count];
+        vk.SubpassDependency* vk_dependencies = stackalloc vk.SubpassDependency[dependency_count];
         foreach (Dependency dependency in _dependencies)
         {
-            vk_dependencies[i++] = new SubpassDependency(
+            vk_dependencies[i++] = new vk.SubpassDependency(
                 srcSubpass: dependency.Source.Subpass == Subpass.External 
-                    ? Vk.SubpassExternal 
+                    ? vk.Vk.SubpassExternal 
                     : subpasses[dependency.Source.Subpass],
                 dstSubpass: dependency.Destination.Subpass == Subpass.External 
-                    ? Vk.SubpassExternal 
+                    ? vk.Vk.SubpassExternal 
                     : subpasses[dependency.Destination.Subpass],
                 srcStageMask: dependency.Source.StageMask,
                 dstStageMask: dependency.Destination.StageMask,
@@ -137,7 +137,7 @@ public class RenderPassBuilder
             );
         }
 
-        RenderPassCreateInfo info = new(
+        vk.RenderPassCreateInfo info = new(
             flags: flags,
             attachmentCount: (uint)all_attachments.Length,
             pAttachments: vk_attachments,
