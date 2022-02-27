@@ -89,7 +89,7 @@ public class DeferredRenderer
     private SlimCommandBuffer[] _commands = new SlimCommandBuffer[MAX_FRAMES_IN_FLIGHT_COUNT];
     
     // memory storage for all the framebuffers
-    private DeviceMemory _framebuffersMemory;
+    private SlimDeviceMemory _framebuffersMemory;
     
     // surface
     private Vector2D<uint> _extent;
@@ -246,7 +246,7 @@ public class DeferredRenderer
         uint command_buffer_index = GetCommandBufferIndex(swap_image_index);
         
         SlimFence image_fence = _fences[image_in_flight_fence_index];
-        SlimCommandBuffer command = _commands[command_buffer_index];
+        
 
         if (image_fence.Handle.Handle != 0)
         {
@@ -266,6 +266,7 @@ public class DeferredRenderer
             BuildCommands(swap_image_index, extent, true);
         }
 
+        SlimCommandBuffer command = _commands[command_buffer_index];
 
         vk.PipelineStageFlags wait_dst_draw = vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit;
         
@@ -438,7 +439,7 @@ public class DeferredRenderer
 
     private void ResetCommandBuffers() => _commandPool.Reset(_device);
 
-    private unsafe void CleanMemory() => VK.API.FreeMemory(_device, _framebuffersMemory, null);
+    private void CleanMemory() => _framebuffersMemory.Free(_device);
     
     private void CleanFramebuffers(uint count)
     {
@@ -530,6 +531,8 @@ public class DeferredRenderer
             Vector2D<uint> vec_extent = new(extent.Width, extent.Height);
             Draw.UpdateFrame(cmd, vec_extent, cameraIndex: 0, frameIndex: swapImageIndex);
             
+            Log.Info($"Recording command {swapImageIndex} with resolution {vec_extent}");
+            
             VK.API.CmdNextSubpass(cmd, vk.SubpassContents.Inline);
             // draw lit render
             int view_index = (int)GetViewBaseIndex(swapImageIndex);
@@ -601,9 +604,9 @@ public class DeferredRenderer
     private void AllocateImagesMemory(uint swapImageCount, ulong size, ReadOnlySpan<vk.MemoryRequirements> requirements)
     {
         // allocate the memory required for all the framebuffers
-        _framebuffersMemory = new DeviceMemory(
+        _framebuffersMemory = new SlimDeviceMemory(
             _device,
-            size: size,
+            allocationSize: size,
             memoryTypeIndex: VK.FindMemoryType(
                 physicalDevice: _physicalDevice, 
                 typeFilter: requirements[0].MemoryTypeBits, // consider [0] as all other memory representation

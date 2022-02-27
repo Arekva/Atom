@@ -30,15 +30,18 @@ public class Game
 
             try
             {
-                Mouse.Mode = CursorMode.Raw;
+                Mouse.CursorMode = CursorMode.Raw;
+                //Mouse.HasFocus = false;
 
                 using CelestialSystem sun_system = new (location: default);
                 
                 using (IRasterShader terrain_shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard"))
                 {
-                    ImprovedPerlinGenerator noise = new ImprovedPerlinGenerator();
-                    noise.Frequency = 5.0D;
-                    
+                    ImprovedPerlinGenerator noise = new()
+                    {
+                        Frequency = 5.0D
+                    };
+
                     Func<double, double, double, double> generator = (x, y, z) =>
                     {
                         double sphere = x * x + y * y + z * z - 1.0;
@@ -80,11 +83,6 @@ public class Game
                         double elapsed = sw.Elapsed.TotalSeconds;
                         double delta_time = elapsed - last_time;
                         last_time = elapsed;
-
-                        if (Keyboard.IsPressed(Key.Escape))
-                        {
-                            Mouse.Mode = CursorMode.Normal;
-                        }
 
                         angle_y += Mouse.Delta.X * mouse_speed * delta_time;
 
@@ -144,7 +142,7 @@ public class Game
                         
                         camera.Location.Coordinates += dir * delta_time * speed;
 
-                        Log.Info("Camera universal coordinates: " + camera.Location.UniversalCoordinates);
+                        // Log.Info("Camera universal coordinates: " + camera.Location.UniversalCoordinates);
                     }
                 }
                 

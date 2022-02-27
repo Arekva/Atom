@@ -11,7 +11,7 @@ public class CameraData : IDisposable
     
 #region Handles
     
-    private static DeviceMemory Memory;
+    private static VulkanMemory Memory;
 
     public static SlimBuffer VPMatrices;
 
@@ -75,7 +75,7 @@ public class CameraData : IDisposable
 
         VPMatrices.GetMemoryRequirements(used_device, out vk.MemoryRequirements reqs);
 
-        Memory = new DeviceMemory(
+        Memory = new VulkanMemory(
             device: used_device,
             size: reqs.Size,
             memoryTypeIndex: VK.GPU.PhysicalDevice.FindMemoryType(reqs.MemoryTypeBits,

@@ -75,7 +75,7 @@ public struct SlimImage
         => VK.API.GetImageMemoryRequirements(device, Handle, out requirements);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void BindMemory(Device device, vk.DeviceMemory memory, ulong memoryOffset)
+    public void BindMemory(Device device, SlimDeviceMemory memory, ulong memoryOffset)
         => VK.API.BindImageMemory(device, Handle, memory, memoryOffset);
 
     #endregion

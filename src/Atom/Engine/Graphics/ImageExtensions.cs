@@ -15,7 +15,7 @@ public static class ImageExtensions
     {
         Handle.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
 
-        DeviceMemory memory = new (
+        VulkanMemory memory = new (
             device,
             reqs.Size,
             VK.GPU.PhysicalDevice.FindMemoryType(

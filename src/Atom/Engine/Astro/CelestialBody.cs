@@ -48,7 +48,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
     private ulong _vertexSize;
     
     private SlimBuffer _meshBuffer;
-    private DeviceMemory _meshMemory;
+    private VulkanMemory _meshMemory;
     
     
     
@@ -113,7 +113,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         );
         _meshBuffer.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
         
-        _meshMemory = new DeviceMemory(
+        _meshMemory = new VulkanMemory(
             device: device,
             size: reqs.Size, 
             VK.GPU.PhysicalDevice.FindMemoryType(

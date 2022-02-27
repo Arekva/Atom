@@ -2,7 +2,7 @@
 
 public struct MemorySegment
 {
-    public DeviceMemory Memory { get; }
+    public VulkanMemory Memory { get; }
 
     public ulong Offset { get; }
 
@@ -11,7 +11,7 @@ public struct MemorySegment
     public ulong End => Offset + Size;
     
 
-    internal MemorySegment(DeviceMemory memory, ulong offset, ulong size)
+    internal MemorySegment(VulkanMemory memory, ulong offset, ulong size)
     {
         if (offset + size > memory.Size)
         {

@@ -70,6 +70,7 @@ public class ViewportWindow : IDisposable
         
         // display mode / window state (minimised, fullscreen, ...)
         options.WindowState = (WindowState)Video.DisplayMode;
+        options.WindowBorder = WindowBorder.Fixed;
         Video.OnDisplayModeChanged += mode => Window!.WindowState = (WindowState)mode;
 
         // lock to 144 updates/ticks per second for now
@@ -101,18 +102,9 @@ public class ViewportWindow : IDisposable
             ManageKeys();
         };
 
-        Window.FocusChanged += state =>
-        {
-            if (state)
-            {
-                Mouse.Mode = CursorMode.Raw;
-            }
-        };
+        Window.FocusChanged += state => Mouse.WindowFocus = state;
         
-        Window.Load += () =>
-        {
-            Keyboard.Context = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
-        };
+        Window.Load += () => Keyboard.Context = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         
         Window.Closing += () =>
         {
@@ -133,7 +125,6 @@ public class ViewportWindow : IDisposable
         
         Window.Render += Render;
 
-        
         Window.Initialize();
         if (Window.VkSurface is null) throw new NotSupportedException($"Windowing platform {Window.GetType().Name} does not support Vulkan.");
         

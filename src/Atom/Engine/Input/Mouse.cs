@@ -6,6 +6,22 @@ namespace Atom.Engine;
 
 public static class Mouse
 {
+#region Inputs 
+    
+    private static readonly HashSet<MouseButton> _recordingFrameButtons = new();
+    private static HashSet<MouseButton> _thisFrameButtons = new();
+    private static HashSet<MouseButton> _previousFrameButtons = new();
+    
+    public static bool IsAnyPressed() => _thisFrameButtons.Count != 0;
+
+    public static bool IsPressed(MouseButton button) => _thisFrameButtons.Contains(button);
+    public static bool IsReleased(MouseButton button) => !IsPressed(button);
+    public static bool IsPressing(MouseButton button) => _thisFrameButtons.Contains(button) && !_previousFrameButtons.Contains(button);
+    public static bool IsReleasing(MouseButton button) => !_thisFrameButtons.Contains(button) && _previousFrameButtons.Contains(button);
+    
+#endregion
+    
+    
     private static IInputContext _context;
     public static IInputContext Context // todo: multiple keyboards
     {
@@ -13,37 +29,62 @@ public static class Mouse
         set
         {
             _context = value ?? throw new ArgumentNullException(nameof(value));
-
-            OnCursorModeChanged += mode =>
-            {
-                foreach (IMouse mouse in value.Mice)
-                {
-                    mouse.Cursor.CursorMode = mode;
-                }
-            };
         }
     }
 
+
     private static Vector2D<double> _previousFramePosition = new (double.PositiveInfinity);
-    public static Vector2D<double> Delta { get; private set; }
+    private static Vector2D<double> _delta = Vector2D<double>.Zero;
+    public static Vector2D<double> Delta => WindowFocus ? _delta : Vector2D<double>.Zero;
 
 
-    private static CursorMode _mode = CursorMode.Normal;
-
-    public static CursorMode Mode
+    private static bool _windowFocus = false;
+    internal static bool WindowFocus
     {
-        get => _mode;
+        get => _windowFocus;
         set
         {
-            if (value != _mode)
+            if (value != _windowFocus)
             {
-                _mode = value;
-                OnCursorModeChanged?.Invoke(value);
+                _windowFocus = value;
+
+                _previousFramePosition = new Vector2D<double>(double.PositiveInfinity);
+
+                UpdateCurrentCursorMode();
             }
         }
     }
-    public static Action<CursorMode>? OnCursorModeChanged;
 
+    private static CursorMode _userCursorMode = CursorMode.Normal;
+    public static CursorMode CursorMode
+    {
+        get => _userCursorMode;
+        set
+        {
+            if (value != _userCursorMode)
+            {
+                _userCursorMode = value;
+                
+                UpdateCurrentCursorMode();
+            }
+        }
+    }
+    public static event Action<CursorMode>? OnCursorModeChanged;
+
+    private static void UpdateCurrentCursorMode()
+    {
+        _context.Mice[0].Cursor.CursorMode = _windowFocus ? _userCursorMode : CursorMode.Normal;
+    }
+    
+    
+    public static Vector2D<double> ViewportPosition { get; private set; }
+    
+    public static Vector2D<double> NormalizedViewportPosition { get; private set; }
+
+    
+    
+    
+    
     internal static void NextFrame()
     {
         IMouse mouse = _context.Mice.First();
@@ -52,9 +93,39 @@ public static class Mouse
 
         if (!double.IsPositiveInfinity(_previousFramePosition.X))
         {
-            Delta = d_pos - _previousFramePosition;
+            _delta = d_pos - _previousFramePosition;
         }
         
         _previousFramePosition = d_pos;
+
+        Vector2D<uint> viewport_resolution = Video.Resolution;
+        
+        
+        
+        ViewportPosition = new Vector2D<double>(
+            x: d_pos.X,
+            y: viewport_resolution.Y - d_pos.Y
+        );
+
+        NormalizedViewportPosition = new Vector2D<double>(
+            x: ViewportPosition.X / viewport_resolution.X,
+            y: ViewportPosition.Y / viewport_resolution.Y
+        );
+        
+        _previousFrameButtons = _thisFrameButtons;
+        _thisFrameButtons = _recordingFrameButtons.ToHashSet();
+
+        bool is_mouse_in_viewport = 
+                NormalizedViewportPosition.X is > 0.0D and < 1.0D ||
+                NormalizedViewportPosition.Y is > 0.0D and < 1.0D;
+        
+        /*if (HasWindowFocus && !_hasFocus && IsPressed(MouseButton.Left) && is_mouse_in_screen)
+        {
+            HasFocus = true;
+            UpdateMiceMode(_mode);
+        }*/
+        
+        //Log.Info($"{ViewportPosition} ({NormalizedViewportPosition})");
+        
     }
 }

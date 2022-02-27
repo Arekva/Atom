@@ -49,7 +49,6 @@ public static class Engine
         try
         {
             Initialize();
-            IsRunning = true;
             //Updater.Run();
             // Do run stuff
             CallGameEntryPoint(gameAssemblyName ?? Assembly.GetExecutingAssembly().GetName().Name!);
@@ -61,7 +60,6 @@ public static class Engine
         finally
         {
             WaitForShutdown();
-            IsRunning = false;
             Shutdown();
         }
     }
@@ -108,6 +106,9 @@ public static class Engine
             Log.Fatal($@"!!|#FF0000,Crash|!!`!` `{e!}`");
             Environment.ExitCode = e!.HResult;
         }
+        
+        
+        IsRunning = false;
 
         _startResetEvent.Set();
         _stopResetEvent.Set();

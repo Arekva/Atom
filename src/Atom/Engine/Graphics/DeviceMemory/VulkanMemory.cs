@@ -3,7 +3,7 @@ using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
-public class DeviceMemory : IDisposable
+public class VulkanMemory : IDisposable
 {
     private bool _isMapped;
     
@@ -25,7 +25,7 @@ public class DeviceMemory : IDisposable
     
 
     // todo: user friendly API, just pass a memorytype object/struct and get its type index
-    public unsafe DeviceMemory(vk.Device device, ulong size, uint memoryTypeIndex)
+    public unsafe VulkanMemory(vk.Device device, ulong size, uint memoryTypeIndex)
     {
         Device = device;
         
@@ -150,10 +150,10 @@ public class DeviceMemory : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    ~DeviceMemory() => Dispose();
+    ~VulkanMemory() => Dispose();
 
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator vk.DeviceMemory(in DeviceMemory memory) => memory._handle;
+    public static implicit operator vk.DeviceMemory(in VulkanMemory memory) => memory._handle;
 }
