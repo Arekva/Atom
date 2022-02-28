@@ -70,7 +70,7 @@ public class ViewportWindow : IDisposable
         
         // display mode / window state (minimised, fullscreen, ...)
         options.WindowState = (WindowState)Video.DisplayMode;
-        options.WindowBorder = WindowBorder.Fixed;
+        //options.WindowBorder = WindowBorder.Fixed;
         Video.OnDisplayModeChanged += mode => Window!.WindowState = (WindowState)mode;
 
         // lock to 144 updates/ticks per second for now

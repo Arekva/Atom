@@ -29,31 +29,58 @@ public static class Mouse
         set
         {
             _context = value ?? throw new ArgumentNullException(nameof(value));
+
+            foreach (IMouse mouse in _context.Mice)
+            {
+                mouse.DoubleClickTime = -1;
+                
+                mouse.Click += (_, _, _) => Input.GameFocus = true;
+            }
         }
     }
 
 
     private static Vector2D<double> _previousFramePosition = new (double.PositiveInfinity);
     private static Vector2D<double> _delta = Vector2D<double>.Zero;
-    public static Vector2D<double> Delta => WindowFocus ? _delta : Vector2D<double>.Zero;
+    public static Vector2D<double> Delta => InputFocus ? _delta : Vector2D<double>.Zero;
 
 
-    private static bool _windowFocus = false;
+    private static bool _windowFocus = true;
     internal static bool WindowFocus
     {
         get => _windowFocus;
         set
         {
-            if (value != _windowFocus)
+            _windowFocus = value;
+
+            if (!value)
             {
-                _windowFocus = value;
-
-                _previousFramePosition = new Vector2D<double>(double.PositiveInfinity);
-
-                UpdateCurrentCursorMode();
+                GameFocus = false;
             }
+
+            _previousFramePosition = new Vector2D<double>(double.PositiveInfinity);
+
+            UpdateCurrentCursorMode();
         }
     }
+    
+    private static bool _gameFocus = false;
+    public static bool GameFocus
+    {
+        get => _gameFocus;
+        set
+        {
+            _gameFocus = value;
+
+            _previousFramePosition = new Vector2D<double>(double.PositiveInfinity);
+
+            UpdateCurrentCursorMode();
+        }
+    }
+
+    public static bool InputFocus => _gameFocus && _windowFocus;
+    
+    
 
     private static CursorMode _userCursorMode = CursorMode.Normal;
     public static CursorMode CursorMode
@@ -61,19 +88,16 @@ public static class Mouse
         get => _userCursorMode;
         set
         {
-            if (value != _userCursorMode)
-            {
-                _userCursorMode = value;
-                
-                UpdateCurrentCursorMode();
-            }
+            _userCursorMode = value;
+
+            UpdateCurrentCursorMode();
         }
     }
     public static event Action<CursorMode>? OnCursorModeChanged;
 
     private static void UpdateCurrentCursorMode()
     {
-        _context.Mice[0].Cursor.CursorMode = _windowFocus ? _userCursorMode : CursorMode.Normal;
+        _context.Mice[0].Cursor.CursorMode = InputFocus ? _userCursorMode : CursorMode.Normal;
     }
     
     

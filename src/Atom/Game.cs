@@ -84,8 +84,18 @@ public class Game
                         double delta_time = elapsed - last_time;
                         last_time = elapsed;
 
-                        angle_y += Mouse.Delta.X * mouse_speed * delta_time;
+                        if (Keyboard.IsPressed(Key.Escape))
+                        {
+                            //Mouse.CursorMode = CursorMode.Normal;
+                            Input.GameFocus = false;
+                        }
 
+                        /*if (Mouse.IsPressed(MouseButton.Left) && Mouse.CursorMode == CursorMode.Normal)
+                        {
+                            Mouse.CursorMode = CursorMode.Raw;
+                        }*/
+                        
+                        angle_y += Mouse.Delta.X * mouse_speed * delta_time;
                         angle_x += Mouse.Delta.Y * mouse_speed * delta_time;
                         if (Keyboard.IsPressed(Key.Q))
                         {
@@ -95,8 +105,7 @@ public class Game
                         {
                             angle_z -= rot_speed * delta_time;
                         }
-
-
+                        
                         camera.Space.LocalRotation =
                             Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitY, angle_y * AMath.DegToRad) *
                             Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitX, angle_x * AMath.DegToRad); //*
