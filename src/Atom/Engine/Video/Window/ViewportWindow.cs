@@ -30,6 +30,8 @@ public class ViewportWindow : IDisposable
     private Device _device;
     private GPU _gpu;
     private QueueFamily _renderFamily;
+
+    private bool _doneFirstResize = false;
     
     
     public ViewportWindow()
@@ -141,13 +143,12 @@ public class ViewportWindow : IDisposable
         );
         
         _fpsWatch.Start();
-        //Updater.Go();
+        
         TryResize();
     }
 
     private bool TryResize()
     {
-        
         return _renderer.Update(updateVideoSettings: true);
     }
 
@@ -187,8 +188,7 @@ public class ViewportWindow : IDisposable
     private void Render(double deltaTime)
     {
         DoFPS(deltaTime);
-        
-        //Updater.WaitRenderReady();
+
         _renderer.Render();
     }
 

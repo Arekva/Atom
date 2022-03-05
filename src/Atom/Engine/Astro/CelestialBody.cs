@@ -51,6 +51,9 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
     private VulkanMemory _meshMemory;
     
     
+    const int MODEL_COUNT = 10_000_000;
+    
+    
     
     public CelestialBody(
         string name, 
@@ -82,19 +85,19 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         Cell cell = Grid.Cells.First();
         cell.FillData();
         //(GVertex[] vert, uint[] indices) verts = cell.Visit(smooth: false);
-        
-        (GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SuzanneAxis.obj");
+
+        (GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SimpleSphere.obj");
 
         _indexCount = (uint)verts.indices.Length;
 
         ulong vert_size = _vertexSize = (ulong)verts.vert.Length * (ulong)sizeof(GVertex);
         ulong indices_size = (ulong)_indexCount * sizeof(uint);
-        ulong instanced_size = (ulong)sizeof(Matrix4X4<float>);
+        ulong instanced_size = (ulong)sizeof(Matrix4X4<float>) * MODEL_COUNT;
 
         _vertexBufferOffset = 0UL;
         _indexBufferOffset = AMath.Align(_vertexBufferOffset + vert_size, 0x10);
         _instanceDataOffset = AMath.Align(_indexBufferOffset + indices_size, 0x10);
-        
+
         //AMath.()
 
         ulong buffer_size = _instanceDataOffset + instanced_size;
@@ -102,22 +105,22 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         uint queue_fam = 0U;
 
         vk.Device device = DebugTerrainMaterial.Device;
-        
-        _meshBuffer = new SlimBuffer(device, 
-            buffer_size, 
-            usage: BufferUsageFlags.VertexBuffer        | 
-                   BufferUsageFlags.IndexBuffer         | 
-                   BufferUsageFlags.StorageBuffer       |
-                   BufferUsageFlags.TransferDestination ,
+
+        _meshBuffer = new SlimBuffer(device,
+            buffer_size,
+            usage: BufferUsageFlags.VertexBuffer |
+                   BufferUsageFlags.IndexBuffer |
+                   BufferUsageFlags.StorageBuffer |
+                   BufferUsageFlags.TransferDestination,
             sharingMode: vk.SharingMode.Exclusive, queue_fam.AsSpan()
         );
         _meshBuffer.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
-        
+
         _meshMemory = new VulkanMemory(
             device: device,
-            size: reqs.Size, 
+            size: reqs.Size,
             VK.GPU.PhysicalDevice.FindMemoryType(
-            typeFilter: reqs.MemoryTypeBits, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent)
+                typeFilter: reqs.MemoryTypeBits, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent)
         );
         _meshBuffer.BindMemory(_meshMemory.Whole);
 
@@ -129,11 +132,38 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
             )
         );*/
 
-        Matrix4X4<float> model_matrix = Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
+        Matrix4X4<float>[] models = new Matrix4X4<float>[MODEL_COUNT];
+
+        Random r = new (0);
+        const double MAX_ANGLE = Math.PI * 2.0D;
+        double max_pos = Radius * 1000;
+        
+        /*models[0] = Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
             Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromYawPitchRoll(0.0F, 0.0F, 0.0F)),
             Matrix4X4.CreateScale(Vector3D<float>.One * (float)Radius)),
             Matrix4X4.CreateTranslation(Vector3D<float>.Zero)), 
-            Matrix4X4<float>.Identity);
+            Matrix4X4<float>.Identity);*/
+        
+        for (int i = 0; i < MODEL_COUNT; i++)
+        {
+            models[i] = (Matrix4X4<float>)Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
+                        Matrix4X4.CreateFromQuaternion(
+                            Quaternion<double>.CreateFromYawPitchRoll(r.NextDouble() * MAX_ANGLE, r.NextDouble() * MAX_ANGLE, r.NextDouble() * MAX_ANGLE)
+                            //Quaternion<double>.CreateFromYawPitchRoll(0.0D, 0.0D, 0.0D)
+                            ),
+                        Matrix4X4.CreateScale(Vector3D<double>.One * Radius)),
+                        Matrix4X4.CreateTranslation(
+                            new Vector3D<double>(r.NextDouble() * max_pos, r.NextDouble() * max_pos, r.NextDouble() * max_pos)
+                            //new Vector3D<double>(i * Radius, i * Radius, i * Radius)
+                            )), 
+                        Matrix4X4<double>.Identity);
+        }
+
+        /*Matrix4X4<float> model_matrix = Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
+            Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromYawPitchRoll(0.0F, 0.0F, 0.0F)),
+            Matrix4X4.CreateScale(Vector3D<float>.One * (float)Radius)),
+            Matrix4X4.CreateTranslation(Vector3D<float>.Zero)), 
+            Matrix4X4<float>.Identity);*/
 
         using (MemoryMap<byte> map = _meshMemory.Map(_meshMemory.Whole))
         {
@@ -145,8 +175,9 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
             {
                 System.Buffer.MemoryCopy(p_indices, (byte*)map.Handle + _indexBufferOffset, reqs.Size, indices_size);
             }
+            fixed (Matrix4X4<float>* p_models = models)
             {
-                System.Buffer.MemoryCopy(&model_matrix, (byte*)map.Handle + _instanceDataOffset, reqs.Size, instanced_size);
+                System.Buffer.MemoryCopy(p_models, (byte*)map.Handle + _instanceDataOffset, reqs.Size, instanced_size);
             }
         }
         
@@ -188,51 +219,58 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
         staging_mesh_memory.Dispose();*/
     }
 
+    private bool[] _copyDone = new bool[3];
+
     public unsafe void CmdDraw(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex)
     {
         Log.Trace($"Draw {Name} (Camera {cameraIndex}) [{frameIndex}]");
-        
-        vk.DescriptorBufferInfo instance_buffer_info = new(
-            _meshBuffer,
-            offset: _instanceDataOffset,
-            range: (ulong)sizeof(Matrix4X4<float>)
-        );
-        vk.DescriptorBufferInfo camera_buffer_info = new(
-            CameraData.VPMatrices,
-            offset: 0,
-            range: CameraData.MaxCameraCount * (ulong)sizeof(CameraVP)
-        );
-        
-        // update instance data
-        Span<vk.WriteDescriptorSet> write_sets = stackalloc vk.WriteDescriptorSet[2];
-        write_sets[0] = /* write instance data buffer */ new vk.WriteDescriptorSet(
-            dstSet: DebugTerrainMaterial.DescriptorSets[frameIndex][ShaderStageFlags.Vertex],
-            dstBinding: 0,
-            dstArrayElement: 0,
-            descriptorCount: 1,
-            descriptorType: vk.DescriptorType.StorageBuffer,
-            pBufferInfo: &instance_buffer_info
-        );
-        write_sets[1] = /* write camera data buffer */ new vk.WriteDescriptorSet(
-            dstSet: DebugTerrainMaterial.DescriptorSets[frameIndex][ShaderStageFlags.Vertex],
-            dstBinding: 1,
-            dstArrayElement: 0,
-            descriptorCount: 1,
-            descriptorType: vk.DescriptorType.StorageBuffer,
-            pBufferInfo: &camera_buffer_info
-        );
-
         
         DebugTerrainMaterial.CmdBindMaterial(cmd, extent, cameraIndex, frameIndex);
         
         VK.API.CmdBindVertexBuffers(cmd, 0U, 1U, _meshBuffer, 0U);
         VK.API.CmdBindIndexBuffer(cmd, _meshBuffer, _vertexSize, vk.IndexType.Uint32);
         
-        vk.VkOverloads.UpdateDescriptorSets(VK.API, DebugTerrainMaterial.Device, 
-            2U, write_sets, 
-            0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
+        if (!_copyDone[frameIndex])
+        {
+            vk.DescriptorBufferInfo instance_buffer_info = new(
+                _meshBuffer,
+                offset: _instanceDataOffset,
+                range: (ulong)sizeof(Matrix4X4<float>) * MODEL_COUNT
+            );
+            vk.DescriptorBufferInfo camera_buffer_info = new(
+                CameraData.VPMatrices,
+                offset: 0,
+                range: CameraData.MaxCameraCount * (ulong)sizeof(CameraVP)
+            );
 
-        VK.API.CmdDrawIndexed(cmd, _indexCount, 1U, 0U, 0, 0U);
+            // update instance data
+            Span<vk.WriteDescriptorSet> write_sets = stackalloc vk.WriteDescriptorSet[2];
+            write_sets[0] = /* write instance data buffer */ new vk.WriteDescriptorSet(
+                dstSet: DebugTerrainMaterial.DescriptorSets[frameIndex][ShaderStageFlags.Vertex],
+                dstBinding: 0,
+                dstArrayElement: 0,
+                descriptorCount: 1,
+                descriptorType: vk.DescriptorType.StorageBuffer,
+                pBufferInfo: &instance_buffer_info
+            );
+            write_sets[1] = /* write camera data buffer */ new vk.WriteDescriptorSet(
+                dstSet: DebugTerrainMaterial.DescriptorSets[frameIndex][ShaderStageFlags.Vertex],
+                dstBinding: 1,
+                dstArrayElement: 0,
+                descriptorCount: 1,
+                descriptorType: vk.DescriptorType.StorageBuffer,
+                pBufferInfo: &camera_buffer_info
+            );
+        
+        
+            vk.VkOverloads.UpdateDescriptorSets(VK.API, DebugTerrainMaterial.Device, 
+                2U, write_sets, 
+                0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
+
+            _copyDone[frameIndex] = true;
+        }
+
+        VK.API.CmdDrawIndexed(cmd, _indexCount, MODEL_COUNT, 0U, 0, 0U);
     }
 
     public override void Delete()

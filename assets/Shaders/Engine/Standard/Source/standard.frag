@@ -3,8 +3,8 @@
 #include <deferred_fragment_io.glsl>
 
 void main() {
-    vec3 albedo = vec3(1.0);
-    vec3 normal = normalize(in_normal);
+    vec3 albedo = vec3(/*gl_InstanceIndex / 10000.0*/ 1.0, 1.0, 1.0);
+    vec3 normal = in_normal;
     vec3 position = in_position.xyz;
     vec2 uv = in_uv;
 

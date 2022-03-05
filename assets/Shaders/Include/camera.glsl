@@ -27,11 +27,21 @@ uint get_camera_index() {
     return camera_index * MAX_FRAMES_COUNT + current_frame;
 }
 
+CameraVP get_camera_matrices(uint index) {
+    return _cameraMatrices.matrices[index];
+}
+
+CameraVP get_camera_matrices() {
+    return _cameraMatrices.matrices[get_camera_index()];
+}
+
 // Standard gl_Position set with projection*view*model*in_Position
 void set_gl_position(mat4 model_matrix, vec3 vertex_position) {
-    CameraVP cam = _cameraMatrices.matrices[get_camera_index()];
+    CameraVP cam = get_camera_matrices();
+
+    mat4 model_view_matrix = cam.view * model_matrix;
  
-    gl_Position = cam.projection * cam.view * model_matrix * vec4(vertex_position, 1.0);
+    gl_Position = cam.projection * model_view_matrix * vec4(vertex_position, 1.0);
 }
 
 /* End of camera.glsl */

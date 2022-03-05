@@ -53,7 +53,7 @@ public class Game
                     using CelestialBody planet = new (
                         name: "Terre", 
                         radius: 6371000.0D, 
-                        mass: 5.972E+24,
+                        mass: 5.972E+24D,
                         terrain_shader,
                         sun_system,
                         generator
@@ -63,18 +63,16 @@ public class Game
                     
                     Camera camera = new ();
                     camera.Location = new Location(-Vector3D<double>.UnitZ * rad);
-                    camera.Space.Rotation = Quaternion<double>.CreateFromYawPitchRoll(Math.PI, 0.0, 0.0);
                     camera.NearPlane = 0.01D;
                     camera.FarPlane = double.PositiveInfinity;
-                    
-                    double speed = 2.5D * rad;
-                    double mouse_speed = 20.0D;
+
+                    double speed = 1000D * rad;
+                    double mouse_speed = 45.0D;
                     double rot_speed = 90.0;
 
-                    
-                    double angle_x = 0.0D;
-                    double angle_y = 0.0D;
-                    double angle_z = 0.0D;
+                    double angle_x = 0.0D; // -45.0D;
+                    double angle_y = 0.0D; // 180.0D - 45.0D;
+                    double angle_z = 0.0D; // 0.0D;
                     
                     Stopwatch sw = Stopwatch.StartNew();
                     double last_time = 0.0D;
@@ -84,74 +82,36 @@ public class Game
                         double delta_time = elapsed - last_time;
                         last_time = elapsed;
 
-                        if (Keyboard.IsPressed(Key.Escape))
-                        {
-                            //Mouse.CursorMode = CursorMode.Normal;
-                            Input.GameFocus = false;
-                        }
+                        if (Keyboard.IsPressed(Key.Escape)) Input.GameFocus = false;
 
-                        /*if (Mouse.IsPressed(MouseButton.Left) && Mouse.CursorMode == CursorMode.Normal)
-                        {
-                            Mouse.CursorMode = CursorMode.Raw;
-                        }*/
-                        
                         angle_y += Mouse.Delta.X * mouse_speed * delta_time;
                         angle_x += Mouse.Delta.Y * mouse_speed * delta_time;
-                        if (Keyboard.IsPressed(Key.Q))
-                        {
-                            angle_z += rot_speed * delta_time;
-                        }
-                        if (Keyboard.IsPressed(Key.E))
-                        {
-                            angle_z -= rot_speed * delta_time;
-                        }
-                        
+                        if (Keyboard.IsPressed(Key.Q)) angle_z += rot_speed * delta_time;
+                        if (Keyboard.IsPressed(Key.E)) angle_z -= rot_speed * delta_time;
+
                         camera.Space.LocalRotation =
                             Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitY, angle_y * AMath.DegToRad) *
-                            Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitX, angle_x * AMath.DegToRad); //*
-                            //Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitZ, angle_z * AMath.DegToRad) ;
-                        
-                        
-                        
+                            Quaternion<double>.CreateFromAxisAngle(Vector3D<double>.UnitX, angle_x * AMath.DegToRad);
+
                         Vector3D<double> dir = Vector3D<double>.Zero;
                         
                         Vector3D<double> right = camera.Space.Right;
                         Vector3D<double> up = camera.Space.Up;
                         Vector3D<double> forward = camera.Space.Forward;
 
-                        if (Keyboard.IsPressed(Key.W))
-                        {
-                            dir += forward;
-                        }
-                        if (Keyboard.IsPressed(Key.S))
-                        {
-                            dir -= forward;
-                        }
-                        if (Keyboard.IsPressed(Key.A))
-                        {
-                            dir -= right;
-                        }
-                        if (Keyboard.IsPressed(Key.D))
-                        {
-                            dir += right;
-                        }
-                        if (Keyboard.IsPressed(Key.R))
-                        {
-                            dir += up;
-                        }
-                        if (Keyboard.IsPressed(Key.F))
-                        {
-                            dir -= up;
-                        }
-
-                        if (dir != Vector3D<double>.Zero)
-                        {
-                            dir = Vector3D.Normalize(dir);
-                        }
+                        if (Keyboard.IsPressed(Key.W)) dir += forward;
+                        if (Keyboard.IsPressed(Key.S)) dir -= forward;
+                        if (Keyboard.IsPressed(Key.A)) dir -= right;
+                        if (Keyboard.IsPressed(Key.D)) dir += right;
                         
+                        if (Keyboard.IsPressed(Key.R)) dir += up;
+                        if (Keyboard.IsPressed(Key.F)) dir -= up;
+
+                        if (dir != Vector3D<double>.Zero) dir = Vector3D.Normalize(dir);
+
                         camera.Location.Coordinates += dir * delta_time * speed;
 
-                        // Log.Info("Camera universal coordinates: " + camera.Location.UniversalCoordinates);
+                        // Log.Info("Coords: " + camera.Location.UniversalCoordinates + " / View: " + camera.Space.Forward);
                     }
                 }
                 

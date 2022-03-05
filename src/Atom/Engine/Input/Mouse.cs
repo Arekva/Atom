@@ -123,9 +123,7 @@ public static class Mouse
         _previousFramePosition = d_pos;
 
         Vector2D<uint> viewport_resolution = Video.Resolution;
-        
-        
-        
+
         ViewportPosition = new Vector2D<double>(
             x: d_pos.X,
             y: viewport_resolution.Y - d_pos.Y
@@ -138,18 +136,5 @@ public static class Mouse
         
         _previousFrameButtons = _thisFrameButtons;
         _thisFrameButtons = _recordingFrameButtons.ToHashSet();
-
-        bool is_mouse_in_viewport = 
-                NormalizedViewportPosition.X is > 0.0D and < 1.0D ||
-                NormalizedViewportPosition.Y is > 0.0D and < 1.0D;
-        
-        /*if (HasWindowFocus && !_hasFocus && IsPressed(MouseButton.Left) && is_mouse_in_screen)
-        {
-            HasFocus = true;
-            UpdateMiceMode(_mode);
-        }*/
-        
-        //Log.Info($"{ViewportPosition} ({NormalizedViewportPosition})");
-        
     }
 }

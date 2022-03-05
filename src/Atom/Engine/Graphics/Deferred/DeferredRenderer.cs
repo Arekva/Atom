@@ -174,7 +174,7 @@ public class DeferredRenderer
         }
     }
 
-    public unsafe void Setup(
+    public void Setup(
         vk.Device device,
         vk.PhysicalDevice physicalDevice,
         KhrSurface surfaceExtension,
@@ -261,9 +261,9 @@ public class DeferredRenderer
 
         if (Draw.HasUpdates(frameIndex: swap_image_index, cameraIndex: 0))
         {
-            Log.Trace($"UPDATE [{swap_image_index}][{0}]");
+            Log.Trace($"UPDATE [swap {swap_image_index}][cam {0}]");
             vk.Extent2D extent = new(_extent.X, _extent.Y);
-            BuildCommands(swap_image_index, extent, true);
+            BuildCommands(swap_image_index, extent);
         }
 
         SlimCommandBuffer command = _commands[command_buffer_index];
@@ -430,14 +430,14 @@ public class DeferredRenderer
 
     private void CleanRenderObjects(uint count)
     {
-        ResetCommandBuffers();
+        //ResetCommandBuffers();
         CleanFramebuffers(count);
         CleanViews(count);
         CleanImages(count);
         CleanMemory();
     }
 
-    private void ResetCommandBuffers() => _commandPool.Reset(_device);
+    //private void ResetCommandBuffers() => _commandPool.Reset(_device);
 
     private void CleanMemory() => _framebuffersMemory.Free(_device);
     
@@ -504,15 +504,12 @@ public class DeferredRenderer
         _swapchainExtension.DestroySwapchain(_device, swapchain.Value, null);
     }
 
-    private unsafe void BuildCommands(uint swapImageIndex, vk.Extent2D extent, bool doReset = false)
+    private unsafe void BuildCommands(uint swapImageIndex, vk.Extent2D extent)
     {
         vk.Rect2D area = new(extent: extent);
         SlimCommandBuffer cmd = _commands[swapImageIndex];
 
-        if (doReset)
-        {
-            cmd.Reset();
-        }
+        cmd.Reset();
 
         vk.CommandBufferBeginInfo begin = new(flags: 0);
         VK.API.BeginCommandBuffer(cmd, in begin);
@@ -536,8 +533,7 @@ public class DeferredRenderer
             VK.API.CmdNextSubpass(cmd, vk.SubpassContents.Inline);
             // draw lit render
             int view_index = (int)GetViewBaseIndex(swapImageIndex);
-            _gbufferDrawer.CmdComputeGBuffer(cmd, swapImageIndex,
-                _views.AsSpan()[view_index..(view_index+4)]);
+            _gbufferDrawer.CmdComputeGBuffer(cmd, swapImageIndex, _views.AsSpan()[view_index..(view_index+4)]);
             VK.API.CmdEndRenderPass(cmd);
             
             // draw on swapchain image as a fullscreen image

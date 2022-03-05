@@ -106,7 +106,7 @@ public class Camera : Thing
         {
             // M11 = -1.0D,
             // M22 = -1.0D,
-            M33 = -1.0D
+            // M33 = -1.0D
         };
         
         // view_double.M33 *= -1.0D; // From -Y up to +Y up

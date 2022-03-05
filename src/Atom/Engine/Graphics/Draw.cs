@@ -63,9 +63,8 @@ public static class Draw
 
     public static bool HasUpdates(uint frameIndex, uint cameraIndex)
     {
-        return 
-            _drawersAdditionList[frameIndex][cameraIndex].Any() || 
-            _drawersDeletionList[frameIndex][cameraIndex].Any() ;
+        return _drawersAdditionList[frameIndex][cameraIndex].Any() ||
+               _drawersDeletionList[frameIndex][cameraIndex].Any() ;
     }
 
     public static void UpdateFrame(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex)
