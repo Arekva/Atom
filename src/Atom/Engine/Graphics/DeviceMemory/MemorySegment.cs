@@ -17,7 +17,7 @@ public struct MemorySegment
         {
             throw new ArgumentOutOfRangeException(
                 paramName: nameof(size), 
-                message: "Memory segment offset + size (To) index is outside of Memory size"
+                message: "Memory segment offset + size (End) index is outside of Memory size"
             );
         }
         
@@ -31,4 +31,11 @@ public struct MemorySegment
     public MemoryMap<byte> Map() => Memory.Map(this);
 
     public void Unmap(IMemoryMap map) => Memory.Unmap(map);
+
+    public static bool operator ==(MemorySegment lhs, MemorySegment rhs)
+    {
+        return lhs.Memory == rhs.Memory && lhs.Size == rhs.Size && lhs.Offset == rhs.Offset;
+    }
+
+    public static bool operator !=(MemorySegment lhs, MemorySegment rhs) => !(lhs == rhs);
 }

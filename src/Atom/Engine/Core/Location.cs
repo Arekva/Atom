@@ -57,19 +57,10 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
         i64 s_overflow_y = (i64)(c.Y / SectorHeightHalf);
         i64 s_overflow_z = (i64)(c.Z / SectorDepthHalf);
 
-        if (s_overflow_x != 0)
-        {
-            c.X = -Math.Sign(s_overflow_x) * SectorWidthHalf + c_overflow_x;
-        }
-        if (s_overflow_y != 0)
-        {
-            c.Y = -Math.Sign(s_overflow_y) * SectorHeightHalf + c_overflow_y;
-        }
-        if (s_overflow_z != 0)
-        {
-            c.Z = -Math.Sign(s_overflow_z) * SectorDepthHalf + c_overflow_z;
-        }
-        
+        if (s_overflow_x != 0) c.X = -Math.Sign(s_overflow_x) * SectorWidthHalf + c_overflow_x;
+        if (s_overflow_y != 0) c.Y = -Math.Sign(s_overflow_y) * SectorHeightHalf + c_overflow_y;
+        if (s_overflow_z != 0) c.Z = -Math.Sign(s_overflow_z) * SectorDepthHalf + c_overflow_z;
+
         s.X += s_overflow_x;
         s.Y += s_overflow_y;
         s.Z += s_overflow_z;
@@ -96,6 +87,14 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
     {
         Vector3D<double> coords = a.Coordinates + b.Coordinates;
         Vector3D<long> sector = a.Sector + b.Sector;
+
+        return new Location(coords, sector);
+    }
+    
+    public static Location operator +(Location a, Vector3D<double> b)
+    {
+        Vector3D<double> coords = a.Coordinates + b;
+        Vector3D<long> sector = a.Sector;
 
         return new Location(coords, sector);
     }

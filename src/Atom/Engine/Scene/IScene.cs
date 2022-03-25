@@ -1,6 +1,3 @@
 ﻿namespace Atom.Engine;
 
-public interface IScene
-{
-    
-}
+public interface IScene : IDisposable { }

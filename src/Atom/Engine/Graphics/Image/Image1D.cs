@@ -7,7 +7,9 @@ namespace Atom.Engine;
 
 public abstract class StandardImage1D : StandardImage
 {
-    internal StandardImage1D(SlimImage baseImage, vk.Device device) : base(baseImage, device) { }
+    internal StandardImage1D(vk.Device device, SlimImage baseImage) : base(device, baseImage) { }
+    
+    internal StandardImage1D(vk.Device device, SlimImage baseImage, MemorySegment segment) : base(device, baseImage, segment) { }
 }
 
 
@@ -17,14 +19,18 @@ public sealed class OptimalDeviceImage1D<T> : StandardImage1D,
     IImageOptimal, IImageDevice, IImage1D<T>  
     where T : unmanaged, IImageFormat
 {
-    internal OptimalDeviceImage1D(SlimImage baseImage, vk.Device device) : base(baseImage, device) { }
+    internal OptimalDeviceImage1D(vk.Device device, SlimImage baseImage) : base(device, baseImage) { }
+    
+    internal OptimalDeviceImage1D(vk.Device device, SlimImage baseImage, MemorySegment segment) : base(device, baseImage, segment) { }
 }
 
 public sealed class LinearDeviceImage1D<T> : StandardImage1D, 
     IImageLinear, IImageDevice, IImage1D<T>  
     where T : unmanaged, IImageFormat
 {
-    internal LinearDeviceImage1D(SlimImage baseImage, vk.Device device) : base(baseImage, device) { }
+    internal LinearDeviceImage1D(vk.Device device, SlimImage baseImage) : base(device, baseImage) { }
+    
+    internal LinearDeviceImage1D(vk.Device device, SlimImage baseImage, MemorySegment segment) : base(device, baseImage, segment) { }
 }
 
 
@@ -34,12 +40,16 @@ public sealed class OptimalHostImage1D<T> : StandardImage1D,
     IImageOptimal, IImageHost, IImage1D<T>  
     where T : unmanaged, IImageFormat
 {
-    internal OptimalHostImage1D(SlimImage baseImage, vk.Device device) : base(baseImage, device) { }
+    internal OptimalHostImage1D(vk.Device device, SlimImage baseImage) : base(device, baseImage) { }
+    
+    internal OptimalHostImage1D(vk.Device device, SlimImage baseImage, MemorySegment segment) : base(device, baseImage, segment) { }
 }
 
 public sealed class LinearHostImage1D<T> : StandardImage1D, 
     IImageLinear, IImageHost, IImage1D<T>  
     where T : unmanaged, IImageFormat
 {
-    internal LinearHostImage1D(SlimImage baseImage, vk.Device device) : base(baseImage, device) { }
+    internal LinearHostImage1D(vk.Device device, SlimImage baseImage) : base(device, baseImage) { }
+    
+    internal LinearHostImage1D(vk.Device device, SlimImage baseImage, MemorySegment segment) : base(device, baseImage, segment) { }
 }

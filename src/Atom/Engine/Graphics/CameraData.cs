@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Atom.Engine.Global;
 using Silk.NET.Maths;
 using Atom.Engine.Vulkan;
 
@@ -11,7 +10,7 @@ public class CameraData : IDisposable
     
 #region Handles
     
-    private static VulkanMemory Memory;
+    public static VulkanMemory Memory;
 
     public static SlimBuffer VPMatrices;
 

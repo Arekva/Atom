@@ -2,7 +2,7 @@
 
 namespace Atom.Engine.Shader;
 
-public abstract partial class Shader : AtomObject, IShader
+public abstract partial class Shader : IShader
 {
     
 #region Handles
@@ -29,6 +29,10 @@ public abstract partial class Shader : AtomObject, IShader
     /// <summary> The version of this shader. </summary>
     public Version Version { get; protected init; }
     
+    public string Name { get; protected init; }
+
+    public Guid GUID { get; protected init; }
+
 #endregion
 
 #region Modules
@@ -42,14 +46,19 @@ public abstract partial class Shader : AtomObject, IShader
     
 #endregion
 
+    private bool _disposed = false;
+
     public Shader(
         string @namespace, string name, string? description, Version version,
         vk.Device? device = null) 
-        => (Device, Namespace, Name, Description, Version) 
-        =  (device ?? VK.Device, @namespace, name, description, version);
+        => (Device, Namespace, Name, Description, Version, GUID) 
+        =  (device ?? VK.Device, @namespace, name, description, version, Guid.NewGuid());
 
-    public override void Delete()
+    public void Delete()
     {
+        if (_disposed) return;
+        _disposed = true;
+        
         // Dispose internal handles
         DescriptorPool.Destroy(Device);
         
@@ -60,5 +69,10 @@ public abstract partial class Shader : AtomObject, IShader
         {
             module.Dispose();
         }
+        
+        GC.SuppressFinalize(this);
     }
+
+    public void Dispose() => Delete();
+    ~Shader() => Dispose();
 }

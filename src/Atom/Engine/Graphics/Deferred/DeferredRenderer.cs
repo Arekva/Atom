@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Atom.Engine.Global;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan.Extensions.KHR;
 
@@ -299,6 +298,8 @@ public class DeferredRenderer
         _swapchainExtension.QueuePresent(_queue, in present_info);
         
         _frameIndex = ++_frameIndex % MAX_FRAMES_IN_FLIGHT_COUNT;
+
+        Graphics.FrameIndex = _frameIndex;
     }
 
     public unsafe bool Update(bool updateVideoSettings)
@@ -528,7 +529,7 @@ public class DeferredRenderer
             Vector2D<uint> vec_extent = new(extent.Width, extent.Height);
             Draw.UpdateFrame(cmd, vec_extent, cameraIndex: 0, frameIndex: swapImageIndex);
             
-            Log.Info($"Recording command {swapImageIndex} with resolution {vec_extent}");
+            //Log.Info($"Recording command {swapImageIndex} with resolution {vec_extent}");
             
             VK.API.CmdNextSubpass(cmd, vk.SubpassContents.Inline);
             // draw lit render

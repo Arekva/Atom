@@ -42,7 +42,7 @@ public static class Log
         return $"|{BANNER_COLOR},[||{MAIN_DATE_COLOR},{now.Hour:D2}||{ALT_DATE_COLOR},:||{MAIN_DATE_COLOR},{now.Minute:D2}||{ALT_DATE_COLOR},:||{MAIN_DATE_COLOR},{now.Second:D2}||{ALT_DATE_COLOR},.||{MAIN_DATE_COLOR},{now.Millisecond:D3}||{BANNER_COLOR},]| ";
     }
 
-    private static string FormattedThreadInfo(LevelInfo info) => $"{Thread.CurrentThread.Name}|{THREAD_SEPARER_COLOR},/|{info.DisplayName}";
+    private static string FormattedThreadInfo(LevelInfo info) => $"{Thread.CurrentThread.Name ?? "CLR"}|{THREAD_SEPARER_COLOR},/|{info.DisplayName}";
 
     private static void InternalLog(LevelInfo levelInfo, object? obj)
     {

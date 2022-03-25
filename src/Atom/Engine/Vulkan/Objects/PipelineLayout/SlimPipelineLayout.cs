@@ -18,9 +18,9 @@ public struct SlimPipelineLayout
         fixed (PushConstantRange* p_push_constant_range = pushConstantRanges)
         {
             PipelineLayoutCreateInfo create_info = new(
-                setLayoutCount: (uint)setLayouts.Length,
+                setLayoutCount: (u32)setLayouts.Length,
                 pSetLayouts: (vk.DescriptorSetLayout*)p_set_layouts,
-                pushConstantRangeCount: (uint)pushConstantRanges.Length,
+                pushConstantRangeCount: (u32)pushConstantRanges.Length,
                 pPushConstantRanges: p_push_constant_range
             );
             

@@ -18,3 +18,5 @@ global using f64 = System.Double;
 // strings
 //global using char = System.Char;
 global using str = System.ReadOnlySpan<char>;
+
+global using vk = Silk.NET.Vulkan;

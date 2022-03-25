@@ -15,14 +15,23 @@ public class Game
     {
         Engine.Engine.Run(gui: true, "Atom");
     }
-    
+
+    private static void Run()
+    {
+        Mouse.CursorMode = CursorMode.Raw;
+
+        using IScene scene = Scene.Load<ClassicScene>();
+
+        Engine.Engine.WaitForShutdown();
+    }
+
     [Entry]
     private static void GameEntry()
     {
         try
         {
             Video.Title = $"{Engine.Game.Name} {Engine.Game.Version}";
-            
+
             // make window thread
             Thread window_thread = create_window();
 
@@ -30,10 +39,16 @@ public class Game
 
             try
             {
-                Mouse.CursorMode = CursorMode.Raw;
-                //Mouse.HasFocus = false;
+                Run();
+                
+                
+                GC.Collect(2, GCCollectionMode.Forced, true, false);
 
-                using CelestialSystem sun_system = new (location: default);
+                {
+                    
+                }
+
+                /*using CelestialSystem sun_system = new (location: default);
                 
                 using (IRasterShader terrain_shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard"))
                 {
@@ -113,39 +128,7 @@ public class Game
 
                         // Log.Info("Coords: " + camera.Location.UniversalCoordinates + " / View: " + camera.Space.Forward);
                     }
-                }
-                
-                
-                
-
-                //Grid grid = planet.Grid;
-                //(Vector3D<float>[] vert, uint[] indices, Vector3D<float>[] normals) verts = grid.Cells.First().Visit();
-
-                /*Device device = VK.Device;
-                
-                SlimCommandPool pool = new SlimCommandPool(device, 0);
-                {
-                    pool.AllocateCommandBuffer(device, CommandBufferLevel.Primary, out SlimCommandBuffer cmd);
-                    
-                    using (IRasterShader shader = Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard"))
-                    {
-                        using IRasterizedMaterial material = new RasterizedMaterial(shader);
-                        
-                        material.CmdBindMaterial(cmd, Video.Resolution, cameraIndex: 0);
-                    }
-                }
-                pool.Destroy(device);*/
-
-                /*using RasterShader shader = Shader.Load<RasterShader>("Engine", "Standard");
-                using RasterizedMaterial material = new(shader);
-    
-                using OpaqueMesh<ushort> model = OpaqueMesh<ushort>.Load("Assets/Meshes/Suzanne.obj");
-    
-                using Element<double> element = new("Test Object");
-                MeshRenderer renderer = element.AddModule<MeshRenderer>(model, material);
-    
-                UniversalElement player_element = new("Player");
-                GameCamera camera = player_element.AddModule<GameCamera>();*/
+                }*/
             }
             catch (Exception e)
             {
@@ -153,7 +136,7 @@ public class Game
             }
 
             window_thread.Join();
-        
+
             Engine.Engine.Quit();
         }
         catch (Exception e)
@@ -165,7 +148,7 @@ public class Game
     static Thread create_window()
     {
         // make window thread
-        Thread win_thread = new (() =>
+        Thread win_thread = new(() =>
         {
             using ViewportWindow viewport_window = new();
             viewport_window.Run();

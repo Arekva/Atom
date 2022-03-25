@@ -36,6 +36,7 @@ public interface IShaderModule : IDisposable
 #region Descriptors
 
     public Dictionary<ResourceType, Descriptor[]> Descriptors { get; }
+    public Dictionary<string, Descriptor> NamedDescriptors { get; }
     
     public Dictionary<string, vk.PushConstantRange> PushConstants { get; }
 

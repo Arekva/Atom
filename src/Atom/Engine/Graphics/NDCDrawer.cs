@@ -1,4 +1,3 @@
-using Atom.Engine.Global;
 using Atom.Engine.RenderPass;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
@@ -88,7 +87,7 @@ public unsafe class NDCDrawer : IDisposable
     private SlimPipelineLayout _layout;
     private WriteDescriptorSet[] _writeDescriptorSets;
     private SlimDescriptorPool _descriptorPool;
-    private Sampler _textureSampler;
+    private SlimSampler _textureSampler;
     private Pipeline _pipeline;
     private Silk.NET.Vulkan.RenderPass _renderPass;
     private SlimDescriptorSetLayout _inTextureDescriptor;
@@ -192,22 +191,18 @@ public unsafe class NDCDrawer : IDisposable
             );
         }
 
-        
-        
         _layout = new SlimPipelineLayout(device, 
             new (&inTextureDescriptor, 1), 
             ReadOnlySpan<PushConstantRange>.Empty);
 
-        SamplerCreateInfo sampler_create_info = new(
+        _textureSampler = new SlimSampler(device,
             anisotropyEnable: false, maxAnisotropy: 16.0F,
             magFilter: Filter.Linear, minFilter: Filter.Linear,
             addressModeU: SamplerAddressMode.Repeat, addressModeV: SamplerAddressMode.Repeat,
             addressModeW: SamplerAddressMode.Repeat,
             mipmapMode: SamplerMipmapMode.Linear, mipLodBias: 0.0F, minLod: 0.0F, maxLod: 0.0F,
             compareEnable: false, compareOp: CompareOp.Always,
-            borderColor: BorderColor.IntOpaqueBlack, unnormalizedCoordinates: false, flags: 0
-        );
-        VK.API.CreateSampler(device, in sampler_create_info, null, out _textureSampler);
+            borderColor: BorderColor.IntOpaqueBlack, unnormalizedCoordinates: false, flags: 0);
 
         CreateRenderPass();
 
@@ -221,14 +216,14 @@ public unsafe class NDCDrawer : IDisposable
 
     private void CreateRenderPass()
     {
-        RenderPassBuilder builder = new RenderPassBuilder();
-        Subpass subpass = new Subpass(bindPoint: PipelineBindPoint.Graphics);
+        RenderPassBuilder builder = new();
+        Subpass subpass = new(bindPoint: PipelineBindPoint.Graphics);
         builder.LinkSubpass(
             subpass: subpass,
             order: 0U
         );
 
-        Attachment attachment = new Attachment(
+        Attachment attachment = new(
             format: DeferredRenderer.DEFAULT_COLOR_FORMAT /*Format.B8G8R8A8Srgb*/,
             operators: new AttachmentOperator(
                 load: AttachmentLoadOp.DontCare,
@@ -359,13 +354,13 @@ public unsafe class NDCDrawer : IDisposable
         
         _descriptorPool.Destroy(_device);
         
-        for (int i = 0; i < _imageCount; i++)
+        for (i32 i = 0; i < _imageCount; i++)
         {
-            VK.API.DestroyFramebuffer(_device, _framebuffers[i], null);
+            _framebuffers[i].Destroy(_device);
         }
         
-        VK.API.DestroySampler(_device, _textureSampler, null);
-        
+        _textureSampler.Destroy(_device);
+
         VK.API.DestroyPipeline(_device, _pipeline, null);
         
         VK.API.DestroyRenderPass(_device, _renderPass, null);

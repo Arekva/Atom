@@ -5,9 +5,6 @@ namespace Atom.Engine;
 
 public class Camera : Thing
 {
-    /*private static List<Camera> _cameras = new List<Camera>();
-    private uint _cameraCount = 0;*/
-    
     public static Camera Main { get; set; }
 
     
@@ -15,19 +12,12 @@ public class Camera : Thing
 
     private CameraData _data;
 
-    //private CameraVP _matrices;
-    
-    
-    //public ref Matrix4X4<float> ViewMatrix => ref _matrices.View;
-
-    //public ref Matrix4X4<float> ProjectionMatrix => ref _matrices.Projection;
-
     
     public Space Space { get; }
 
     public Projection Projection { get; set; } = Projection.Perspective;
 
-    public double NearPlane { get; set; } = 0.001D;
+    public double NearPlane { get; set; } = 0.01D;
 
     public double FarPlane { get; set; } = double.PositiveInfinity;
 

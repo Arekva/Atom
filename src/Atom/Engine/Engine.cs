@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Silk.NET.GLFW;
 using Atom.Engine.Vulkan;
 
@@ -49,7 +50,7 @@ public static class Engine
         try
         {
             Initialize();
-            //Updater.Run();
+            Updater.Run();
             // Do run stuff
             CallGameEntryPoint(gameAssemblyName ?? Assembly.GetExecutingAssembly().GetName().Name!);
         }
@@ -87,7 +88,7 @@ public static class Engine
 
     private static void Shutdown()
     {
-        //Updater.Stop();
+        Updater.Stop();
         
         VK.Terminate();
 

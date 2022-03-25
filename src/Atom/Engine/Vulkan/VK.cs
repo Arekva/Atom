@@ -206,20 +206,23 @@ public static class VK
         string[] extensions = GetRequiredDeviceExtensions();
         vk.DeviceQueueCreateInfo[] queues = GetRequiredQueues();
 
-        //PhysicalDeviceFeatures enabled_features = 
+        vk.PhysicalDeviceFeatures enabled_features = new PhysicalDeviceFeatures(
+            samplerAnisotropy: true
+        );
         
         fixed (vk.DeviceQueueCreateInfo* p_queues = queues)
         {
             vk.DeviceCreateInfo info = new (
-                enabledExtensionCount: (uint)extensions.Length,
+                enabledExtensionCount  : (u32)extensions.Length         ,
                 ppEnabledExtensionNames: LowLevel.GetPointer(extensions),
-                enabledLayerCount: (uint)layers.Length,
-                ppEnabledLayerNames: LowLevel.GetPointer(layers),
-                queueCreateInfoCount: (uint)queues.Length,
-                pQueueCreateInfos: p_queues
+                enabledLayerCount      : (u32)layers.Length             ,
+                ppEnabledLayerNames    : LowLevel.GetPointer(layers)    ,
+                queueCreateInfoCount   : (u32)queues.Length             ,
+                pQueueCreateInfos      : p_queues                       ,
+                pEnabledFeatures       : &enabled_features
             );
             
-            API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
+            VK.API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
             VK.API.GetDeviceQueue(_device, 0, 0, out _queue);
             
             

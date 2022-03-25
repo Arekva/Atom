@@ -55,7 +55,7 @@ public struct SlimImageView
 #region Standard API Proxying 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Destroy(Device device) => VK.API.DestroyImageView(device, Handle, ReadOnlySpan<AllocationCallbacks>.Empty);
+    public readonly void Destroy(Device device) => VK.API.DestroyImageView(device, Handle, ReadOnlySpan<AllocationCallbacks>.Empty);
 
 #endregion
 

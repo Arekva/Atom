@@ -8,7 +8,7 @@ namespace Atom.Engine;
 
 public class RasterizedMaterial : Material, IRasterizedMaterial
 {
-    public IRasterShader Shader { get; }
+    public IRasterShader Shader { get; private set; }
     
 #region Settings
 
@@ -41,8 +41,10 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 
 #endregion
 
-    private uint _moduleCount;
+    private readonly uint _moduleCount;
 
+    private readonly Queue<(vk.DescriptorBufferInfo buffer, vk.WriteDescriptorSet write)>[] _writeEdits;
+    
 
     public RasterizedMaterial(IRasterShader shader, vk.Device? device = null) : this(shader, default, device) { }
  
@@ -51,6 +53,11 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         Shader = shader ?? throw new ArgumentNullException(nameof(shader));
 
         DescriptorSets = new Dictionary<ShaderStageFlags, vk.DescriptorSet>[Graphics.MaxFramesCount];
+        _writeEdits = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>[Graphics.MaxFramesCount];
+        for (int i = 0; i < Graphics.MaxFramesCount; i++)
+        {
+            _writeEdits[i] = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>(capacity: 1024);
+        }
 
         Span<ShaderStageFlags> descriptor_set_stages = stackalloc ShaderStageFlags[7];
         Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[7];
@@ -113,6 +120,8 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         }
         
         vk.VkOverloads.FreeDescriptorSets(VK.API, Device, Shader.DescriptorPool, total_sets_count, sets);
+
+        Shader = null!;
     }
 
     public RasterizedMaterial Clone() => new (Shader, Pipeline);
@@ -163,7 +172,9 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         foreach ((uint _, VertexInput input) in Shader.VertexModule.VertexInputs)
         {
             bindings_list.Add(input.Binding);
-            attribs_list.AddRange(input.Attributes.Values.Select(a => a.Description));
+            attribs_list.AddRange(input.Attributes.Values
+                .Select(a => a.Description)
+                .OrderBy(d => d.Location));
         }
 
         vk.VertexInputAttributeDescription[] attribs = attribs_list.ToArray();
@@ -212,6 +223,81 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 
                 Pipeline = pipeline;
             }
+        }
+    }
+
+    /*public void WriteData<TStage, TData>(string name, in TData data)
+        where TStage : IRasterModule
+        where TData  : unmanaged
+    {
+        ShaderStageFlags module_type = ModuleAttribute.InterfaceStageMap[typeof(TStage)];
+
+        for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
+        {
+            _writeEdits[i].Enqueue(());
+        }
+    }*/
+
+    public unsafe void WriteBuffer<TStage>(string name, BufferSubresource subresource, 
+        vk.DescriptorType descriptorType = vk.DescriptorType.StorageBuffer)
+        where TStage : IRasterModule
+    {
+        ShaderStageFlags module_type = ModuleAttribute.InterfaceStageMap[typeof(TStage)];
+        
+        Descriptor desc = Shader[typeof(TStage)]!.NamedDescriptors[name];
+
+        /*Pin<*/vk.DescriptorBufferInfo/*>*/ buffer_info = new (
+            buffer: subresource.Buffer,
+            offset: subresource.Segment.Offset,
+            range : subresource.Segment.Size 
+        );
+        
+        for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
+        {
+            
+
+            vk.WriteDescriptorSet write_descriptor = new(
+                dstSet         : DescriptorSets[frame_index][module_type],
+                dstBinding     : desc.Binding,
+                dstArrayElement: 0,
+                descriptorCount: 1,
+                descriptorType : descriptorType,
+                pBufferInfo    : &buffer_info
+            );
+            
+            vk.VkOverloads.UpdateDescriptorSets(VK.API, Device, 
+                1U, &write_descriptor, 
+                0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
+        }
+    }
+
+    public unsafe void WriteImage<TStage>(string name, Texture texture,
+        vk.DescriptorType descriptorType = vk.DescriptorType.CombinedImageSampler) where TStage : IRasterModule
+    {
+        ShaderStageFlags module_type = ModuleAttribute.InterfaceStageMap[typeof(TStage)];
+        
+        Descriptor desc = Shader[typeof(TStage)]!.NamedDescriptors[name];
+        
+        vk.DescriptorImageInfo image_info = new(
+            sampler  : texture.Sampler.Sampler,
+            imageView: texture.Subresource.View,
+            imageLayout: texture.Subresource.Image.Layout
+        );
+        
+        for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
+        {
+            vk.WriteDescriptorSet write_descriptor = new(
+                dstSet         : DescriptorSets[frame_index][module_type],
+                dstBinding     : desc.Binding,
+                dstArrayElement: 0,
+                descriptorCount: 1,
+                descriptorType : descriptorType,
+                pImageInfo     : &image_info
+            );
+            
+            vk.VkOverloads.UpdateDescriptorSets(VK.API, Device, 
+                1U, &write_descriptor, 
+                0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
         }
     }
 }

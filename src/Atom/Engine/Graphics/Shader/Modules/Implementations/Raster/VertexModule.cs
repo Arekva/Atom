@@ -24,20 +24,20 @@ public class VertexModule : ShaderModule, IVertexModule
     {
         base.Reflect(program);
 
-        VertexInputs = new Dictionary<uint, VertexInput>();
+        VertexInputs = new Dictionary<u32, VertexInput>();
+        Dictionary<u32, u32> offsets = new (capacity: 8);
 
         foreach (Descriptor descriptor in Descriptors[ResourceType.StageInput])
         {
             Format format = descriptor.GetDefaultVkFormat();
 
 
-            uint binding = descriptor.Binding;
-            uint location = descriptor.Location;
-            
+            u32 binding     = descriptor.Binding ;
+            u32 location    = descriptor.Location;
+            u32 desc_offset = descriptor.Offset  ;
 
-            uint total_resource_width = (descriptor.BitWidth / 8) + descriptor.Offset;
-            
-            
+            u32 total_resource_width = (descriptor.BitWidth / 8) + desc_offset;
+
             if (VertexInputs.TryGetValue(binding, out VertexInput input))
             { // group vertex inputs with each other, by binding.
                 input.Binding.Stride += total_resource_width;
@@ -48,7 +48,8 @@ public class VertexModule : ShaderModule, IVertexModule
                         Description = new  VertexInputAttributeDescription(
                             location: location, 
                             binding: binding, 
-                            format: format
+                            format: format,
+                            offset: offsets[binding]
                         )
                     }
                 );
@@ -57,6 +58,8 @@ public class VertexModule : ShaderModule, IVertexModule
             }
             else
             {
+                offsets.Add(binding, 0);
+                
                 VertexInputs.Add(binding, new VertexInput
                 {
                     Attributes = new Dictionary<uint, VertexInputAttribute>
@@ -82,6 +85,8 @@ public class VertexModule : ShaderModule, IVertexModule
                     )
                 });
             }
+            
+            offsets[binding] += total_resource_width;
         }
     }
 }

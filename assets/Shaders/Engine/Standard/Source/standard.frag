@@ -2,8 +2,10 @@
 
 #include <deferred_fragment_io.glsl>
 
+layout(set = 1, binding = 0) uniform sampler2D _albedo;
+
 void main() {
-    vec3 albedo = vec3(/*gl_InstanceIndex / 10000.0*/ 1.0, 1.0, 1.0);
+    vec3 albedo = vec3(texture(_albedo, in_uv));
     vec3 normal = in_normal;
     vec3 position = in_position.xyz;
     vec2 uv = in_uv;

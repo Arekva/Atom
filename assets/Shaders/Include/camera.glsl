@@ -15,14 +15,18 @@ layout(binding = 1) buffer CameraMatrices {
 } _cameraMatrices;
 
 // The camera index that is currently rendering that object 
-layout( push_constant ) uniform Constants {
+layout(push_constant) uniform Constants {
     uint value;
     uint frame;
 } _currentCameraIndex;
 
+uint get_current_frame() {
+    return _currentCameraIndex.frame;
+}
+
 uint get_camera_index() {
     uint camera_index = _currentCameraIndex.value;
-    uint current_frame = _currentCameraIndex.frame;
+    uint current_frame = get_current_frame();
     
     return camera_index * MAX_FRAMES_COUNT + current_frame;
 }

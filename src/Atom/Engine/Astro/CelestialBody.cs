@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Atom.Engine.Astro.Transvoxel;
 using Atom.Engine.Global;
 using Atom.Engine.Shader;
@@ -51,7 +52,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
     private VulkanMemory _meshMemory;
     
     
-    const int MODEL_COUNT = 10_000_000;
+    const int MODEL_COUNT = 1_000_000;
     
     
     
@@ -84,9 +85,9 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
     {
         Cell cell = Grid.Cells.First();
         cell.FillData();
-        //(GVertex[] vert, uint[] indices) verts = cell.Visit(smooth: false);
+        (GVertex[] vert, uint[] indices) verts = cell.Visit(smooth: false);
 
-        (GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SimpleSphere.obj");
+        //(GVertex[] vert, uint[] indices) verts = WavefrontLoader.ImportFile<uint>("Assets/Meshes/SimpleSphere.obj");
 
         _indexCount = (uint)verts.indices.Length;
 
@@ -120,7 +121,10 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
             device: device,
             size: reqs.Size,
             VK.GPU.PhysicalDevice.FindMemoryType(
-                typeFilter: reqs.MemoryTypeBits, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent)
+                typeFilter: reqs.MemoryTypeBits, 
+                properties: MemoryPropertyFlags.HostVisible  | 
+                            MemoryPropertyFlags.HostCoherent | 
+                            MemoryPropertyFlags.DeviceLocal  )
         );
         _meshBuffer.BindMemory(_meshMemory.Whole);
 
@@ -136,28 +140,38 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
 
         Random r = new (0);
         const double MAX_ANGLE = Math.PI * 2.0D;
-        double max_pos = Radius * 1000;
+        double max_pos = Radius * 500;
         
         /*models[0] = Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
             Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromYawPitchRoll(0.0F, 0.0F, 0.0F)),
             Matrix4X4.CreateScale(Vector3D<float>.One * (float)Radius)),
             Matrix4X4.CreateTranslation(Vector3D<float>.Zero)), 
             Matrix4X4<float>.Identity);*/
-        
-        for (int i = 0; i < MODEL_COUNT; i++)
+
+
+        Stopwatch sw = Stopwatch.StartNew();
+
+
+        Vector3D<double> scale = Vector3D<double>.One * Radius;
+
+        Parallel.For(0, MODEL_COUNT, i =>
         {
             models[i] = (Matrix4X4<float>)Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
                         Matrix4X4.CreateFromQuaternion(
-                            Quaternion<double>.CreateFromYawPitchRoll(r.NextDouble() * MAX_ANGLE, r.NextDouble() * MAX_ANGLE, r.NextDouble() * MAX_ANGLE)
-                            //Quaternion<double>.CreateFromYawPitchRoll(0.0D, 0.0D, 0.0D)
-                            ),
+                            Quaternion<double>.CreateFromYawPitchRoll(r.NextDouble() * MAX_ANGLE,
+                                r.NextDouble() * MAX_ANGLE, r.NextDouble() * MAX_ANGLE)
+                        ),
                         Matrix4X4.CreateScale(Vector3D<double>.One * Radius)),
-                        Matrix4X4.CreateTranslation(
-                            new Vector3D<double>(r.NextDouble() * max_pos, r.NextDouble() * max_pos, r.NextDouble() * max_pos)
-                            //new Vector3D<double>(i * Radius, i * Radius, i * Radius)
-                            )), 
-                        Matrix4X4<double>.Identity);
-        }
+                    Matrix4X4.CreateTranslation(
+                        new Vector3D<double>(r.NextDouble() * max_pos, r.NextDouble() * max_pos,
+                            r.NextDouble() * max_pos)
+                    )),
+                Matrix4X4<double>.Identity);
+        });
+        
+        sw.Stop();
+        
+        Log.Info($"{MODEL_COUNT} => {sw.Elapsed.TotalMilliseconds:F2} ms");
 
         /*Matrix4X4<float> model_matrix = Matrix4X4.Multiply(Matrix4X4.Multiply(Matrix4X4.Multiply(
             Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromYawPitchRoll(0.0F, 0.0F, 0.0F)),

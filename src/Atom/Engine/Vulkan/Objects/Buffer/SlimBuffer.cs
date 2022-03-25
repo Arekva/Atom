@@ -62,7 +62,7 @@ public struct SlimBuffer
     
 #region User defined
 
-    
+
 
 #endregion
 

@@ -187,9 +187,13 @@ public class ViewportWindow : IDisposable
 
     private void Render(double deltaTime)
     {
+        Updater.WaitUpdate();
+        
         DoFPS(deltaTime);
 
         _renderer.Render();
+        
+        Updater.NextFrame();
     }
 
     private void InitializeVulkanSurface()

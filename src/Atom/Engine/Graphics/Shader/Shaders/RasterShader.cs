@@ -86,6 +86,9 @@ public class RasterShader : Shader, IRasterShader
             IRasterModule raster_module = (IRasterModule) shader_module;
             
             descriptor_set_layouts[module_count] = raster_module.DescriptorSetLayout;
+            {
+                
+            }
             
             push_constants_list.AddRange(raster_module.PushConstants.Values);
 

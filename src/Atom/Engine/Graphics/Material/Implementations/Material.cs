@@ -10,10 +10,6 @@ public abstract class Material : AtomObject, IMaterial
 
     public vk.Pipeline Pipeline { get; protected set; }
     
-    //public Dictionary<string, DescriptorSetInfo> DescriptorSets { get; protected set; }
-    
-    
-
     public Dictionary<ShaderStageFlags, vk.DescriptorSet>[] DescriptorSets { get; protected set; }
 
     public vk.Device Device { get; }
@@ -28,7 +24,7 @@ public abstract class Material : AtomObject, IMaterial
     public override void Delete()
     {
         base.Delete();
-        
+
         // Handle destroying
         vk.VkOverloads.DestroyPipeline(VK.API, Device, Pipeline, ReadOnlySpan<vk.AllocationCallbacks>.Empty);
     }
