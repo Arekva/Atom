@@ -62,7 +62,7 @@ public class DeferredRenderer
     private vk.Device _device;
     private vk.PhysicalDevice _physicalDevice;
     private QueueFamily _renderFamily;
-    private vk.Queue _queue;
+    private Mutex<vk.Queue> _queue;
 
     private Silk.NET.Vulkan.RenderPass _renderPass;
     private uint _subpassIndex = 0U;
@@ -179,7 +179,7 @@ public class DeferredRenderer
         KhrSurface surfaceExtension,
         vk.SurfaceKHR surface,
         QueueFamily renderFamily,
-        vk.Queue queue)
+        Mutex<vk.Queue> queue)
     {
         _device = device;
         _physicalDevice = physicalDevice;
@@ -278,24 +278,33 @@ public class DeferredRenderer
             commandBufferCount: 1,
             pCommandBuffers: (vk.CommandBuffer*)&command
         );
-        VK.API.QueueSubmit(
-            _queue,
-            submitCount: 1,
-            in draw_submit,
-            frame_fence.Handle
-        );
-
-        vk.SwapchainKHR swapchain = _swapchain;
         
-        vk.PresentInfoKHR present_info = new(
-            waitSemaphoreCount: 1,
-            pWaitSemaphores: (vk.Semaphore*)&render_finished_semaphore,
-            swapchainCount: 1,
-            pSwapchains: &swapchain,
-            pImageIndices: &swap_image_index
+        using (MutexLock<vk.Queue> queue = _queue.Lock())
+        {
+            // UNSAFE
+            VK.API.QueueSubmit(
+                queue.Data,
+                submitCount: 1,
+                in draw_submit,
+                frame_fence.Handle
+            );
+            vk.SwapchainKHR swapchain = _swapchain;
+        
+            vk.PresentInfoKHR present_info = new(
+                waitSemaphoreCount: 1,
+                pWaitSemaphores: (vk.Semaphore*)&render_finished_semaphore,
+                swapchainCount: 1,
+                pSwapchains: &swapchain,
+                pImageIndices: &swap_image_index
+            );
+            
+            _swapchainExtension.QueuePresent(queue.Data, in present_info);
+        }
+        
 
-        );
-        _swapchainExtension.QueuePresent(_queue, in present_info);
+        
+        
+        
         
         _frameIndex = ++_frameIndex % MAX_FRAMES_IN_FLIGHT_COUNT;
 

@@ -11,7 +11,7 @@ public class ClassicPlayerController : Thing
     private Vector3D<f64> _angles = Vector3D<f64>.Zero;
     private const f64 MAX_X_ROT = 89.9D;
 
-    private f64 _eyesHeight = 1.75D;
+    private f64 _eyesHeight = 0.0D;//1.75D;
 
     private f64 _mouseSpeed = 45.0D;
     

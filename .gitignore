@@ -356,3 +356,5 @@ MigrationBackup/
 
 !**/Maintainance/**
 !assets/**
+
+**/do_not_push/**

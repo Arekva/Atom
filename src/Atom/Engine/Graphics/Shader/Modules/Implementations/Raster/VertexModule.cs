@@ -27,10 +27,9 @@ public class VertexModule : ShaderModule, IVertexModule
         VertexInputs = new Dictionary<u32, VertexInput>();
         Dictionary<u32, u32> offsets = new (capacity: 8);
 
-        foreach (Descriptor descriptor in Descriptors[ResourceType.StageInput])
+        foreach (Descriptor descriptor in Descriptors[ResourceType.StageInput].OrderBy(d => d.Binding).ThenBy(d => d.Location))
         {
             Format format = descriptor.GetDefaultVkFormat();
-
 
             u32 binding     = descriptor.Binding ;
             u32 location    = descriptor.Location;

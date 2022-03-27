@@ -214,13 +214,18 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
         SlimFence fence = new(device: _device, signaled: false);
         vk.SubmitInfo submit = new(commandBufferCount: 1U, pCommandBuffers: (vk.CommandBuffer*)&cmd);
 
-        VK.API.QueueSubmit(
-            queue      : VK.Queue     ,
-            submitCount: 1U, in submit,
-            fence      : fence.Handle
-        );
+        using (MutexLock<vk.Queue> queue = VK.Queue.Lock())
+        {
+            VK.API.QueueSubmit(
+                queue      : queue.Data   ,
+                submitCount: 1U, in submit,
+                fence      : fence.Handle
+            );
+            fence.Wait(_device);
+        }
+        
 
-        fence.Wait(_device);
+        
 
         fence.         Destroy(_device);
         pool.          Destroy(_device);
@@ -451,14 +456,18 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
         {
             vk.SubmitInfo submit = new(commandBufferCount: 1U, pCommandBuffers: (vk.CommandBuffer*)&cmd);
 
-            VK.API.QueueSubmit(
-                queue      : VK.Queue     ,
-                submitCount: 1U, in submit,
-                fence      : fence.Handle
-            );
+            using (MutexLock<vk.Queue> queue = VK.Queue.Lock())
+            {
+                VK.API.QueueSubmit(
+                    queue      : queue.Data   ,
+                    submitCount: 1U, in submit,
+                    fence      : fence.Handle
+                );
+            }
+            fence.Wait(_device);
         }
 
-        fence.Wait(_device);
+        
 
         fence.         Destroy(_device);
         pool.          Destroy(_device);

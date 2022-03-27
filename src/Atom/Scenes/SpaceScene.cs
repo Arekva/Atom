@@ -21,7 +21,12 @@ public class ClassicScene : AtomObject, IScene, IDrawer
 
     private readonly RasterizedMaterial _groundMaterial;
 
-    private readonly Texture _groundTexture;
+    private readonly Texture _groundAlbedo;
+    private readonly Texture _groundMetallic;
+    private readonly Texture _groundRoughness;
+    private readonly Texture _groundNormal;
+    private readonly Texture _groundAO;
+    private readonly Texture _groundHeight;
 
     private vk.Device Device => _groundMaterial.Device;
 
@@ -31,7 +36,7 @@ public class ClassicScene : AtomObject, IScene, IDrawer
 
         _controller = new ClassicPlayerController();
 
-        _ground = ReadOnlyMesh.Load<u32>("Assets/Meshes/Cube.obj");
+        _ground = ReadOnlyMesh.Load<u32>("Assets/Meshes/256_UVSphere.obj");
 
         IRasterShader shader = Shader.Load<IRasterShader>("Engine", "Standard");
 
@@ -62,13 +67,27 @@ public class ClassicScene : AtomObject, IScene, IDrawer
                 segment: CameraData.Memory.Whole
             )
         );
+        {
+            
+        }
         
-        _groundTexture = new Texture(DDS.Load(File.OpenRead("assets/Images/photo.dds")));
+        _groundAlbedo    = new Texture(image: DDS.Load(stream: File.OpenRead("assets/Images/brick/albedo.dds")));
+        _groundMaterial.WriteImage<IFragmentModule>(name: "_albedo", texture: _groundAlbedo);
         
-        _groundMaterial.WriteImage<IFragmentModule>(
-            name   : "_albedo"     ,
-            texture: _groundTexture
-        );
+        _groundNormal    = new Texture(image: DDS.Load(stream: File.OpenRead("assets/Images/brick/normal.dds")));
+        _groundMaterial.WriteImage<IFragmentModule>(name: "_normal", texture: _groundNormal);
+        
+        _groundAO        = new Texture(image: DDS.Load(stream: File.OpenRead("assets/Images/rust/ao.dds")));
+        //_groundMaterial.WriteImage<IFragmentModule>(name: "_ambientOcclusion", texture: _groundAO);
+        
+        _groundMetallic  = new Texture(image: DDS.Load(stream: File.OpenRead("assets/Images/rust/metallic.dds")));
+        _groundMaterial.WriteImage<IFragmentModule>(name: "_metalness", texture: _groundMetallic);
+        
+        _groundRoughness = new Texture(image: DDS.Load(stream: File.OpenRead("assets/Images/rust/roughness.dds")));
+        _groundMaterial.WriteImage<IFragmentModule>(name: "_roughness", texture: _groundRoughness);
+        
+        _groundHeight   = new Texture(image: DDS.Load(stream: File.OpenRead("assets/Images/brick/height.dds")));
+        _groundMaterial.WriteImage<IVertexModule>(name: "_height", texture: _groundHeight);
 
         Draw.AssignDrawer(this, 0);
     }
@@ -78,8 +97,11 @@ public class ClassicScene : AtomObject, IScene, IDrawer
     protected override void Frame()
     {
         if (_transformsMemory == null!) return;
-        
-        _rotation += Time.DeltaTime * 45.0D;
+
+        {
+            
+        }
+        _rotation += Time.DeltaTime * 60.0/360D;
         using (MemoryMap<Matrix4X4<f32>> map = _transformsMemory.Map<Matrix4X4<f32>>())
         {
             Span<Matrix4X4<f32>> frame_data = map.AsSpan(Graphics.FrameIndex, 1);
@@ -101,7 +123,13 @@ public class ClassicScene : AtomObject, IScene, IDrawer
                 
         _ground          .Dispose(      );
         _groundMaterial  .Dispose(      );
-        _groundTexture   .Dispose(      );
+        
+        _groundAlbedo.Dispose();
+        _groundMetallic.Dispose();
+        _groundRoughness.Dispose();
+        _groundNormal.Dispose();
+        _groundAO.Dispose();
+        _groundHeight.Dispose();
 
         _transformsBuffer.Destroy(Device);
         _transformsMemory.Dispose(      );

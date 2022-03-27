@@ -25,8 +25,8 @@ public static class VK
     private static GPU _gpu;
     public static GPU GPU => _gpu;
 
-    private static vk.Queue _queue;
-    public static vk.Queue Queue => _queue;
+    private static Mutex<vk.Queue> _queue;
+    public static Mutex<vk.Queue> Queue => _queue;
     
     public static Version ApplicationVersion { get; private set; }
 
@@ -223,7 +223,8 @@ public static class VK
             );
             
             VK.API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
-            VK.API.GetDeviceQueue(_device, 0, 0, out _queue);
+            VK.API.GetDeviceQueue(_device, 0, 0, out vk.Queue queue);
+            _queue = queue;
             
             
             //Camera.Init(_device, best_gpu, best_gpu.QueueFamilies[0]);

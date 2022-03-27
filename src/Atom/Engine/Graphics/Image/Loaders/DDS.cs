@@ -91,6 +91,10 @@ public static class DDS
             throw new NotImplementedException("Only DX10 DDS files are implemented.");
         }
 
+        {
+            
+        }
+
         // Get Vulkan parameters
         u32          vk_width        = header.Width == 0
                                         ? throw new InvalidDDSFile("No width is specified in DDS file's header.")
@@ -378,9 +382,12 @@ public static class DDS
         );
 
         SlimFence upload_fence = new(used_device);
-        VK.API.QueueSubmit(VK.Queue, 1U, in submission, upload_fence);
-        upload_fence.Wait(used_device);
-        
+        using (MutexLock<vk.Queue> queue = VK.Queue.Lock())
+        {
+            VK.API.QueueSubmit(queue.Data, 1U, in submission, upload_fence);
+            upload_fence.Wait(used_device);
+        }
+
         // cleanup
         upload_fence.Destroy(used_device);
         transfer_pool.Destroy(used_device);

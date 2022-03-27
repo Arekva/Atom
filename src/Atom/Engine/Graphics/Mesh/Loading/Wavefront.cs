@@ -109,10 +109,43 @@ public static class Wavefront
                     indices.Add(Scalar.Add(vertex_count, Scalar<TIndex>.Two));
                     indices.Add(Scalar.Add(vertex_count, Scalar.Add(Scalar<TIndex>.One, Scalar<TIndex>.Two)));
                 }
+                
+                // tangents
+                u32 vertex_count_u32 = Scalar.As<TIndex, u32>(vertex_count);
+                i32 vertex_count_i32 = (i32)vertex_count_u32;
+                
+                Vector4D<f32> work_tangent;
+                
+                Vector3D<f32> pos1 = vertices[vertex_count_i32+0].Position;
+                Vector3D<f32> pos2 = vertices[vertex_count_i32+1].Position;
+                Vector3D<f32> pos3 = vertices[vertex_count_i32+2].Position;
+                
+                Vector2D<f32> uv1 = vertices[vertex_count_i32+0].UV;
+                Vector2D<f32> uv2 = vertices[vertex_count_i32+1].UV;
+                Vector2D<f32> uv3 = vertices[vertex_count_i32+2].UV;
+                
+                Vector3D<f32> edge1    = pos2 - pos1;
+                Vector3D<f32> edge2    = pos3 - pos1;
+                Vector2D<f32> delta_uv1 = uv2 - uv1;
+                Vector2D<f32> delta_uv2 = uv3 - uv1;
+                
+                f32 f = 1.0f / (delta_uv1.X * delta_uv2.Y - delta_uv2.X * delta_uv1.Y);
+                work_tangent.X = f * (delta_uv2.Y * edge1.X - delta_uv1.Y * edge2.X);
+                work_tangent.Y = f * (delta_uv2.Y * edge1.Y - delta_uv1.Y * edge2.Y);
+                work_tangent.Z = f * (delta_uv2.Y * edge1.Z - delta_uv1.Y * edge2.Z);
+                work_tangent.W = (f32)Math.CopySign(1.0, delta_uv2.Y - delta_uv1.Y);
+                
+                Vector3D<f32> tangent_xyz = Vector3D.Normalize<f32>(new(work_tangent.X, work_tangent.Y, work_tangent.Z));
+                
+                Vector4D<f32> tangent = new (tangent_xyz, -work_tangent.W);
 
+                for (i32 i = 0; i < components.Length - 1; i++)
+                {
+                    GVertex previous = vertices[vertex_count_i32 + i];
+                    vertices[vertex_count_i32 + i] = previous with { Tangent = tangent };
+                }
             }
         }
-
         return (vertices.ToArray(), indices.ToArray());
     }
 }
