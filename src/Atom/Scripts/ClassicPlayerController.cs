@@ -47,12 +47,16 @@ public class ClassicPlayerController : Thing
         move_right.Y = 0.0D;
         Vector3D<f64> right   = Vector3D.Normalize(move_right  );
         
+        Vector3D<f64> up = _camera.Space.Up;
+        
         Vector3D<f64> dir = Vector3D<f64>.Zero;
         
         if (Keyboard.IsPressed(Key.W)) dir += forward;
         if (Keyboard.IsPressed(Key.S)) dir -= forward;
         if (Keyboard.IsPressed(Key.A)) dir -= right  ;
         if (Keyboard.IsPressed(Key.D)) dir += right  ;
+        if (Keyboard.IsPressed(Key.F)) dir -= up     ;
+        if (Keyboard.IsPressed(Key.R)) dir += up     ;
         
         if (dir != Vector3D<f64>.Zero) dir = Vector3D.Normalize(dir);
 

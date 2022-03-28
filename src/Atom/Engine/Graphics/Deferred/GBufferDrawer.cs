@@ -104,7 +104,7 @@ public unsafe class GBufferDrawer : IDisposable
         _colorBlend.Data.PAttachments = _colorBlendAttachment;
     }
 
-    public unsafe GBufferDrawer(uint maxImages, vk.Device device)
+    public GBufferDrawer(uint maxImages, vk.Device device)
     {
         _device = device;
         _maxImages = maxImages;
@@ -175,17 +175,17 @@ public unsafe class GBufferDrawer : IDisposable
 
         _writeDescriptorSets = new vk.WriteDescriptorSet[maxImages*4];
 
-        for (int i = 0; i < maxImages; i++)
+        for (u32 i = 0; i < maxImages; i++)
         {
-            for (int j = 0; j < 4; j++)
+            for (u32 j = 0; j < 4; j++)
             {
-                int index = i * 4 + j;
+                u32 index = i * 4 + j;
                 
                 _writeDescriptorSets[index] = new vk.WriteDescriptorSet(
-                    dstSet: _descriptorSets[i],
-                    dstBinding: (uint)j,
-                    dstArrayElement: 0,
-                    descriptorType: vk.DescriptorType.InputAttachment,
+                    dstSet         : _descriptorSets[i]               ,
+                    dstBinding     : j                                ,
+                    dstArrayElement: 0                                ,
+                    descriptorType : vk.DescriptorType.InputAttachment,
                     descriptorCount: 1
                 
                     // set ImageInfo later, in CmdDrawView() 

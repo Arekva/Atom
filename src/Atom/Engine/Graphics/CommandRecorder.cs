@@ -22,7 +22,7 @@ public class CommandRecorder : IDisposable
         VK.API.EndCommandBuffer(CommandBuffer.Handle);
         GC.SuppressFinalize(this);
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ~CommandRecorder() => Dispose();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -46,7 +46,7 @@ public class CommandRecorder : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public  void CopyImage(
+    public void CopyImage(
         SlimImage sourceImage, vk.ImageLayout sourceImageLayout,
         SlimImage destinationImage, vk.ImageLayout destinationImageLayout,
         ReadOnlySpan<vk.ImageCopy> regions
@@ -63,7 +63,7 @@ public class CommandRecorder : IDisposable
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public  void CopyImage(
+    public void CopyImage(
         SlimImage sourceImage, vk.ImageLayout sourceImageLayout,
         SlimImage destinationImage, vk.ImageLayout destinationImageLayout,
         in vk.ImageCopy regions
@@ -79,4 +79,48 @@ public class CommandRecorder : IDisposable
             pRegions      : regions
         );
     }
+
+    public class RenderPassRecorder : IDisposable
+    {
+        public readonly SlimCommandBuffer CommandBuffer;
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe RenderPassRecorder(
+            SlimCommandBuffer commandBuffer, vk.RenderPass renderPass,
+            vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
+            vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
+        {
+            CommandBuffer = commandBuffer;
+            
+            fixed (vk.ClearValue* p_clear_values = clearValues)
+            {
+                vk.RenderPassBeginInfo pass_info = new(
+                    renderPass     : renderPass             ,
+                    renderArea     : renderArea             ,
+                    framebuffer    : framebuffer           ,
+                    clearValueCount: (u32)clearValues.Length,
+                    pClearValues   : p_clear_values
+                );
+                VK.API.CmdBeginRenderPass(commandBuffer, in pass_info, subpassContents);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void NextSubpass(vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
+        => VK.API.CmdNextSubpass(CommandBuffer, subpassContents);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            VK.API.CmdEndRenderPass(CommandBuffer);
+            GC.SuppressFinalize(this);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ~RenderPassRecorder() => Dispose();
+    }
+
+    public RenderPassRecorder RenderPass(vk.RenderPass renderPass,
+        vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
+        vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
+    => new (CommandBuffer, renderPass, renderArea, framebuffer, clearValues, subpassContents);
 }

@@ -53,10 +53,22 @@ public abstract partial class Shader
             throw new NotImplementedException("Other shaders than fragment and vertex aren't implemented yet.");
         }
 
+        IRasterShader? light_shader = null;
+        if (descriptor.Light != null)
+        {
+            VertexModule vertex = new (new Program(Path.Combine(path, "..", descriptor.Light)), device);
+            
+            light_shader = new RasterShader(@namespace, descriptor.Name + " (Light)",
+                descriptor.Description, descriptor.Version,
+                vertex: vertex
+            );
+        }
+
         RasterShader shader = new (
             @namespace, descriptor.Name, descriptor.Description, descriptor.Version,
             vertex: new VertexModule(new Program(Path.Combine(path, ".." , descriptor.Stages[ShaderStageFlags.Vertex])), device), 
-            fragment: new FragmentModule(new Program(Path.Combine(path, ".." , descriptor.Stages[ShaderStageFlags.Fragment])), device)
+            fragment: new FragmentModule(new Program(Path.Combine(path, ".." , descriptor.Stages[ShaderStageFlags.Fragment])), device),
+            lightShader: light_shader
         )
         {
             Namespace = @namespace,

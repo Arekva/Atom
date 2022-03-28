@@ -12,6 +12,8 @@ public class ShaderDescriptor
     public string? Description { get; set; }
     
     public Version Version { get; set; }
+    
+    public string? Light { get; set; }
 
     public Dictionary<ShaderStageFlags, string> Stages { get; set; }
 }

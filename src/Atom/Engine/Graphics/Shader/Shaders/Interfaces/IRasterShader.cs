@@ -3,6 +3,9 @@
 /// <summary> A raster-able shader. They are used to render triangles based meshes onto an image. </summary>
 public interface IRasterShader : IShader 
 {
+    public IRasterShader? LightShader { get; }
+    
+    
     /// <summary> The vertex module of the shader. This is an obligatory module of the raster pipeline. </summary>
     ///<p> Vertex modules are able to control where the vertices will be placed on the screen. They are mostly used
     /// to apply a Model-View-Matrix so cameras can be simulated. </p>
@@ -24,12 +27,11 @@ public interface IRasterShader : IShader
     /// <p> Geometry modules are able to create vertices from the pipeline itself. </p>
     public IGeometryModule? GeometryModule { get; }
     
-    /// <summary> The fragment module (or pixel module) of the shader. This is an obligatory module of the raster
-    /// pipeline. </summary>
+    /// <summary> The fragment module (or pixel module) of the shader. </summary>
     /// <p> Fragment modules are the modules which actually draw the pixels onto the image. For each pixel of the
     /// triangle display on the screen, the fragment shader has to output a color, like a solid color, a texture
     /// with a light effect and so on. </p>
-    public IFragmentModule FragmentModule { get; }
+    public IFragmentModule? FragmentModule { get; }
     
     /// <summary> The task module of the shader. This is an optional module of the raster pipeline, and is only
     /// available on NVIDIA GPUs. </summary>

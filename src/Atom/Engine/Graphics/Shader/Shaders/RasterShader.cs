@@ -4,7 +4,7 @@ namespace Atom.Engine.Shader;
 
 public class RasterShader : Shader, IRasterShader
 {
-    public const uint MaxMaterialPerShaderCount = 1024;
+    public const u32 MAX_MATERIAL_PER_SHADER_COUNT = 1024;
     
     
 #region Modules
@@ -33,7 +33,7 @@ public class RasterShader : Shader, IRasterShader
             if (TessellationControlModule != null) yield return TessellationControlModule;
             if (TessellationEvaluationModule != null) yield return TessellationEvaluationModule;
             if (GeometryModule != null) yield return GeometryModule;
-            yield return FragmentModule;
+            if (FragmentModule != null) yield return FragmentModule;
             if (TaskModule != null) yield return TaskModule;
             if (MeshModule != null) yield return MeshModule;
         }
@@ -47,7 +47,7 @@ public class RasterShader : Shader, IRasterShader
     
     public IGeometryModule? GeometryModule { get; }
     
-    public IFragmentModule FragmentModule { get; }
+    public IFragmentModule? FragmentModule { get; }
     
     public ITaskModule? TaskModule { get; }
     
@@ -55,14 +55,19 @@ public class RasterShader : Shader, IRasterShader
     
 #endregion
 
+    public IRasterShader? LightShader { get; }
+
     public RasterShader(
         string @namespace, string name, string? description, Version version,
         /* obligatory modules */ 
-        IVertexModule vertex, IFragmentModule fragment, 
+        IVertexModule vertex, 
         /* optional modules */
+        IFragmentModule? fragment = null,
         IGeometryModule? geometry = null,
         ITessellationControlModule? tessControl = null, ITessellationEvaluationModule? tessEval = null, 
         ITaskModule? task = null, IMeshModule? mesh = null,
+        /* lighting */
+        IRasterShader? lightShader = null,
         vk.Device? device = null
     ) : base(@namespace, name, description, version, device)
     {
@@ -70,31 +75,30 @@ public class RasterShader : Shader, IRasterShader
         TessellationControlModule = tessControl;
         TessellationEvaluationModule = tessEval;
         GeometryModule = geometry;
-        FragmentModule = fragment ?? throw new ArgumentNullException(nameof(fragment));
+        FragmentModule = fragment; // ?? throw new ArgumentNullException(nameof(fragment));
         TaskModule = task;
         MeshModule = mesh;
+
+        LightShader = lightShader;
         
         Span<SlimDescriptorSetLayout> descriptor_set_layouts = stackalloc SlimDescriptorSetLayout[7];
 
-        Dictionary<vk.DescriptorType, uint> descriptors_counts = new Dictionary<vk.DescriptorType, uint>();
+        Dictionary<vk.DescriptorType, u32> descriptors_counts = new ();
         
-        List<vk.PushConstantRange> push_constants_list = new List<vk.PushConstantRange>();
+        List<vk.PushConstantRange> push_constants_list = new ();
 
-        int module_count = 0;
+        i32 module_count = 0;
         foreach (IShaderModule shader_module in Modules)
         {
             IRasterModule raster_module = (IRasterModule) shader_module;
             
             descriptor_set_layouts[module_count] = raster_module.DescriptorSetLayout;
-            {
-                
-            }
             
             push_constants_list.AddRange(raster_module.PushConstants.Values);
 
             foreach ((SPIRVCross.ResourceType type, Descriptor[] descriptors) in raster_module.Descriptors)
             {
-                uint desc_count = (uint)descriptors.Length;
+                u32 desc_count = (u32)descriptors.Length;
 
                 if (desc_count == 0 || 
                     type 
@@ -136,9 +140,16 @@ public class RasterShader : Shader, IRasterShader
         
         DescriptorPool = new SlimDescriptorPool(
             device: Device,
-            maxSets: Graphics.MaxFramesCount * MaxMaterialPerShaderCount,
+            maxSets: Graphics.MaxFramesCount * MAX_MATERIAL_PER_SHADER_COUNT,
             poolSizes: PoolSizes,
             flags: vk.DescriptorPoolCreateFlags.DescriptorPoolCreateFreeDescriptorSetBit
         );
+    }
+
+    public override void Delete()
+    {
+        base.Delete();
+        
+        LightShader?.Dispose();
     }
 }

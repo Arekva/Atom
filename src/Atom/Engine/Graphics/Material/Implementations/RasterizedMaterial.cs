@@ -25,23 +25,29 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     public DepthStencil DepthStencil { get; set; } = DepthStencil.Default;
     
     public ColorBlending ColorBlending { get; set; } = ColorBlending.Default;
+
+    public bool CastShadows { get; set; } = true;
     
 #endregion
 
 #region Dynamic State Configuration
 
-    private static readonly Pin<int> DynamicStates 
-        = new int[] { (int)vk.DynamicState.Viewport, (int)vk.DynamicState.Scissor };
+    private static readonly Pin<i32> DynamicStates 
+        = new [] { (i32)vk.DynamicState.Viewport, (i32)vk.DynamicState.Scissor };
 
     private static readonly unsafe vk.PipelineDynamicStateCreateInfo DynamicStateInfo = new(
         flags: 0,
-        dynamicStateCount: (uint)DynamicStates.Size,
+        dynamicStateCount: (u32)DynamicStates.Size,
         pDynamicStates: (vk.DynamicState*)DynamicStates.Pointer
     );
 
 #endregion
 
-    private readonly uint _moduleCount;
+    private vk.Pipeline _lightPipeline;
+
+    private readonly u32 _moduleCount;
+
+    private readonly bool _hasLightShader;
 
     private readonly Queue<(vk.DescriptorBufferInfo buffer, vk.WriteDescriptorSet write)>[] _writeEdits;
     
@@ -51,10 +57,11 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     private RasterizedMaterial(IRasterShader shader, vk.Pipeline basePipeline, vk.Device? device = null) : base(device)
     {
         Shader = shader ?? throw new ArgumentNullException(nameof(shader));
-
+        _hasLightShader = shader.LightShader != null;
+        
         DescriptorSets = new Dictionary<ShaderStageFlags, vk.DescriptorSet>[Graphics.MaxFramesCount];
         _writeEdits = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>[Graphics.MaxFramesCount];
-        for (int i = 0; i < Graphics.MaxFramesCount; i++)
+        for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
         {
             _writeEdits[i] = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>(capacity: 1024);
         }
@@ -69,7 +76,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
             descriptor_set_stages[module_count] = module.Stage;
             module_count++;
         }
-        _moduleCount = (uint)module_count;
+        _moduleCount = (u32)module_count;
 
         unsafe
         {
@@ -97,24 +104,34 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
                 }
             }
         }
-
+        
         CreatePipeline(shader.Device, basePipeline);
+
+        if (_hasLightShader && CastShadows)
+        {
+            CreateLightPipeline(shader.LightShader!.Device);
+        }
     }
 
     public override unsafe void Delete()
     {
         base.Delete();
 
-        uint total_sets_count = Graphics.MaxFramesCount * _moduleCount;
+        if (_hasLightShader)
+        {
+            VK.API.DestroyPipeline(Shader.LightShader!.Device, _lightPipeline, null);
+        }
+
+        u32 total_sets_count = Graphics.MaxFramesCount * _moduleCount;
         
         Span<vk.DescriptorSet> sets = stackalloc vk.DescriptorSet[(int)total_sets_count];
-        for (uint i = 0; i < Graphics.MaxFramesCount; i++)
+        for (u32 i = 0; i < Graphics.MaxFramesCount; i++)
         {
-            uint j = 0;
+            u32 j = 0;
             foreach (vk.DescriptorSet set in DescriptorSets[i].Values)
             {
-                uint index = AMath.To1D(j, i, _moduleCount);
-                sets[(int) index] = set;
+                u32 index = AMath.To1D(j, i, _moduleCount);
+                sets[(i32) index] = set;
                 ++j;
             }
         }
@@ -160,7 +177,126 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
             pDynamicOffsets: null);
     }
     
-    
+    public override unsafe void CmdBindLightMaterial(SlimCommandBuffer cmd, Vector2D<u32> extent, u32 cameraIndex, u32 frameIndex)
+    {
+        if (!_hasLightShader || !CastShadows) return;
+        
+        vk.Viewport viewport = new(width: extent.X, height: extent.Y, minDepth: 0.0F, maxDepth: 1.0F);
+        vk.Rect2D scissor = new(extent: new vk.Extent2D(extent.X, extent.Y));
+
+        VK.API.CmdBindPipeline(cmd, vk.PipelineBindPoint.Graphics, _lightPipeline);
+        VK.API.CmdSetViewport(cmd, 0U, 1U, in viewport);
+        VK.API.CmdSetScissor(cmd, 0U, 1U, in scissor);
+
+        Span<u32> pushs = stackalloc u32[2];
+        pushs[0] = cameraIndex;
+        pushs[1] = frameIndex;
+        // set camera & frame index
+        VK.API.CmdPushConstants(cmd, Shader.LightShader!.PipelineLayout, (vk.ShaderStageFlags)ShaderStageFlags.Vertex, 0U, pushs);
+
+        Span<vk.DescriptorSet> sets = stackalloc vk.DescriptorSet[(i32)_moduleCount];
+
+        i32 desc_index = 0;
+        foreach (vk.DescriptorSet set in DescriptorSets[frameIndex].Values)
+        {
+            sets[desc_index] = set;
+            ++desc_index;
+        }
+        
+        VK.API.CmdBindDescriptorSets(
+            cmd, 
+            vk.PipelineBindPoint.Graphics, 
+            Shader.LightShader!.PipelineLayout,
+            firstSet: 0U,
+            sets, 
+            dynamicOffsetCount: 0U, 
+            pDynamicOffsets: null);
+    }
+
+    private unsafe void CreateLightPipeline(vk.Device device)
+    {
+        IRasterShader light_shader = Shader.LightShader!;
+        
+        vk.PipelineShaderStageCreateInfo[] stages = light_shader.Modules.Select(module => module.StageInfo).ToArray();
+        
+        List<vk.VertexInputAttributeDescription> attribs_list = new();
+        List<vk.VertexInputBindingDescription> bindings_list = new();
+        foreach ((u32 _, VertexInput input) in light_shader.VertexModule.VertexInputs)
+        {
+            bindings_list.Add(input.Binding);
+            attribs_list.AddRange(input.Attributes.Values
+                .Select(a => a.Description)
+                .OrderBy(d => d.Location));
+        }
+
+        vk.VertexInputAttributeDescription[] attribs = attribs_list.ToArray();
+        vk.VertexInputBindingDescription[] bindings = bindings_list.ToArray();
+
+        vk.PipelineDynamicStateCreateInfo dynamic_state = DynamicStateInfo;
+
+        vk.Pipeline base_pipeline = new (0);
+        
+        fixed (vk.VertexInputAttributeDescription* p_attribs = attribs)
+        fixed (vk.VertexInputBindingDescription* p_bindings = bindings)
+        {
+            vk.PipelineVertexInputStateCreateInfo input_state_info = new(
+                flags: 0,
+                vertexAttributeDescriptionCount: (u32)attribs.Length,
+                pVertexAttributeDescriptions: p_attribs,
+
+                vertexBindingDescriptionCount: (u32)bindings.Length,
+                pVertexBindingDescriptions: p_bindings
+            );
+            
+            Rasterizer rasterizer = new()
+            {
+                CullMode = vk.CullModeFlags.CullModeFrontBit, LineWidth = 1.0F
+            };
+            Multisampling multisampling = new()
+            {
+                DoMultisampling = false,
+                Count = vk.SampleCountFlags.SampleCount1Bit
+            };
+            DepthStencil depth_stencil = new()
+            {
+                DoDepthTest = true,
+                DepthCompareOp = vk.CompareOp.Greater,
+                DepthWriteEnable = true,
+                DepthBounds = new Clamp<float>(0.0F, 1.0F)
+            };
+            ColorBlending color_blending = new() { DoLogicOperator = false };
+
+            fixed (vk.PipelineShaderStageCreateInfo* p_stages = stages)
+            {
+                vk.GraphicsPipelineCreateInfo info = new(
+                    flags:               0,
+                    stageCount:          (u32)stages.Length,
+                    pStages:             p_stages,
+                    pVertexInputState:   &input_state_info,
+                    pInputAssemblyState: (vk.PipelineInputAssemblyStateCreateInfo*)Unsafe.AsPointer(ref Topology.State),
+                    pTessellationState:  (vk.PipelineTessellationStateCreateInfo*)Unsafe.AsPointer(ref Tessellation.State),
+                    pViewportState:      (vk.PipelineViewportStateCreateInfo*)Unsafe.AsPointer(ref Viewport.State),
+                    pRasterizationState: (vk.PipelineRasterizationStateCreateInfo*)Unsafe.AsPointer(ref rasterizer.State),
+                    pMultisampleState:   (vk.PipelineMultisampleStateCreateInfo*)Unsafe.AsPointer(ref multisampling.State),
+                    pDepthStencilState:  (vk.PipelineDepthStencilStateCreateInfo*)Unsafe.AsPointer(ref depth_stencil.State),
+                    pColorBlendState:    (vk.PipelineColorBlendStateCreateInfo*)Unsafe.AsPointer(ref color_blending.State),
+                    pDynamicState:       &dynamic_state,
+                    layout:              light_shader.PipelineLayout,
+                    renderPass:          Graphics.MainRenderPass,
+                    subpass:             Graphics.MainSubpass,
+                    basePipelineHandle:  base_pipeline,
+                    basePipelineIndex:   0
+                );
+
+                vk.Result result = VK.API.CreateGraphicsPipelines(
+                   light_shader.Device, default,
+                   1U, in info,
+                   null, out vk.Pipeline pipeline);
+
+                _lightPipeline = pipeline;
+            }
+        }
+    }
 
     private unsafe void CreatePipeline(vk.Device device, vk.Pipeline basePipeline)
     {
@@ -226,18 +362,6 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         }
     }
 
-    /*public void WriteData<TStage, TData>(string name, in TData data)
-        where TStage : IRasterModule
-        where TData  : unmanaged
-    {
-        ShaderStageFlags module_type = ModuleAttribute.InterfaceStageMap[typeof(TStage)];
-
-        for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
-        {
-            _writeEdits[i].Enqueue(());
-        }
-    }*/
-
     public unsafe void WriteBuffer<TStage>(string name, BufferSubresource subresource, 
         vk.DescriptorType descriptorType = vk.DescriptorType.StorageBuffer)
         where TStage : IRasterModule
@@ -254,8 +378,6 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         
         for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
         {
-            
-
             vk.WriteDescriptorSet write_descriptor = new(
                 dstSet         : DescriptorSets[frame_index][module_type],
                 dstBinding     : desc.Binding,

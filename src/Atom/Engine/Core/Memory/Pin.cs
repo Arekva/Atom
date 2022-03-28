@@ -21,6 +21,8 @@ public unsafe class Pin<T> : IDisposable where T : unmanaged
     
     
     private GCHandle _handle;
+
+    private bool _disposed;
     
     public Pin(ref T data)
     {
@@ -45,6 +47,9 @@ public unsafe class Pin<T> : IDisposable where T : unmanaged
     
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+        
         _handle.Free();
         GC.SuppressFinalize(this);
     }

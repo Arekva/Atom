@@ -254,7 +254,7 @@ public class CelestialBody : AtomObject, ICelestialBody, IDrawer
             vk.DescriptorBufferInfo camera_buffer_info = new(
                 CameraData.VPMatrices,
                 offset: 0,
-                range: CameraData.MaxCameraCount * (ulong)sizeof(CameraVP)
+                range: CameraData.MAX_CAMERA_COUNT * (ulong)sizeof(CameraVP)
             );
 
             // update instance data

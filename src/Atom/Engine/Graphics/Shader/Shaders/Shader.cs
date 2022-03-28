@@ -54,7 +54,7 @@ public abstract partial class Shader : IShader
         => (Device, Namespace, Name, Description, Version, GUID) 
         =  (device ?? VK.Device, @namespace, name, description, version, Guid.NewGuid());
 
-    public void Delete()
+    public virtual void Delete()
     {
         if (_disposed) return;
         _disposed = true;

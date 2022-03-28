@@ -6,7 +6,7 @@ namespace Atom.Engine;
 
 public class CameraData : IDisposable
 {
-    public const uint MaxCameraCount = 1024;
+    public const u32 MAX_CAMERA_COUNT = 1024;
     
 #region Handles
     
@@ -40,6 +40,7 @@ public class CameraData : IDisposable
         OnFrameUpdateInternal += FrameUpdate; // always assigned by owner camera
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void FrameUpdate(uint frameIndex) => OnFrameUpdate!(frameIndex);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,7 +67,7 @@ public class CameraData : IDisposable
         uint queue_family = 0U;
         VPMatrices = new SlimBuffer(
             device: used_device,
-            size: (ulong)(MaxCameraCount * sizeof(CameraVP) * Graphics.MaxFramesCount),
+            size: (ulong)(MAX_CAMERA_COUNT * sizeof(CameraVP) * Graphics.MaxFramesCount),
             usage: BufferUsageFlags.StorageBuffer,
             sharingMode: vk.SharingMode.Exclusive, queue_family.AsSpan(), 
             flags: 0

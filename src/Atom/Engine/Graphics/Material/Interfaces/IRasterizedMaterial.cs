@@ -1,4 +1,6 @@
 ﻿using Atom.Engine.Shader;
+using Atom.Engine.Vulkan;
+using Silk.NET.Maths;
 
 namespace Atom.Engine;
 
@@ -25,5 +27,7 @@ public interface IRasterizedMaterial : IMaterial
     public ColorBlending ColorBlending { get; set; }
     
 #endregion
+
+    public void CmdBindLightMaterial(SlimCommandBuffer cmd, Vector2D<u32> extent, u32 cameraIndex, u32 frameIndex);
 
 }

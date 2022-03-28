@@ -10,7 +10,7 @@ public static class StructExtension
         new (Unsafe.AsPointer(ref @struct), length: 1);
 
     public static unsafe (SlimBuffer buffer, VulkanMemory memory) CreateVulkanMemory<T>(
-        ref this Span<T> span, vk.Device device, MemoryPropertyFlags properties) where T : unmanaged
+        ref this Span<T> span, vk.Device device, BufferUsageFlags usages, MemoryPropertyFlags properties) where T : unmanaged
     {
         u64 buffer_size = (u64)span.Length * (u64)Unsafe.SizeOf<T>();
 
@@ -18,7 +18,7 @@ public static class StructExtension
         
         SlimBuffer buffer = new (device,
             buffer_size,
-            usage: BufferUsageFlags.StorageBuffer,
+            usage: usages,
             sharingMode: vk.SharingMode.Exclusive, queue_fam.AsSpan()
         );
         buffer.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);

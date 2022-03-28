@@ -5,9 +5,9 @@ layout(binding = 0) buffer InstanceData {
 } _instanceData;
 
 layout(binding = 2) uniform sampler2D _height;
-/*layout(binding = 3) uniform Settings {
-    
-} _settings;*/
+layout(binding = 3) uniform Settings {
+    float height;
+} _settings;
 
 #include <camera.glsl>
 
@@ -20,10 +20,8 @@ mat4 get_model_matrix() {
 }
 
 void main() {
-    const float HEIGHT = 0.05;
-
     mat4 model_matrix   = get_model_matrix();
-    vec3 position       = in_position + in_normal * texture(_height, in_uv).r * HEIGHT;
+    vec3 position       = in_position + in_normal * texture(_height, in_uv).r * _settings.height;
     
     mat3 model_rot_matrix = mat3(model_matrix);
 

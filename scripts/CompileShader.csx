@@ -31,6 +31,8 @@ public class ShaderDescriptor
     
     public Version Version { get; set; }
 
+    public string Light { get; set; }
+
     public Dictionary<ShaderStage, string> Stages { get; set; }
 }
 
@@ -49,6 +51,18 @@ string path_to_include = Path.Combine(SHADER_PATH, INCLUDE);
 
 Directory.CreateDirectory(path_to_modules_compiles);
 
+string compile_mode = "-O";
+
+if (Args.Count > 1)
+{
+    compile_mode = Args[1].ToLower() switch {
+        "debug" => "-O0",
+        "performance" => "-O",
+        "size" => "-Os",
+        _       => throw new ArgumentException($"Compile mode {Args[1]} is not a valid compile mode.")
+    };
+}
+
 foreach(string source_file_path in Directory.GetFiles(path_to_modules_sources))
 {
     string compiled_file_name = Path.GetFileName(source_file_path);
@@ -59,7 +73,7 @@ foreach(string source_file_path in Directory.GetFiles(path_to_modules_sources))
     ProcessStartInfo info = new ()
     {
         FileName = "glslc",
-        Arguments = $"--target-env=vulkan1.2 -I {path_to_include} -o {save_path} {load_path}",
+        Arguments = $"--target-env=vulkan1.2 {compile_mode} -I {path_to_include} -o {save_path} {load_path}",
         UseShellExecute = false
     };
 

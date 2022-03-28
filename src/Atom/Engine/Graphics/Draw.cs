@@ -22,7 +22,7 @@ public static class Draw
     {
         _device = device ?? VK.Device;
         
-        const int camCount = (int) CameraData.MaxCameraCount;
+        const int camCount = (int) CameraData.MAX_CAMERA_COUNT;
         for (int i = 0; i < _drawersAdditionList.Length; i++)
         {
             _drawersAdditionList[i] = new Dictionary<uint, List<IDrawer>>(capacity: camCount);

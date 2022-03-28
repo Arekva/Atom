@@ -117,11 +117,11 @@ public class Camera : Thing
         }
         else
         {
-            float f = (float) (1.0 / Math.Tan(FieldOfView / 2.0D));
-            float r = (float) (f / AspectRatio);
-            float n = (float) NearPlane;
+            f32 f = (f32) (1.0 / Math.Tan(FieldOfView / 2.0D));
+            f32 r = (f32) (f / AspectRatio);
+            f32 n = (f32) NearPlane;
             
-            projection = new Matrix4X4<float>(
+            projection = new Matrix4X4<f32>(
                 r, 0, 0, 0,
                 0, f, 0, 0,
                 0, 0, 0,-1,

@@ -71,7 +71,7 @@ internal static class DeferredRenderPass
 #region Attachments
         
     #region G-Buffer
-        Attachment gAlbedoLuminanceAttachment = new(
+        Attachment g_albedo_luminance_attachment = new(
             format: ALBEDO_LUMINANCE_FORMAT,
             operators: new AttachmentOperator(
                 load: vk.AttachmentLoadOp.Clear, 
@@ -81,7 +81,7 @@ internal static class DeferredRenderPass
                 final: vk.ImageLayout.ColorAttachmentOptimal
             )
         );
-        Attachment gNormalRoughnessMetalnessAttachment = new(
+        Attachment g_normal_roughness_metalness_attachment = new(
             format: NORMAL_ROUGHNESS_METALNESS_FORMAT,
             operators: new AttachmentOperator(
                 load: vk.AttachmentLoadOp.Clear, 
@@ -91,7 +91,7 @@ internal static class DeferredRenderPass
                 final: vk.ImageLayout.ColorAttachmentOptimal
             )
         );
-        Attachment gPositionTranslucencyAttachment = new(
+        Attachment g_position_translucency_attachment = new(
             format: POSITION_TRANSLUCENCY_FORMAT,
             operators: new AttachmentOperator(
                 load: vk.AttachmentLoadOp.Clear, 
@@ -101,7 +101,7 @@ internal static class DeferredRenderPass
                 final: vk.ImageLayout.ColorAttachmentOptimal
             )
         );
-        Attachment gDepthAttachment = new(
+        Attachment g_depth_attachment = new(
             format: depthFormat,
             operators: new AttachmentOperator(
                 load: vk.AttachmentLoadOp.Clear, 
@@ -114,7 +114,7 @@ internal static class DeferredRenderPass
     #endregion
         
     #region Lit
-        Attachment litAttachment = new(
+        Attachment lit_attachment = new(
             format: LIT_FORMAT,
             operators: new AttachmentOperator(
                 load: vk.AttachmentLoadOp.DontCare, 
@@ -129,73 +129,73 @@ internal static class DeferredRenderPass
 #endregion
 
 #region Subpasses
-        Subpass gBufferSubpass = new(
+        Subpass g_buffer_subpass = new(
             colors: new[]
             {
-                gAlbedoLuminanceAttachment,
-                gNormalRoughnessMetalnessAttachment,
-                gPositionTranslucencyAttachment
+                g_albedo_luminance_attachment,
+                g_normal_roughness_metalness_attachment,
+                g_position_translucency_attachment
             },
             depthStencils: new[]
             {
-                gDepthAttachment
+                g_depth_attachment
             }
         );
-        Subpass litSubpass = new(
+        Subpass lit_subpass = new(
             colors: new[]
             {
-                litAttachment
+                lit_attachment
             },
             inputs: new[]
             {
-                gAlbedoLuminanceAttachment,
-                gNormalRoughnessMetalnessAttachment,
-                gPositionTranslucencyAttachment,
-                gDepthAttachment
+                g_albedo_luminance_attachment,
+                g_normal_roughness_metalness_attachment,
+                g_position_translucency_attachment,
+                g_depth_attachment
             }
         );
 #endregion
 
 #region Dependencies
-        DependencyInfo externalInfo = new(
+        DependencyInfo external_info = new(
             subpass: Subpass.External,
             stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
                        vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
             accessMask: vk.AccessFlags.AccessNoneKhr
         );
-        DependencyInfo gBufferInfo = new(
-            subpass: gBufferSubpass,
+        DependencyInfo g_buffer_info = new(
+            subpass: g_buffer_subpass,
             stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
                        vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
             accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit | 
                         vk.AccessFlags.AccessDepthStencilAttachmentWriteBit
         );
-        DependencyInfo litInfo = new(
-            subpass: litSubpass,
+        DependencyInfo lit_info = new(
+            subpass: lit_subpass,
             stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
                        vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
             accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit
         );
         
-        Dependency gBufferDependency = new(
-            source: externalInfo, 
-            destination: gBufferInfo
+        Dependency g_buffer_dependency = new(
+            source: external_info, 
+            destination: g_buffer_info
         );
         Dependency litDependency = new(
-            source: gBufferInfo, 
-            destination: litInfo
+            source: g_buffer_info, 
+            destination: lit_info
         );
 #endregion
 
         RenderPassBuilder builder = new RenderPassBuilder(
             subpasses: new []
             {
-                gBufferSubpass,
-                litSubpass
+                g_buffer_subpass,
+                lit_subpass
             },
             dependencies: new []
             {
-                gBufferDependency,
+                g_buffer_dependency,
                 litDependency
             }
         );

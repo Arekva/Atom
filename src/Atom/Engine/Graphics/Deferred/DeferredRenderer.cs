@@ -21,16 +21,6 @@ public class DeferredRenderer
         public vk.ImageUsageFlags SupportedUsageFlags;
     }
 
-    private struct RenderPassClear
-    {
-        public vk.ClearColorValue GBufferAlbedo        = new (0.0F, 0.0F, 0.0F, 0.0F);
-        public vk.ClearColorValue GBufferNormal        = new (0.0F, 0.0F, 0.0F, 0.0F);
-        public vk.ClearColorValue GBufferPosition      = new (0.0F, 0.0F, 0.0F, 0.0F);
-        public vk.ClearDepthStencilValue GBufferDepth  = new (0.0F);
-        
-        public RenderPassClear() { }
-    }
-
 #region Configuration
 
     // -- Defaults
@@ -51,7 +41,7 @@ public class DeferredRenderer
     private const uint DEFERRED_VIEW_COUNT = 5U;
 
 
-    private static readonly Pin<RenderPassClear> RENDER_PASS_CLEAR = new RenderPassClear();
+    private static readonly Pin<vk.ClearValue> RENDER_PASS_CLEAR = new vk.ClearValue [] { new(), new(), new(), new() };
     
 
     private const uint MAX_VIEW_COUNT = MAX_FRAMES_IN_FLIGHT_COUNT * (RESULT_VIEW_COUNT + DEFERRED_VIEW_COUNT);
@@ -152,14 +142,14 @@ public class DeferredRenderer
         {
             unsafe
             {
-                uint present_mode_count = default;
-                _surfaceExtension.GetPhysicalDeviceSurfacePresentModes(_physicalDevice, _surface,
-                    ref present_mode_count, null);
-                Span<vk.PresentModeKHR> present_modes = stackalloc vk.PresentModeKHR[(int)present_mode_count];
-                _surfaceExtension.GetPhysicalDeviceSurfacePresentModes(_physicalDevice, _surface,
+                const i32 MAX_PRESENT_MODE_COUNT = 6;
+                Span<vk.PresentModeKHR> present_modes = stackalloc vk.PresentModeKHR[MAX_PRESENT_MODE_COUNT];
+                
+                u32 present_mode_count = 0;
+                _surfaceExtension.GetPhysicalDeviceSurfacePresentModes(_physicalDevice, _surface, 
                     &present_mode_count, present_modes);
 
-                for (int i = 0; i < present_mode_count; i++)
+                for (i32 i = 0; i < present_mode_count; i++)
                 {
                     if (present_modes[i] == value)
                     {
@@ -174,12 +164,9 @@ public class DeferredRenderer
     }
 
     public void Setup(
-        vk.Device device,
-        vk.PhysicalDevice physicalDevice,
-        KhrSurface surfaceExtension,
-        vk.SurfaceKHR surface,
-        QueueFamily renderFamily,
-        Mutex<vk.Queue> queue)
+        vk.Device device, vk.PhysicalDevice physicalDevice,
+        KhrSurface surfaceExtension, vk.SurfaceKHR surface,
+        QueueFamily renderFamily, Mutex<vk.Queue> queue)
     {
         _device = device;
         _physicalDevice = physicalDevice;
@@ -197,13 +184,13 @@ public class DeferredRenderer
 
         ColorFormat = _colorFormat;
 
-        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++)
+        for (i32 i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++)
         {
             _fences[i] = new SlimFence(_device, signaled: true);
             _semaphores[i] = new SlimSemaphore(_device);
         }
 
-        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++) // 2x more semaphores than frames in flight.
+        for (i32 i = 0; i < MAX_FRAMES_IN_FLIGHT_COUNT; i++) // 2x more semaphores than frames in flight.
         {
             _semaphores[i + MAX_FRAMES_IN_FLIGHT_COUNT] = new SlimSemaphore(_device);
         }
@@ -221,9 +208,9 @@ public class DeferredRenderer
 
     public void WaitForRenders()
     {
-        int base_index = (int)GetFrameInFlightFenceIndex(0U);
+        i32 base_index = (i32)GetFrameInFlightFenceIndex(0U);
 
-        SlimFence.WaitAll(_device, _fences.AsSpan(base_index, (int)MAX_FRAMES_IN_FLIGHT_COUNT));
+        SlimFence.WaitAll(_device, _fences.AsSpan(base_index, (i32)MAX_FRAMES_IN_FLIGHT_COUNT));
     }
 
     public unsafe void Render()
@@ -237,12 +224,12 @@ public class DeferredRenderer
 
         frame_fence.Wait(_device);
         
-        uint swap_image_index = default;
+        u32 swap_image_index = default;
         _swapchainExtension.AcquireNextImage(_device, _swapchain, 
         ulong.MaxValue, image_availability_semaphore, default, ref swap_image_index);
 
-        uint image_in_flight_fence_index = GetImageInFlightFenceIndex(swap_image_index);
-        uint command_buffer_index = GetCommandBufferIndex(swap_image_index);
+        u32 image_in_flight_fence_index = GetImageInFlightFenceIndex(swap_image_index);
+        u32 command_buffer_index = GetCommandBufferIndex(swap_image_index);
         
         SlimFence image_fence = _fences[image_in_flight_fence_index];
         
@@ -300,11 +287,6 @@ public class DeferredRenderer
             
             _swapchainExtension.QueuePresent(queue.Data, in present_info);
         }
-        
-
-        
-        
-        
         
         _frameIndex = ++_frameIndex % MAX_FRAMES_IN_FLIGHT_COUNT;
 
@@ -514,48 +496,39 @@ public class DeferredRenderer
         _swapchainExtension.DestroySwapchain(_device, swapchain.Value, null);
     }
 
-    private unsafe void BuildCommands(uint swapImageIndex, vk.Extent2D extent)
+    private void BuildCommands(u32 swapImageIndex, vk.Extent2D extent)
     {
         vk.Rect2D area = new(extent: extent);
         SlimCommandBuffer cmd = _commands[swapImageIndex];
-
         cmd.Reset();
 
-        vk.CommandBufferBeginInfo begin = new(flags: 0);
-        VK.API.BeginCommandBuffer(cmd, in begin);
+        using (CommandRecorder command = new (cmd))
         {
-            vk.RenderPassBeginInfo pass_info = new (
-                renderPass: _renderPass,
-                renderArea: area,
-                framebuffer: _framebuffers[swapImageIndex],
-                clearValueCount: 4,
-                pClearValues: (vk.ClearValue*)(RenderPassClear*)RENDER_PASS_CLEAR
-            );
-            VK.API.CmdBeginRenderPass(cmd, in pass_info, vk.SubpassContents.Inline);
-            // draw meshes in gbuffer
-            // just consider 1 camera for now.
-            
-            Vector2D<uint> vec_extent = new(extent.Width, extent.Height);
-            Draw.UpdateFrame(cmd, vec_extent, cameraIndex: 0, frameIndex: swapImageIndex);
-            
-            //Log.Info($"Recording command {swapImageIndex} with resolution {vec_extent}");
-            
-            VK.API.CmdNextSubpass(cmd, vk.SubpassContents.Inline);
-            // draw lit render
-            int view_index = (int)GetViewBaseIndex(swapImageIndex);
-            _gbufferDrawer.CmdComputeGBuffer(cmd, swapImageIndex, _views.AsSpan()[view_index..(view_index+4)]);
-            VK.API.CmdEndRenderPass(cmd);
+            using (CommandRecorder.RenderPassRecorder render_pass = command.RenderPass(
+                       _renderPass, area, _framebuffers[swapImageIndex], RENDER_PASS_CLEAR.Array))
+            {
+                // draw meshes in gbuffer
+                // just consider 1 camera for now.
+                Vector2D<u32> vec_extent = new(extent.Width, extent.Height);
+                
+                Draw.UpdateFrame(cmd, vec_extent, cameraIndex: 0, frameIndex: swapImageIndex);
+                
+                render_pass.NextSubpass();
+                
+                // draw lit render
+                i32 view_index = (i32)GetViewBaseIndex(swapImageIndex);
+                _gbufferDrawer.CmdComputeGBuffer(cmd, swapImageIndex, _views.AsSpan()[view_index..(view_index+4)]);
+            }
             
             // draw on swapchain image as a fullscreen image
             _screenDrawer.CmdDrawView(cmd, swapImageIndex, _views[GetViewBaseIndex(swapImageIndex) + 4]);
         }
-        VK.API.EndCommandBuffer(cmd);
     }
 
-    private void CreateViews(uint swapImageIndex)
+    private void CreateViews(u32 swapImageIndex)
     {
-        uint view_index  = GetViewBaseIndex (swapImageIndex);
-        uint image_index = GetImageBaseIndex(swapImageIndex);
+        u32 view_index  = GetViewBaseIndex (swapImageIndex);
+        u32 image_index = GetImageBaseIndex(swapImageIndex);
 
         SlimImage final_image           = _images[image_index    ];
         SlimImage gbuffer_main_image    = _images[image_index + 1];
@@ -579,7 +552,7 @@ public class DeferredRenderer
         const vk.Format GBUFFER_FORMAT = vk.Format.R32G32B32A32Sfloat;
         
         // albedo / luminance | normal / roughness / metalness | position / translucency
-        for (uint i = 0; i < 3; i++) // 3 views for the main g buffer
+        for (u32 i = 0; i < 3; i++) // 3 views for the main g buffer
         {
             create_view(gbuffer_main_image, 
                 GBUFFER_FORMAT, ImageAspectFlags.Color, 
@@ -607,7 +580,7 @@ public class DeferredRenderer
         );
     }
     
-    private void AllocateImagesMemory(uint swapImageCount, ulong size, ReadOnlySpan<vk.MemoryRequirements> requirements)
+    private void AllocateImagesMemory(u32 swapImageCount, u64 size, ReadOnlySpan<vk.MemoryRequirements> requirements)
     {
         // allocate the memory required for all the framebuffers
         _framebuffersMemory = new SlimDeviceMemory(
