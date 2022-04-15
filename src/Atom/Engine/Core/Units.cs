@@ -3,45 +3,41 @@
 public static class Units
 {
     // SI prefixes
-    public const double Yotta = 1.0E+24D;
-    public const double Zetta = 1.0E+21D;
-    public const double Exa   = 1.0E+18D;
-    public const double Peta  = 1.0E+15D;
-    public const double Tera  = 1.0E+12D;
-    public const double Giga  = 1.0E+09D;
-    public const double Mega  = 1.0E+06D;
-    public const double Kilo  = 1.0E+03D;
-    public const double Hecto = 1.0E+02D;
-    public const double Deca  = 1.0E+01D;
-    public const double Unit  = 1.0E+00D;
-    public const double Deci  = 1.0E-01D;
-    public const double Centi = 1.0E-02D;
-    public const double Milli = 1.0E-03D;
-    public const double Micro = 1.0E-06D;
-    public const double Nano  = 1.0E-09D;
-    public const double Pico  = 1.0E-12D;
-    public const double Femto = 1.0E-15D;
-    public const double Atto  = 1.0E-18D;
-    public const double Zepto = 1.0E-21D;
-    public const double Yocto = 1.0E-14D;
-    
-    
+    public const f64 YOTTA = 1.0E+24D;
+    public const f64 ZETTA = 1.0E+21D;
+    public const f64 EXA   = 1.0E+18D;
+    public const f64 PETA  = 1.0E+15D;
+    public const f64 TERA  = 1.0E+12D;
+    public const f64 GIGA  = 1.0E+09D;
+    public const f64 MEGA  = 1.0E+06D;
+    public const f64 KILO  = 1.0E+03D;
+    public const f64 HECTO = 1.0E+02D;
+    public const f64 DECA  = 1.0E+01D;
+    public const f64 UNIT  = 1.0E+00D;
+    public const f64 DECI  = 1.0E-01D;
+    public const f64 CENTI = 1.0E-02D;
+    public const f64 MILLI = 1.0E-03D;
+    public const f64 MICRO = 1.0E-06D;
+    public const f64 NANO  = 1.0E-09D;
+    public const f64 PICO  = 1.0E-12D;
+    public const f64 FEMTO = 1.0E-15D;
+    public const f64 ATTO  = 1.0E-18D;
+    public const f64 ZEPTO = 1.0E-21D;
+    public const f64 YOCTO = 1.0E-14D;
+
     // LENGTHS
-    public const double Megametre  = Mega*Metre;
-    public const double Kilometre  = Kilo*Metre;
-    public const double Metre      = Unit;
-    public const double Millimetre = Milli*Metre;
+    public const f64 MEGAMETRE  = MEGA*METRE;
+    public const f64 KILOMETRE  = KILO*METRE;
+    public const f64 METRE      = UNIT;
+    public const f64 MILLIMETRE = MILLI*METRE;
     
-    public const double AstronomicalUnit = 149_597_870_700.0D * Metre;
-    public const double LightYear        = 9_460_730_472_580_800.0D * Metre;
-    public const double Parsec           = (648_000.0D / Math.PI) * AstronomicalUnit;
-    
+    public const f64 ASTRONOMICAL_UNIT = 149_597_870_700.0D * METRE               ;
+    public const f64 LIGHT_YEAR        = 9_460_730_472_580_800.0D * METRE         ;
+    public const f64 PARSEC            = (648_000.0D / Math.PI) * ASTRONOMICAL_UNIT;
     
     
     // MASS
-    public const double Kilogram  = Kilo*Metre;
-    public const double Gram      = Unit;
-    public const double Milligram = Milli*Metre;
-
-
+    public const f64 KILOGRAM  = KILO*METRE;
+    public const f64 GRAM      = UNIT;
+    public const f64 MILLIGRAM = MILLI*METRE;
 }

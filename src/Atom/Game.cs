@@ -4,6 +4,7 @@ using Atom.Engine.Astro;
 using Silk.NET.Vulkan;
 using Atom.Engine.Astro.Transvoxel;
 using Atom.Engine.Shader;
+using Atom.Game.Config;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 
@@ -20,7 +21,7 @@ public class Game
     {
         Mouse.CursorMode = CursorMode.Raw;
 
-        using IScene scene = Scene.Load<ClassicScene>();
+        using IScene scene = Scene.Load<SpaceScene>();
 
         Engine.Engine.WaitForShutdown();
     }
@@ -40,6 +41,8 @@ public class Game
             try
             {
                 Run();
+
+                //PlanetConfig config = Config.Config.LoadInto<PlanetConfig>("assets/Space/Earth.planet");
                 
                 
                 GC.Collect(2, GCCollectionMode.Forced, true, false);

@@ -4,19 +4,26 @@ public interface ICelestialBody
 {
     public bool IsStatic { get; }
     
-    public Orbit? Orbit { get; }
+    public ITrajectory? Orbit { get; }
     
+    public ICelestialBody? Reference { get; }
     
-    
-    public Space EquatorialSpace { get; }
+    public IEnumerable<ICelestialBody> Satellites { get; }
+
+
+    public Space CelestialSpace { get; }
     
     public Space RotatedSpace { get; }
-    
     
     
     public string? Name { get; }
     
     
     // Total mass of the CB, in kg
-    public double Mass { get; }
+    public f64 Mass { get; }
+
+    public void AddSatellite(ICelestialBody celestialBody);
+    public void RemoveSatellite(ICelestialBody celestialBody);
+
+    public string View(i32 level = 0);
 }

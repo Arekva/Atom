@@ -91,10 +91,6 @@ public static class DDS
             throw new NotImplementedException("Only DX10 DDS files are implemented.");
         }
 
-        {
-            
-        }
-
         // Get Vulkan parameters
         u32          vk_width        = header.Width == 0
                                         ? throw new InvalidDDSFile("No width is specified in DDS file's header.")

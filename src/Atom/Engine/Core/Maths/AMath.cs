@@ -45,23 +45,29 @@ public static class AMath
     public static float Map(float value, float oldLow, float oldHigh, float newLow, float newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong Align(ulong number, ulong alignment)
+    public static u64 Align(ulong number, ulong alignment)
     {
-        if (alignment == 0)
-        {
-            return number;
-        }
-
-        ulong remainder = number % alignment;
-        if (remainder == 0)
-        {
-            return number;
-        }
-        else
-        {
-            return number + alignment - remainder;
-        }
+        if (alignment == 0) return number;
+        u64 remainder = number % alignment;
+        return remainder == 0 ? number : number + alignment - remainder;
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static f64 AlignLower(f64 number, f64 alignment)
+    {
+        if (alignment == 0) return number;
+        f64 remainder = number % alignment;
+        return remainder == 0 ? number : number + alignment - remainder;
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static f64 AlignUpper(f64 number, f64 alignment)
+    {
+        if (alignment == 0) return number;
+        f64 remainder = number % alignment;
+        return remainder == 0 ? number : number + alignment - remainder;
+    }
+    
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double LinearInterpolation(double a, double b, double t) => (1.0D - t) * a + t * b;

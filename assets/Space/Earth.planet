@@ -1,0 +1,66 @@
+Planet {
+    ID          = Atom.SolarSystem.Earth
+    Name        = Earth
+    Description = { 
+        Insert
+        Multi
+        Line
+        Text
+    }
+
+    Generation {
+        // todo: specialized generator with actual Earth heightmap
+        Generator = Generators/TemperedPlanet.generator
+
+        Parameters {
+            Radius = 6371km
+
+        //    Atmosphere {
+        //        Composition = {
+        //            Nitrogen      = 78.0840%
+        //            Dioxygen      = 20.9460%
+        //            Argon         = 0.93400%
+        //            CarbonDioxide = 0.04070%
+        //            Neon          = 18.18ppm
+        //            Helium        = 5.240ppm
+        //            Methane       = 1.870ppm
+        //            Krypton       = 1.140ppm
+        //        }
+
+        //        Height   = 130km
+        //        Pressure = 1atm
+        //    }
+
+        //    Ocean {
+        //        Composition = {
+        //            Water = 100%
+        //            // other elements?
+        //        }
+
+        //        Coverage = 70.8%
+        //    }
+        }
+    }
+    
+    Rotation { 
+        Inclination {
+            Obliquity      = 23.44°
+            RightAscension = 00.00°
+        }
+
+        Day = 86164.09s
+    }
+
+    Orbit {
+        Parent                   = Atom.SolarSystem.Sun
+        
+        SemiMajorAxis            = 1.0000001124AU
+
+        Eccentricity             = 0.0167086
+        Inclination              = 7.155°
+        LongitudeOfAscendingNode = 174.9°
+        LongitudeOfPeriapsis     = 102.9°
+        ArgumentOfPeriapsis      = 288.1°
+        MeanAnomaly              = 0rad
+    }
+}

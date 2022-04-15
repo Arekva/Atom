@@ -1,0 +1,117 @@
+{
+  "main": {
+    "id": "bde190a5bdb0b11c",
+    "type": "split",
+    "children": [
+      {
+        "id": "276dd2507eba344d",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "Systems/Kerbol System/Kerbol.md",
+            "mode": "source",
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e28b1060f8614420",
+    "type": "split",
+    "children": [
+      {
+        "id": "f5f3bd61d8341a41",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3a16478cfa9458fd",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "146cf35c8fdc4a73",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "9e8dd55aeda62f9a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "29b0bacf3651e82d",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 541
+  },
+  "right": {
+    "id": "2e3fdb13be579e2a",
+    "type": "split",
+    "children": [
+      {
+        "id": "b1e5558a54161739",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3db8a0e12f7234cd",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Systems/Kerbol System/Kerbol.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "276dd2507eba344d",
+  "lastOpenFiles": [
+    "Systems/Kerbol System/Kerbol.md",
+    "Systems/Kerbol System/Sans titre.md",
+    "Systems/Kerbol System/Tylo.md",
+    "Systems/Kerbol System/Eeloo.md",
+    "Systems/Kerbol System/Bop.md",
+    "Systems/Kerbol System/Pol.md",
+    "Systems/Kerbol System/Vall.md",
+    "Systems/Kerbol System/Laythe.md",
+    "Systems/Kerbol System/Jool.md",
+    "Systems/Kerbol System/Dres.md"
+  ]
+}

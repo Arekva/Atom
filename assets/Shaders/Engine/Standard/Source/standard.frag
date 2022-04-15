@@ -14,10 +14,7 @@ void main() {
     vec3 albedo = vec3(texture(_albedo, in_uv));
 
     vec3 tex_normal = normalize((texture(_normal, in_uv).rgb) * 2.0 - 1.0);
-    vec3 normal = in_normal * tex_normal;
-    //vec3(0.0, 0.0, 1.0);
-    //normalize(in_normal * normalize(((texture(_normal, in_uv).rgb) * 2.0 - 1.0)));
-    //in_normal;
+    vec3 normal = in_tbn * tex_normal;
     vec3 position = in_position.xyz;
     vec2 uv = in_uv;
 

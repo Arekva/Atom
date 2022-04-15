@@ -1,0 +1,16 @@
+Generator {
+    Parameters {
+        Radius     : f64(length)
+        Oblateness : f64(length)
+    }
+
+    Pass "Terrace" {
+        for length(CENTRE)..Radius {
+            material = stone
+        }
+    }
+
+    Perform {
+        "Terrace"
+    }
+}

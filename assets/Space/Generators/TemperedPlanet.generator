@@ -1,0 +1,19 @@
+Generator {
+    Parameters {
+        Radius : f64(length)
+
+        Atmosphere : {
+            Composition : <Element, f64(%)>[]
+            Height      : f64(length)
+            Pressure    : f64(force )
+        }
+
+        Ocean : {
+            Composition : <Element, f64(%)>[]
+            Coverage    : f64(%)
+        }
+    }
+}
+
+
+

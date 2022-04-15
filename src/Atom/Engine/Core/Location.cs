@@ -6,16 +6,20 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
 {
     // we need to keep everything under reasonable distance so the precisions
     // stays around the millimetre
-    public const f64 SectorSize = 60.0D * Units.AstronomicalUnit;
-    public const f64 SectorWidth  = SectorSize;
-    public const f64 SectorHeight = SectorSize;
-    public const f64 SectorDepth  = SectorSize;
-    public const f64 SectorWidthHalf  = SectorWidth / 2.0D;
-    public const f64 SectorHeightHalf = SectorHeight/ 2.0D;
-    public const f64 SectorDepthHalf  = SectorDepth / 2.0D;
+    public const f64 SectorSize       = 60.0D * Units.ASTRONOMICAL_UNIT;
+    public const f64 SectorWidth      = SectorSize                     ;
+    public const f64 SectorHeight     = SectorSize                     ;
+    public const f64 SectorDepth      = SectorSize                     ;
+    public const f64 SectorWidthHalf  = SectorWidth / 2.0D             ;
+    public const f64 SectorHeightHalf = SectorHeight/ 2.0D             ;
+    public const f64 SectorDepthHalf  = SectorDepth / 2.0D             ;
+    
     public static readonly Vector3D<f64> SectorScale  = new (SectorWidth, SectorHeight, SectorDepth);
-    public static readonly Vector3D<f64> SectorCentre = SectorScale / 2.0D;
-    public static readonly Vector3D<f64> SectorHalf   = SectorScale / 2.0D;
+    public static readonly Vector3D<f64> SectorCentre = SectorScale / 2.0D                               ;
+    public static readonly Vector3D<f64> SectorHalf   = SectorScale / 2.0D                               ;
+
+    public static readonly Location Origin = new(coordinates: new Vector3D<Double>(0.0, 0.0, 0.0));
+    
     
     public Vector3D<f64> Coordinates;
     public Vector3D<i64> Sector;
