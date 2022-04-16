@@ -134,12 +134,12 @@ public class Space : AtomObject
     public Matrix4X4<f64> UniverseMatrix => Matrix4X4.Multiply(Matrix4X4.Multiply(
         Matrix4X4.CreateFromQuaternion(Rotation), 
         Matrix4X4.CreateScale(Scale)), 
-        Matrix4X4.CreateTranslation(Location.UniversalCoordinates));
+        Matrix4X4.CreateTranslation(Location.Position));
 
     public Matrix4X4<f64> RelativeMatrix(Location location) => Matrix4X4.Multiply(Matrix4X4.Multiply(
         Matrix4X4.CreateFromQuaternion(Rotation), 
         Matrix4X4.CreateScale(Scale)), 
-        Matrix4X4.CreateTranslation((location - Location).UniversalCoordinates));
+        Matrix4X4.CreateTranslation((location - Location).Position));
 
     public Plane Plane => new (Right, Up, Forward);
 }

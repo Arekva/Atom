@@ -1,0 +1,43 @@
+Planet {
+    ID          = Squad.Kerbol.Jool
+    Name        = Jool
+    Description = { 
+        [KSP]
+        Jool is particularly known for being a rather large, predominantly green planet. Kerbalkind has longed to visit it since it was first spotted in the sky.
+        Philosophers reason that the swirling green planet must be a really nice place to visit, on account of its wholesome coloration.
+        If you look at Jool through a telescope, it is fuzzy.
+    }
+
+    Generation {
+        Generator = Generators/Gas.generator
+
+        Parameters {
+            Radius = 6000 km
+
+            Atmosphere {
+                Composition = {
+                    Dioxygen = 100.0 %
+                }
+
+                Height   = 200 km
+                Pressure = 1519.875 kPa
+            }
+        }
+    }
+    
+    Rotation { 
+        Day = 36000 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 68773560320 m
+
+        Eccentricity             = 0.050
+        Inclination              = 1.304 °
+        LongitudeOfAscendingNode = 52.00 °
+        ArgumentOfPeriapsis      = 0.000 °
+        MeanAnomaly              = 0.100 rad
+    }
+}

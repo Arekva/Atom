@@ -44,7 +44,6 @@ public class Game
 
                 //PlanetConfig config = Config.Config.LoadInto<PlanetConfig>("assets/Space/Earth.planet");
                 
-                
                 GC.Collect(2, GCCollectionMode.Forced, true, false);
 
                 {

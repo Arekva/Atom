@@ -5,9 +5,23 @@ using Atom.Engine.Astro;
 using Atom.Engine.Loaders;
 using Atom.Engine.Shader;
 using Atom.Engine.Vulkan;
+using Atom.Game.Config;
 using Silk.NET.Maths;
 
 namespace Atom.Game;
+
+class SystemStructure
+{
+    private string SystemName { get; }
+    
+    
+}
+
+class Subsystem
+{
+    
+}
+
 
 public class SpaceScene : AtomObject, IScene, IDrawer
 {
@@ -18,7 +32,19 @@ public class SpaceScene : AtomObject, IScene, IDrawer
     public SpaceScene()
     {
         _controller = new ClassicPlayerController();
+        
+        SystemConfig[] system_configs = Directory
+            .GetFiles("assets/Space/", "*.system", SearchOption.AllDirectories)
+            .Select(ConfigFile.LoadInto<SystemConfig>)
+            .ToArray();
 
+        PlanetConfig[] planet_configs = Directory
+            .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
+            .Select(ConfigFile.LoadInto<PlanetConfig>)
+            .ToArray();
+        
+        
+        
         // ksp system
         
         /* root */ 

@@ -6,5 +6,6 @@ public enum DataType
     Angle,
     Length,
     Percentage,
-    Time
+    Time,
+    Pressure
 }

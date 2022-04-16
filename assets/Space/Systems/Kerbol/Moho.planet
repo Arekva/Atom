@@ -1,0 +1,34 @@
+Planet {
+    ID          = Squad.Kerbol.Moho
+    Name        = Moho
+    Description = { 
+        [KSP]
+        Moho figures in Kerbal mythology as a fiery place with oceans of flowing lava. 
+        In reality however, it’s much less interesting. Scientists speculate about possible ways to make it “awesome like in the stories”.
+        Some of those ideas have led to new breakthroughs in aerospace technology.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 250 km
+        }
+    }
+    
+    Rotation { 
+        Day = 1210000 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 5263138304 m
+
+        Eccentricity             = 0.20
+        Inclination              = 7.00 °
+        LongitudeOfAscendingNode = 70.0 °
+        ArgumentOfPeriapsis      = 15.0 °
+        MeanAnomaly              = 3.14 rad
+    }
+}

@@ -1,0 +1,42 @@
+Planet {
+    ID          = Squad.Kerbol.Duna
+    Name        = Duna
+    Description = { 
+        [KSP]
+        Also known as the red dot that you can see if you squint at it really hard, Duna has long been a wonder to Kerbalkind.
+        The planet has been held in much awe, due to its striking red color and stark contrast to the color green.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 320 km
+
+            Atmosphere {
+                Composition = {
+                    Dioxygen = 100.0 %
+                }
+
+                Height   = 50 km
+                Pressure = 6750 Pa
+            }
+        }
+    }
+    
+    Rotation { 
+        Day = 65517.859375 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 20726155264 m
+
+        Eccentricity             = 0.051
+        Inclination              = 0.060 °
+        LongitudeOfAscendingNode = 135.5 °
+        ArgumentOfPeriapsis      = 0.000 °
+        MeanAnomaly              = 3.140 rad
+    }
+}

@@ -25,7 +25,7 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
     public Vector3D<i64> Sector;
 
     /// <summary> The global universe coordinates. Avoid using this for precise calculations. </summary>
-    public Vector3D<f64> UniversalCoordinates => new Vector3D<f64>(Sector.X, Sector.Y, Sector.Z) * SectorScale
+    public Vector3D<f64> Position => new Vector3D<f64>(Sector.X, Sector.Y, Sector.Z) * SectorScale
                                                  + Coordinates;
 
     public Location(Vector3D<double> coordinates, Vector3D<long> sector)
@@ -82,8 +82,8 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
 
     public int CompareTo(Location other)
     {
-        double other_length = other.UniversalCoordinates.LengthSquared;
-        double this_length = UniversalCoordinates.LengthSquared;
+        double other_length = other.Position.LengthSquared;
+        double this_length = Position.LengthSquared;
         return other_length > this_length ? -1 : other_length < this_length ? 1 : 0;
     }
 

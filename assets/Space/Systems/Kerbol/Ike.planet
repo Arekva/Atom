@@ -1,0 +1,33 @@
+Planet {
+    ID          = Squad.Kerbol.Ike
+    Name        = Ike
+    Description = { 
+        [KSP]
+        Ike is a relatively large, grey object occasionally seen orbiting Duna.
+        Scientists have postulated that Ike is seemingly perfectly positioned to sneakily interfere with any object that presumes to come orbiting near its parent.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 130 km
+        }
+    }
+    
+    Rotation { 
+        Day = 65517.859375 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Duna
+        
+        SemiMajorAxis            = 3200000 m
+
+        Eccentricity             = 0.03
+        Inclination              = 0.20 °
+        LongitudeOfAscendingNode = 0.00 °
+        ArgumentOfPeriapsis      = 0.00 °
+        MeanAnomaly              = 1.70 rad
+    }
+}

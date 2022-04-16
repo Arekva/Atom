@@ -1,0 +1,49 @@
+Planet {
+    ID          = Squad.Kerbol.Eve
+    Name        = Eve
+    Description = { 
+        [KSP]
+        Eve is certainly the purplest object in the solar system. It’s one of the larger, most visible objects, mainly because of its very, very purple tint.
+        It is considered by some to be almost a sister planet to Kerbin. Well, despite the purple, and the toxic atmosphere, and the extreme pressures and temperatures.
+        Actually, it’s not very similar at all is it? Who are those people?
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 700 km
+
+            Atmosphere {
+                Composition = {
+                    Dioxygen = 100.0 %
+                }
+
+                Height   = 90 km
+                Pressure = 506.625 kPa
+            }
+
+            Ocean {
+                Composition = {
+                    Water = 100 %
+                }
+            }
+        }
+    }
+    
+    Rotation { 
+        Day = 80500 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 9832684544 m
+
+        Eccentricity             = 0.01
+        Inclination              = 2.10 °
+        LongitudeOfAscendingNode = 15.0 °
+        ArgumentOfPeriapsis      = 0.00 °
+        MeanAnomaly              = 3.14 rad
+    }
+}

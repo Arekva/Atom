@@ -1,0 +1,33 @@
+Planet {
+    ID          = Squad.Kerbol.Eeloo
+    Name        = Eeloo
+    Description = { 
+        [KSP]
+        There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. 
+        The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 210 km
+        }
+    }
+    
+    Rotation { 
+        Day = 19460 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 90118820000 m
+
+        Eccentricity             = 0.260
+        Inclination              = 6.150 °
+        LongitudeOfAscendingNode = 50.00 °
+        ArgumentOfPeriapsis      = 260.0 °
+        MeanAnomaly              = 3.140 rad
+    }
+}

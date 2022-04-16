@@ -1,0 +1,34 @@
+Planet {
+    ID          = Squad.Kerbol.Mun
+    Name        = Mun
+    Description = { 
+        [KSP]
+        The Mun, is a large satellite orbiting Kerbin. It is mostly gray in appearance, with craters of various sizes dotting its otherwise smooth surface.
+        The Mun’s discovery is widely regarded as one of the more important breakthroughs of Kerbal evolution. 
+        Granted, it didn’t happen all that long ago, but it’s still fair to say Kerbals are wiser and more evolved now than they were back then.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 200 km
+        }
+    }
+    
+    Rotation { 
+        Day = 138984.376574476 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbin
+        
+        SemiMajorAxis            = 12000000 m
+
+        Eccentricity             = 0.00
+        Inclination              = 0.00 °
+        LongitudeOfAscendingNode = 0.00 °
+        ArgumentOfPeriapsis      = 0.00 °
+        MeanAnomaly              = 1.70 rad
+    }
+}

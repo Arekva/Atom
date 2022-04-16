@@ -1,0 +1,34 @@
+Planet {
+    ID          = Squad.Kerbol.Dres
+    Name        = Dres
+    Description = { 
+        [KSP]
+        Dres is a very small planet. It was the first planet considered to be a dwarf. 
+        It’s orbit is highly irregular and together with it’s size it took a long time to discover since half the time it was not where scientists expected to find a planet.Due to its nature of frequenting the bad parts of space. 
+        This dwarf planet was officially labeled as “Not to be trusted” by the scientific community.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 138 km
+        }
+    }
+    
+    Rotation { 
+        Day = 34800 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 40839348203 m
+
+        Eccentricity             = 0.145
+        Inclination              = 5.000 °
+        LongitudeOfAscendingNode = 280.0 °
+        ArgumentOfPeriapsis      = 90.00 °
+        MeanAnomaly              = 3.140 rad
+    }
+}

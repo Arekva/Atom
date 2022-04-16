@@ -1,0 +1,14 @@
+System {
+    ID = Squad.KerbolSystem
+    Name = Kerbol System
+    Description = {
+        KSP System
+    }
+
+    Location = [52;42;5] <1.5 AU;128 km;85 m>
+
+    Inclination {
+        Obliquity      = 0.0 °
+        RightAscension = 0.0 °
+    }
+}

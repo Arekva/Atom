@@ -1,0 +1,34 @@
+Planet {
+    ID          = Squad.Kerbol.Tylo
+    Name        = Tylo
+    Description = { 
+        [KSP]
+        Tylo was the first moon of Jool to be discovered by the Kerbal Astronomical Society.
+        After many failed attempts to take a flawless picture of Jool to hang on the office walls, it was finally discovered that the wandering white smear was indeed a moon.
+        Scientists speculate that the view from the surface with Laythe, Vall and Jool overhead must be “quite something”.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 600 km
+        }
+    }
+    
+    Rotation { 
+        Day = 211926.35802123 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Jool
+        
+        SemiMajorAxis            = 68500000 m
+
+        Eccentricity             = 0.000
+        Inclination              = 0.025 °
+        LongitudeOfAscendingNode = 0.000 °
+        ArgumentOfPeriapsis      = 0.000 °
+        MeanAnomaly              = 3.14 rad
+    }
+}

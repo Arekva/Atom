@@ -1,0 +1,33 @@
+Planet {
+    ID          = Squad.Kerbol.Pol
+    Name        = Pol
+    Description = { 
+        [KSP]
+        This moon was especially hard to spot, as it looks just like a pollen grain, particularly when observed through telescopes based near dusty fields.
+        Pol was finally discovered when someone decided to write down the location of the pollen, after having given up on yet another failed attempt to be rid of the smudge.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 44 km
+        }
+    }
+    
+    Rotation { 
+        Day = 901902.623531173 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Jool
+        
+        SemiMajorAxis            = 179890000 m
+
+        Eccentricity             = 0.17085
+        Inclination              = 4.25000 °
+        LongitudeOfAscendingNode = 2.00000 °
+        ArgumentOfPeriapsis      = 15.0000 °
+        MeanAnomaly              = 0.900 rad
+    }
+}

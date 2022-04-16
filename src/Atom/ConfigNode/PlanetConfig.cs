@@ -5,6 +5,9 @@ namespace Atom.Game.Config;
 [Bind("Planet")]
 public class PlanetConfig
 {
+    public override String ToString() => $"{Name} [{ID}]";
+
+
     [Bind("ID")] public string ID { get; set; }
     
     [Bind("Name")] public string Name { get; set; }
@@ -59,8 +62,6 @@ public class PlanetConfig
         public double Inclination { get; set; }             
         [Bind("LongitudeOfAscendingNode", DataType.Angle)]
         public double LongitudeOfAscendingNode { get; set; }
-        [Bind("LongitudeOfPeriapsis", DataType.Angle)]
-        public double LongitudeOfPeriapsis { get; set; }    
         [Bind("ArgumentOfPeriapsis", DataType.Angle)]
         public double ArgumentOfPeriapsis { get; set; }     
         [Bind("MeanAnomaly", DataType.Angle)]

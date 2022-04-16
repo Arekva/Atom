@@ -1,0 +1,43 @@
+Planet {
+    ID          = Squad.Kerbol.Laythe
+    Name        = Laythe
+    Description = { 
+        [KSP]
+        When Laythe was first discovered, it was not entered in the records because the scientist in charge thought he was looking at Kerbin.
+        Luckily this error was corrected when a plucky intern informed him that “telescopes don’t work that way”.
+        The intern was shortly afterwards “promoted” and moved to the experimental rocket testing program.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 500 km
+
+            Atmosphere {
+                Composition = {
+                    Dioxygen = 100.0 %
+                }
+
+                Height   = 50 km
+                Pressure = 60.795 kPa
+            }
+        }
+    }
+    
+    Rotation { 
+        Day = 52980.8790593796 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Jool
+        
+        SemiMajorAxis            = 27184000 m
+
+        Eccentricity             = 0.00
+        Inclination              = 0.00 °
+        LongitudeOfAscendingNode = 0.00 °
+        ArgumentOfPeriapsis      = 0.00 °
+        MeanAnomaly              = 3.14 rad
+    }
+}

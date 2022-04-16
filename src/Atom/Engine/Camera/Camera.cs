@@ -80,7 +80,7 @@ public class Camera : Thing
 
         Location rel_loc = main_loc - this_loc;*/
         
-        Vector3D<double> position = /*rel_loc*/Location.UniversalCoordinates;
+        Vector3D<double> position = /*rel_loc*/Location.Position;
         //position.X *= -1.0D; // Invert X position
         //position.Y *= -1.0D;
 

@@ -1,0 +1,34 @@
+Planet {
+    ID          = Squad.Kerbol.Gilly
+    Name        = Gilly
+    Description = { 
+        [KSP]
+        Gilly is a lumpy rock wandering around the orbit of Eve. 
+        It’s by far the smallest natural satellite that the Kerbal Astronomical Society has discovered.
+        Due to the large amount of squinting and eye strain associated with its discovery, wearing glasses has now become synonymous with being an accomplished Astronomer.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 13 km
+        }
+    }
+    
+    Rotation { 
+        Day = 28255 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Eve
+        
+        SemiMajorAxis            = 31500000 m
+
+        Eccentricity             = 0.55
+        Inclination              = 12.0 °
+        LongitudeOfAscendingNode = 80.0 °
+        ArgumentOfPeriapsis      = 10.0 °
+        MeanAnomaly              = 0.90 rad
+    }
+}

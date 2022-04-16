@@ -1,0 +1,35 @@
+Planet {
+    ID          = Squad.Kerbol.Kerbol
+    Name        = Kerbol
+    Description = {
+        [KSP] 
+        The Sun is the most well known object in the daytime sky. 
+        Scientists have noted a particular burning sensation and potential loss of vision if it is stared at for long periods of time. 
+        This is especially important to keep in mind considering the effect shiny objects have on the average Kerbal.
+    }
+
+    Generation {
+        Generator = Generators/Star.generator
+
+        Parameters {
+            Radius = 261600000 m
+
+            Atmosphere {
+                Composition = {
+                    Hydrogen = 100.0 %
+                }
+
+                Height   = 600 km
+                Pressure = 16 kPa
+            }
+        }
+    }
+
+    Rotation {
+        Day = 432000 s
+    }
+
+    Orbit {
+        Parent = Squad.KerbolSystem
+    }
+}

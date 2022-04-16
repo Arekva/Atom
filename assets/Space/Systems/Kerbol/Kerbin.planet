@@ -1,0 +1,49 @@
+Planet {
+    ID          = Squad.Kerbol.Kerbin
+    Name        = Kerbin
+    Description = { 
+        [KSP]
+        A unique world, Kerbin has flat plains, soaring mountains and wide, blue oceans. 
+        Home to the Kerbals, it has just the right conditions to support a vast, seemingly undepletable population of the eager green creatures.
+        Reaching a stable orbit around Kerbin is one of the first things budding space programs strive for. It is said that those who can get their ship into orbit are halfway to anywhere.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 600 km
+
+            Atmosphere {
+                Composition = {
+                    Dioxygen = 100.0 %
+                }
+
+                Height   = 70 km
+                Pressure = 1 atm
+            }
+
+            Ocean {
+                Composition = {
+                    Water = 100 %
+                }
+            }
+        }
+    }
+    
+    Rotation { 
+        Day = 21549.4251830898 s
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbol
+        
+        SemiMajorAxis            = 13599840256 m
+
+        Eccentricity             = 0.00
+        Inclination              = 0.00 °
+        LongitudeOfAscendingNode = 0.00 °
+        ArgumentOfPeriapsis      = 0.00 °
+        MeanAnomaly              = 3.14 rad
+    }
+}
