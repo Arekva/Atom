@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Gilly
     Name        = Gilly
+    Mass        = 1.24203632781093E+17 kg
     Description = { 
         [KSP]
         Gilly is a lumpy rock wandering around the orbit of Eve. 
@@ -18,6 +19,11 @@ Planet {
     
     Rotation { 
         Day = 28255 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Gilly.dds
+        Height = Assets/Images/Planets/Heights/Gilly.dds
     }
 
     Orbit {

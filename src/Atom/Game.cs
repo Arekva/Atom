@@ -40,15 +40,14 @@ public class Game
 
             try
             {
+                Video.FPSLimit = 10;
+                Video.LimitFPS = true;
                 Run();
 
                 //PlanetConfig config = Config.Config.LoadInto<PlanetConfig>("assets/Space/Earth.planet");
                 
                 GC.Collect(2, GCCollectionMode.Forced, true, false);
-
-                {
-                    
-                }
+                
 
                 /*using CelestialSystem sun_system = new (location: default);
                 

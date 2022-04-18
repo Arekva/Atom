@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Kerbin
     Name        = Kerbin
+    Mass        = 5.29151583439215E+22 kg
     Description = { 
         [KSP]
         A unique world, Kerbin has flat plains, soaring mountains and wide, blue oceans. 
@@ -33,6 +34,11 @@ Planet {
     
     Rotation { 
         Day = 21549.4251830898 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Kerbin.dds
+        Height = Assets/Images/Planets/Heights/Kerbin.dds
     }
 
     Orbit {

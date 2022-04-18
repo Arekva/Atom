@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Mun
     Name        = Mun
+    Mass        = 9.7599066119646E+20 kg
     Description = { 
         [KSP]
         The Mun, is a large satellite orbiting Kerbin. It is mostly gray in appearance, with craters of various sizes dotting its otherwise smooth surface.
@@ -18,6 +19,11 @@ Planet {
     
     Rotation { 
         Day = 138984.376574476 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Mun.dds
+        Height = Assets/Images/Planets/Heights/Mun.dds
     }
 
     Orbit {

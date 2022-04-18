@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Pol
     Name        = Pol
+    Mass        = 1.08135065806823E+19 kg
     Description = { 
         [KSP]
         This moon was especially hard to spot, as it looks just like a pollen grain, particularly when observed through telescopes based near dusty fields.
@@ -17,6 +18,11 @@ Planet {
     
     Rotation { 
         Day = 901902.623531173 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Pol.dds
+        Height = Assets/Images/Planets/Heights/Pol.dds
     }
 
     Orbit {

@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Bop
     Name        = Bop
+    Mass        = 3.72610898343278E+19 kg
     Description = { 
         [KSP]
         Bop is a small moon in the vicinity of Jool. 
@@ -17,6 +18,11 @@ Planet {
     
     Rotation { 
         Day = 544507.428516654 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Bop.dds
+        Height = Assets/Images/Planets/Heights/Bop.dds
     }
 
     Orbit {

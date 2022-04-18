@@ -70,6 +70,8 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
         s.Z += s_overflow_z;
     }
 
+    public override string ToString() => ToString(null, null);
+
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
         ref readonly Vector3D<f64> c = ref Coordinates;

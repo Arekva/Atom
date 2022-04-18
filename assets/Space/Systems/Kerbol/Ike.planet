@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Ike
     Name        = Ike
+    Mass        = 2.78216152235874E+20 kg
     Description = { 
         [KSP]
         Ike is a relatively large, grey object occasionally seen orbiting Duna.
@@ -17,6 +18,11 @@ Planet {
     
     Rotation { 
         Day = 65517.859375 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Ike.dds
+        Height = Assets/Images/Planets/Heights/Ike.dds
     }
 
     Orbit {

@@ -15,31 +15,20 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Core\**" />
-      <Compile Remove="Astro\**" />
-      <Compile Remove="Graphics\**" />
-      <Compile Remove="Vulkan\**" />
+      <PackageReference Include="Silk.NET.Core" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.GLFW" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Input" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Vulkan" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Windowing" Version="2.15.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Remove="Core\**" />
-      <EmbeddedResource Remove="Astro\**" />
-      <EmbeddedResource Remove="Graphics\**" />
-      <EmbeddedResource Remove="Vulkan\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="Core\**" />
-      <None Remove="Astro\**" />
-      <None Remove="Graphics\**" />
-      <None Remove="Vulkan\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Silk.NET.Core" Version="2.13.0" />
-      <PackageReference Include="Silk.NET.GLFW" Version="2.13.0" />
-      <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
-      <PackageReference Include="Silk.NET.Windowing" Version="2.13.0" />
+      <Content Include="../../../assets/**/*.*">
+        <Link>Assets/%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

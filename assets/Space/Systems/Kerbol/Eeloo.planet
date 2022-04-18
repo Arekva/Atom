@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Eeloo
     Name        = Eeloo
+    Mass        = 1.11492242417007E+21 kg
     Description = { 
         [KSP]
         There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. 
@@ -17,6 +18,11 @@ Planet {
     
     Rotation { 
         Day = 19460 s
+    }
+    
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Eeloo.dds
+        Height = Assets/Images/Planets/Heights/Eeloo.dds
     }
 
     Orbit {

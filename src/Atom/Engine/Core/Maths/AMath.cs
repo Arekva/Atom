@@ -4,6 +4,8 @@ namespace Atom.Engine;
 
 public static class AMath
 {
+    public const f64 TAU = 2.0D * Math.PI;
+    
     /// <summary> Conversion ratio from degrees to radians. </summary>
     public const double DegToRad = Math.PI / 180D;
     /// <summary> Conversion ratio from radians to degrees. </summary>

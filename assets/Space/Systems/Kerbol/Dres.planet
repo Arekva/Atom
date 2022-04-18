@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Dres
     Name        = Dres
+    Mass        = 3.21909365785247E+20 kg
     Description = { 
         [KSP]
         Dres is a very small planet. It was the first planet considered to be a dwarf. 
@@ -18,6 +19,11 @@ Planet {
     
     Rotation { 
         Day = 34800 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Dres.dds
+        Height = Assets/Images/Planets/Heights/Dres.dds
     }
 
     Orbit {

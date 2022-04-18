@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Duna
     Name        = Duna
+    Mass        = 4.51542702477492E+21 kg
     Description = { 
         [KSP]
         Also known as the red dot that you can see if you squint at it really hard, Duna has long been a wonder to Kerbalkind.
@@ -26,6 +27,11 @@ Planet {
     
     Rotation { 
         Day = 65517.859375 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Duna.dds
+        Height = Assets/Images/Planets/Heights/Duna.dds
     }
 
     Orbit {

@@ -26,4 +26,5 @@ public interface IMaterial : IDisposable
 
 #endregion
     
+    public void Delete();
 }

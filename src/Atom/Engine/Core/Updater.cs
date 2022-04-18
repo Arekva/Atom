@@ -48,13 +48,48 @@ public static class Updater
             _frameDoneEvent .Reset();
             if (!_isRunning) break;
             
+            
+            //== 0- Update Keys ==//
+            Keyboard.NextFrame();
+            Mouse.NextFrame();
+            
+            //== 1- Update Time ==//
+            
+            
+            // compute delta time
             double now = Time.Elapsed;
             double delta_time = now - previous_time;
             previous_time = now;
             
             Time.NextUpdate(delta_time);
+            Astrophysics.UniversalTime += delta_time * Astrophysics.TimeWarp;
             
-            DoNextFrame();
+            
+            //== 2- Game Logic ==//
+            foreach (AtomObject @object in AtomObject.Objects)
+            {
+                if (@object.IsDeleted) /* just to be sure */ continue;
+
+                try { @object.Frame(); }
+                catch (Exception e) { Log.Error(e); }
+            }
+            
+            //== 3- Space relative transform to cameras ==//
+            /*foreach (Thing thing in AtomObject.Objects.Where(o => o is Thing))
+            {
+                if (thing.IsDeleted) continue;
+                
+                foreach()
+            }*/
+            
+            //= 3- Render Logic ==//
+            foreach (AtomObject @object in AtomObject.Objects)
+            {
+                if (@object.IsDeleted) continue;
+
+                try { @object.Render(); }
+                catch (Exception e) { Log.Error(e); }
+            }
             
             _frameDoneEvent.Set();
         }
@@ -84,28 +119,6 @@ public static class Updater
         }
     }
     
-    
-    private static void DoNextFrame()
-    {
-        // update
-        foreach (AtomObject @object in AtomObject.Objects)
-        {
-            if (@object.IsDeleted) /* just to be sure */ continue;
-
-            try { @object.Frame(); }
-            catch (Exception e) { Log.Error(e); }
-        }
-        
-        // render
-        foreach (AtomObject @object in AtomObject.Objects)
-        {
-            if (@object.IsDeleted) continue;
-
-            try { @object.Render(); }
-            catch (Exception e) { Log.Error(e); }
-        }
-    }
-
     private static void DoNextPhysicsFrame()
     {
         foreach (AtomObject @object in AtomObject.Objects)

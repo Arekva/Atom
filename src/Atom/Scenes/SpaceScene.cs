@@ -1,11 +1,8 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Atom.Engine;
+﻿using Atom.Engine;
 using Atom.Engine.Astro;
-using Atom.Engine.Loaders;
-using Atom.Engine.Shader;
 using Atom.Engine.Vulkan;
 using Atom.Game.Config;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 
 namespace Atom.Game;
@@ -17,9 +14,11 @@ class SystemStructure
     
 }
 
-class Subsystem
+class BodyInheritence
 {
+    public string ID { get; set; }
     
+    public List<BodyInheritence> Inheritence { get; set; }
 }
 
 
@@ -29,53 +28,24 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 
     private readonly ClassicPlayerController _controller;
 
+    private List<CelestialSystem> _systems;
+
     public SpaceScene()
     {
         _controller = new ClassicPlayerController();
-        
-        SystemConfig[] system_configs = Directory
-            .GetFiles("assets/Space/", "*.system", SearchOption.AllDirectories)
-            .Select(ConfigFile.LoadInto<SystemConfig>)
-            .ToArray();
 
-        PlanetConfig[] planet_configs = Directory
+        
+        Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<PlanetConfig>)
-            .ToArray();
-        
-        
-        
-        // ksp system
-        
-        /* root */ 
-        using CelestialSystem kerbol_system = new( 
-            location: Location.Origin,
-            name    : "Kerbol"
-        );
-        /* main star */ 
-        Star kerbol  = new(name: "Kerbol"    ,
-            radius   : 261600000.0D          ,
-            mass     : 1.75654591319326E+28D ,
-            reference: kerbol_system
-        );
-        Planet moho  = new(name: "Moho"      ,
-            radius   : 250000.0D             ,
-            mass     : 2.52633139930162E+21D ,
-            reference: kerbol
-        );
-        Planet eve   = new(name: "Eve"       ,
-            radius   : 700000.0D             ,
-            mass     : 1.2243980038014E+23D  ,
-            reference: kerbol
-        );
-        Planet gilly = new(name: "Gilly"     ,
-            radius   : 13000.0D              ,
-            mass     : 1.24203632781093E+17D ,
-            reference: eve
-        );
+            .ToDictionary(planet => planet.ID);
 
-        Log.Put(kerbol_system.View());
-
+        _systems = CelestialSystem.CreateSystems(Directory
+            .GetFiles("assets/Space/", "*.system", SearchOption.AllDirectories)
+            .Select(ConfigFile.LoadInto<SystemConfig>),
+            planet_configs
+        ).ToList();
+        
 
         Draw.AssignDrawer(this, 0);
     }
@@ -83,6 +53,24 @@ public class SpaceScene : AtomObject, IScene, IDrawer
     protected override void Frame()
     {
         
+    }
+
+    protected override void Render()
+    {
+        base.Render();
+        
+        Log.Info(Astrophysics.UniversalTime);
+        
+        if (Keyboard.IsPressed(Key.K))
+        {
+            VoxelBody minmus = (_systems[0].Satellites
+                .First().Satellites
+                .First(s => s.Name == "Kerbin") as VoxelBody)!;
+            
+            Location loc = minmus.CelestialSpace.Location;
+
+            _controller.Location = loc + (Vector3D<f64>.UnitY + Vector3D<f64>.UnitZ) * minmus.Radius * 4.0D;
+        }
     }
 
     protected override void PhysicsFrame() { /* todo */ }
@@ -93,10 +81,23 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 
         Draw.UnassignDrawer(this, 0);
 
+        foreach (CelestialSystem system in _systems)
+        {
+            system.Delete();
+        }
+        
+        
         _controller      .Dispose(      );
     }
 
     public void CmdDraw(SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex)
     {
+        foreach (CelestialSystem system in _systems)
+        {
+            foreach (ICelestialBody body in system.Satellites)
+            {
+                body.CmdDraw(cmd, extent, cameraIndex, frameIndex);
+            }
+        }
     }
 }

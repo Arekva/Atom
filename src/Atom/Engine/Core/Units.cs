@@ -31,8 +31,8 @@ public static class Units
     public const f64 METRE      = UNIT;
     public const f64 MILLIMETRE = MILLI*METRE;
     
-    public const f64 ASTRONOMICAL_UNIT = 149_597_870_700.0D * METRE               ;
-    public const f64 LIGHT_YEAR        = 9_460_730_472_580_800.0D * METRE         ;
+    public const f64 ASTRONOMICAL_UNIT = 149_597_870_700.0D * METRE               ; // 149597870700
+    public const f64 LIGHT_YEAR        = 9_460_730_472_580_800.0D * METRE         ; // 9460730472580800
     public const f64 PARSEC            = (648_000.0D / Math.PI) * ASTRONOMICAL_UNIT;
     
     

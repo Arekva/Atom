@@ -1,4 +1,5 @@
-﻿using Silk.NET.Input;
+﻿using System.Diagnostics;
+using Silk.NET.Input;
 
 namespace Atom.Engine;
 
@@ -30,7 +31,9 @@ public static class Keyboard
 
     public static bool IsPressed(Key key) => GameFocus && _thisFrameKeys.Contains(key);
     public static bool IsReleased(Key key) => GameFocus && !IsPressed(key);
+
     public static bool IsPressing(Key key) => GameFocus && _thisFrameKeys.Contains(key) && !_previousFrameKeys.Contains(key);
+
     public static bool IsReleasing(Key key) => GameFocus && !_thisFrameKeys.Contains(key) && _previousFrameKeys.Contains(key);
 
     private static void OnKeyUp(IKeyboard keyboard, Key key, int idk) => _recordingFrameKeys.Remove(key);

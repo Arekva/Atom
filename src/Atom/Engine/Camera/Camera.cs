@@ -19,7 +19,7 @@ public class Camera : Thing
 
     public double NearPlane { get; set; } = 0.01D;
 
-    public double FarPlane { get; set; } = double.PositiveInfinity;
+    public double FarPlane { get; set; } = 1000.0D;
 
     public double Width { get; set; } = 10.0D;
 

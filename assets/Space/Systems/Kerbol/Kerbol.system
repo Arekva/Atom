@@ -5,10 +5,5 @@ System {
         KSP System
     }
 
-    Location = [52;42;5] <1.5 AU;128 km;85 m>
-
-    Inclination {
-        Obliquity      = 0.0 °
-        RightAscension = 0.0 °
-    }
+    Location = [784561;84562788;45812456876] <0.0 AU;0.0 AU;0.0 AU>
 }

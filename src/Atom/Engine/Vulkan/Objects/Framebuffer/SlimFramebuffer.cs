@@ -12,7 +12,7 @@ public struct SlimFramebuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe SlimFramebuffer(
         Device device,
-        RenderPass renderPass,
+        vk.RenderPass renderPass,
         ReadOnlySpan<SlimImageView> attachments,
         uint width, uint height, uint layers,
         FramebufferCreateFlags flags = 0)

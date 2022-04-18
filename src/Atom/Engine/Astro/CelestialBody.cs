@@ -1,30 +1,31 @@
-using System.Diagnostics;
-using Atom.Engine.Astro.Transvoxel;
-using Atom.Engine.Global;
-using Atom.Engine.Shader;
 using Silk.NET.Maths;
 using Atom.Engine.Vulkan;
+using Atom.Game.Config;
 
 namespace Atom.Engine.Astro;
 
 public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
 {
+    public string ID { get; }
+    public string? Description { get; }
+
     public bool            IsStatic  { get; }
 
-    public ITrajectory?    Orbit     { get; }
+    public ITrajectory?    Orbit     { get; set; }
     
     public ICelestialBody  Reference { get; }
     
 
-    protected List<ICelestialBody> SatellitesList;
+    protected List<ICelestialBody> SatellitesList = new();
     public IEnumerable<ICelestialBody> Satellites => SatellitesList.AsEnumerable();
 
 
     public Space CelestialSpace { get; }
     
-    public Space RotatedSpace { get; }
+    public Space RotatedSpace { get; init; }
     
-    
+
+
     // kg
     public f64 Mass { get; }
 
@@ -43,30 +44,27 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
     public f64 SurfaceGravity => (Astrophysics.G * Mass) / (Radius * Radius);
     
     public f64 SurfaceG => SurfaceGravity / Astrophysics.EARTH_SURFACE_GRAVITY;
-    
 
-    public CelestialBody(
-        string name, 
-        f64 radius, f64 mass,
-        ICelestialBody reference)
+    public CelestialBody(PlanetConfig config, ICelestialBody reference)
     {
-        Name = name;
+        ID = config.ID;
         
-        Radius = radius;
-        Mass = mass;
+        Name = config.Name;
+
+        Radius = config.Generation.GeneratorParameters.Radius;
+
+        Mass = config.Mass / 1000.0D;
 
         Reference = reference;
 
-        CelestialSpace = new Space(reference.CelestialSpace);
-
-        SatellitesList = new List<ICelestialBody>(capacity: 7);
+        CelestialSpace = new Space(reference.CelestialSpace, $"{config.Name} celestial space");
         
         reference.AddSatellite(this);
-
+        
         Draw.AssignDrawer(this, cameraIndex: 0);
     }
-    
-    
+
+
     public void AddSatellite(ICelestialBody celestialBody)
     {
         SatellitesList.Add(celestialBody);
@@ -87,9 +85,7 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
         return Satellites.Aggregate(info, (current, satellite) => current + satellite.View(level: level + 1));
     }
 
-    public void CmdDraw(SlimCommandBuffer cmd, Vector2D<u32> extent, u32 cameraIndex, u32 frameIndex)
-    {
-    }
+    public abstract void CmdDraw(SlimCommandBuffer cmd, Vector2D<u32> extent, u32 cameraIndex, u32 frameIndex);
 
     public override void Delete()
     {

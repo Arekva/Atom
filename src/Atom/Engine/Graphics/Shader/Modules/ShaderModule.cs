@@ -93,7 +93,7 @@ public abstract class ShaderModule : IShaderModule
             for (int i = 0; i < descs.Length; i++)
             {
                 NamedDescriptors.Add(
-                    key: descs[i].Name,
+                    key:   descs[i].Name,
                     value: descs[i]
                 );
             }

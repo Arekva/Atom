@@ -6,15 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPIRV-Cross", "src/SPIRV-Cr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine", "src/Atom/Engine/Atom.Engine.csproj", "{0C56416C-E793-4A4C-8C08-A8960C634C48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Core", "src/Atom/Engine/Core/Atom.Engine.Core.csproj", "{0753EE7C-607E-4F81-8CA1-90F0539F4275}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeTest", "src\Test\ComputeTest\ComputeTest\ComputeTest.csproj", "{B4E3319C-38BE-4761-9BC8-3F44820734C4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Astro", "src\Atom\Engine\Astro\Atom.Engine.Astro.csproj", "{87919550-A14C-4A7E-A182-A422B90F5D8E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Graphics", "src\Atom\Engine\Graphics\Atom.Engine.Graphics.csproj", "{182B5524-F422-4197-A0C1-DA17CDDC6ED8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom.Engine.Vulkan", "src\Atom\Engine\Vulkan\Atom.Engine.Vulkan.csproj", "{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,25 +26,9 @@ Global
 		{0C56416C-E793-4A4C-8C08-A8960C634C48}.Debug|x64.Build.0 = Debug|x64
 		{0C56416C-E793-4A4C-8C08-A8960C634C48}.Release|x64.ActiveCfg = Release|x64
 		{0C56416C-E793-4A4C-8C08-A8960C634C48}.Release|x64.Build.0 = Release|x64
-		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Debug|x64.ActiveCfg = Debug|x64
-		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Debug|x64.Build.0 = Debug|x64
-		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Release|x64.ActiveCfg = Release|x64
-		{0753EE7C-607E-4F81-8CA1-90F0539F4275}.Release|x64.Build.0 = Release|x64
 		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.ActiveCfg = Debug|x64
 		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.Build.0 = Debug|x64
 		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.ActiveCfg = Release|x64
 		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.Build.0 = Release|x64
-		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Debug|x64.ActiveCfg = Debug|x64
-		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Debug|x64.Build.0 = Debug|x64
-		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Release|x64.ActiveCfg = Release|x64
-		{87919550-A14C-4A7E-A182-A422B90F5D8E}.Release|x64.Build.0 = Release|x64
-		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Debug|x64.ActiveCfg = Debug|x64
-		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Debug|x64.Build.0 = Debug|x64
-		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Release|x64.ActiveCfg = Release|x64
-		{182B5524-F422-4197-A0C1-DA17CDDC6ED8}.Release|x64.Build.0 = Release|x64
-		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Debug|x64.ActiveCfg = Debug|x64
-		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Debug|x64.Build.0 = Debug|x64
-		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Release|x64.ActiveCfg = Release|x64
-		{8B4D0AF3-30E1-47E8-8E7D-DE70353C0B58}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 EndGlobal

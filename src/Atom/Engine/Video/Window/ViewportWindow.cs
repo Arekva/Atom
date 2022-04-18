@@ -99,8 +99,6 @@ public class ViewportWindow : IDisposable
         Window = Silk.NET.Windowing.Window.Create(options);
         Window.Update += delta_time =>
         {
-            Keyboard.NextFrame();
-            Mouse.NextFrame();
             ManageKeys();
         };
 
@@ -188,7 +186,7 @@ public class ViewportWindow : IDisposable
     private void Render(double deltaTime)
     {
         Updater.WaitUpdate();
-        
+
         DoFPS(deltaTime);
 
         _renderer.Render();

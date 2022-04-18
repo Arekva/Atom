@@ -56,5 +56,6 @@ public interface IShader : IDisposable
     
 #endregion
 
+    public void Delete();
 }
 

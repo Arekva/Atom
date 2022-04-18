@@ -6,19 +6,53 @@ public class Space : AtomObject
 {
     private Thing _thing;
     
-    private Space? _parent;
+    private Space?      _parent   ;
     private List<Space> _subspaces;
 
-    private Vector3D<f64> _localPosition   = Vector3D<f64>.Zero;
-    private Quaternion<f64> _localRotation = Quaternion<f64>.Identity;
-    private Vector3D<f64> _localScale      = Vector3D<f64>.One;
+    private Vector3D<f64>   _localPosition   = Vector3D<f64>.Zero      ;
+    private Quaternion<f64> _localRotation   = Quaternion<f64>.Identity;
+    private Vector3D<f64>   _localScale      = Vector3D<f64>.One       ;
     
     
+    // Dictionary<CameraIndex, Matrix4X4<f64>[FrameIndex]>
+    private Dictionary<u32, Matrix4X4<f64>[]> _renderMatrices;
+
     
     public Thing Thing => _thing;
 
     public Space? Parent => _parent;
     public IEnumerable<Space> Subspaces => _subspaces;
+
+    public ref Matrix4X4<f64> this[u32 cameraIndex, u32 frameIndex]
+    {
+        get
+        {
+            const u32 MAX_FRAME_COUNT = 3;
+            const u32 MAX_CAMERA_COUNT = 1024;
+            
+            if (frameIndex > MAX_FRAME_COUNT)
+            {
+                throw new IndexOutOfRangeException($"Frame index {frameIndex} is higher than {MAX_FRAME_COUNT}.");
+            }
+            if (cameraIndex > MAX_CAMERA_COUNT)
+            {
+                throw new IndexOutOfRangeException($"Camera index {frameIndex} is higher than {MAX_FRAME_COUNT}.");
+            }
+            
+            if (_renderMatrices.TryGetValue(cameraIndex, out Matrix4X4<f64>[]? frame_array))
+            {
+                return ref frame_array[frameIndex];
+            }
+            else
+            {
+                Matrix4X4<f64>[] frames = new Matrix4X4<f64>[3];
+                _renderMatrices.Add(cameraIndex, frames);
+                return ref frames[frameIndex];
+            }
+        }
+    }
+    
+    
 
     public Space(Thing thing, string? name = "Space") : base(name)
     {
@@ -28,6 +62,8 @@ public class Space : AtomObject
         _subspaces = new List<Space>();
         
         _thing.AddSpace(this);
+
+        _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
     }
 
     public Space(Space parent, string? name = "Space") : base(name)
@@ -37,15 +73,20 @@ public class Space : AtomObject
         _parent = parent;
         _subspaces = new List<Space>();
         
-        _thing.AddSpace(this);
+        _parent._subspaces.Add(this);
+        
+        _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
     }
 
     public override void Delete()
     {
         base.Delete();
         
+        _parent?._subspaces.Remove(this);
         _thing.RemoveSpace(this);
         _thing = null!;
+
+        _renderMatrices = null!;
     }
 
 
@@ -119,6 +160,7 @@ public class Space : AtomObject
     {
         get => Rotation.Multiply(Vector3D<f64>.UnitZ);
         set => Rotation = SilkExtender.FromCross(Vector3D<f64>.UnitZ, Vector3D.Normalize(value));
+        
     }
     
     public Matrix4X4<f64> LocalMatrix => Matrix4X4.Multiply(Matrix4X4.Multiply(
@@ -136,10 +178,18 @@ public class Space : AtomObject
         Matrix4X4.CreateScale(Scale)), 
         Matrix4X4.CreateTranslation(Location.Position));
 
-    public Matrix4X4<f64> RelativeMatrix(Location location) => Matrix4X4.Multiply(Matrix4X4.Multiply(
+    
+    // (((sca * rot) * pos) * identity)
+    public Matrix4X4<f64> RelativeMatrix(Location location) =>
+        Matrix4X4.Multiply(
+        Matrix4X4.Multiply(
+        Matrix4X4.Multiply(Matrix4X4.CreateScale(Scale), Matrix4X4.CreateFromQuaternion(Rotation)), Matrix4X4.CreateTranslation((Location - location).Position)), Matrix4X4<f64>.Identity);
+        
+        /*Matrix4X4.Multiply(Matrix4X4.Multiply(
         Matrix4X4.CreateFromQuaternion(Rotation), 
         Matrix4X4.CreateScale(Scale)), 
-        Matrix4X4.CreateTranslation((location - Location).Position));
+        Matrix4X4.CreateTranslation((Location - location).Position));*/
+    
 
     public Plane Plane => new (Right, Up, Forward);
 }

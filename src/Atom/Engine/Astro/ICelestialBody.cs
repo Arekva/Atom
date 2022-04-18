@@ -1,6 +1,6 @@
 namespace Atom.Engine.Astro;
 
-public interface ICelestialBody
+public interface ICelestialBody : IDrawer
 {
     public bool IsStatic { get; }
     
@@ -17,6 +17,10 @@ public interface ICelestialBody
     
     
     public string? Name { get; }
+    
+    public string ID { get; }
+    
+    public string? Description { get; }
     
     
     // Total mass of the CB, in kg

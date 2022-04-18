@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Jool
     Name        = Jool
+    Mass        = 4.23321273059351E+24 kg
     Description = { 
         [KSP]
         Jool is particularly known for being a rather large, predominantly green planet. Kerbalkind has longed to visit it since it was first spotted in the sky.
@@ -29,6 +30,10 @@ Planet {
         Day = 36000 s
     }
 
+    Texture {
+        Color  = Assets/Images/uv_test.dds
+    }
+    
     Orbit {
         Parent                   = Squad.Kerbol.Kerbol
         

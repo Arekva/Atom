@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Tylo
     Name        = Tylo
+    Mass        = 4.23321273059351E+22 kg
     Description = { 
         [KSP]
         Tylo was the first moon of Jool to be discovered by the Kerbal Astronomical Society.
@@ -18,6 +19,11 @@ Planet {
     
     Rotation { 
         Day = 211926.35802123 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Tylo.dds
+        Height = Assets/Images/Planets/Heights/Tylo.dds
     }
 
     Orbit {

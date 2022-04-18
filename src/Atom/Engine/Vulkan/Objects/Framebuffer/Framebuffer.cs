@@ -15,7 +15,7 @@ public struct Framebuffer
 #region Creation & Non-API stuff
 
     public Framebuffer(
-        RenderPass renderPass,
+        vk.RenderPass renderPass,
         ReadOnlySpan<SlimImageView> attachments,
         uint width, uint height, uint layers,
         FramebufferCreateFlags flags = 0,

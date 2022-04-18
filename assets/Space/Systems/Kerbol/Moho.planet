@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Moho
     Name        = Moho
+    Mass        = 2.52633139930162E+21 kg
     Description = { 
         [KSP]
         Moho figures in Kerbal mythology as a fiery place with oceans of flowing lava. 
@@ -18,6 +19,11 @@ Planet {
     
     Rotation { 
         Day = 1210000 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Moho.dds
+        Height = Assets/Images/Planets/Heights/Moho.dds
     }
 
     Orbit {

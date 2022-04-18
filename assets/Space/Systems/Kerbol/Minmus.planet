@@ -1,0 +1,40 @@
+Planet {
+    ID          = Squad.Kerbol.Minmus
+    Name        = Minmus
+    Mass        = 2.64575795662095E+19 kg
+    Description = { 
+        [KSP]
+        Minmus is the smallest moon orbiting Kerbin. 
+        From the surface of Kerbin, it can be seen on clear days as a tiny blue speck in the sky. 
+        It is often mistaken as dirt on telescope lenses or dead pixels, but the top minds at the Kerbal Astronomical Society assure us it is a real moon nevertheless.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 60 km
+        }
+    }
+    
+    Rotation { 
+        Day = 40400 s
+    }
+
+    Texture {
+        Color = Assets/Images/Planets/Colors/Minmus.dds
+        Height = Assets/Images/Planets/Heights/Minmus.dds
+    }
+
+    Orbit {
+        Parent                   = Squad.Kerbol.Kerbin
+        
+        SemiMajorAxis            = 47000000 m
+
+        Eccentricity             = 0.00
+        Inclination              = 6.00 °
+        LongitudeOfAscendingNode = 78.0 °
+        ArgumentOfPeriapsis      = 38.0 °
+        MeanAnomaly              = 0.90 rad
+    }
+}

@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Eve
     Name        = Eve
+    Mass        = 1.2243980038014E+23 kg
     Description = { 
         [KSP]
         Eve is certainly the purplest object in the solar system. It’s one of the larger, most visible objects, mainly because of its very, very purple tint.
@@ -33,6 +34,11 @@ Planet {
     
     Rotation { 
         Day = 80500 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Eve.dds
+        Height = Assets/Images/Planets/Heights/Eve.dds
     }
 
     Orbit {

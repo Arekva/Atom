@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Atom.Game.Config;
 using Silk.NET.Maths;
 
 namespace Atom.Engine.Astro;
@@ -22,6 +23,20 @@ public class RailOrbit : ITrajectory
     
     
     public f64 Period => _period;
+    
+    public RailOrbit(ICelestialBody body, PlanetConfig.OrbitConfig cfg)
+    {
+        _semiMajorAxis            = cfg.SemiMajorAxis                 ;
+        _eccentricity             = cfg.Eccentricity                  ;
+        _inclination              = cfg.Inclination                   ;
+        _longitudeOfAscendingNode = cfg.LongitudeOfAscendingNode      ;
+        _argumentOfPeriapsis      = cfg.ArgumentOfPeriapsis           ;
+        _trueAnomaly              = MeanToTrueAnomaly(cfg.MeanAnomaly);
+        
+        PrecalculateTrigonometry();
+
+        PlanetUpdate(body);
+    }
     
     public RailOrbit(ICelestialBody body   ,
         f64 semiMajorAxis                  ,
@@ -119,4 +134,21 @@ public class RailOrbit : ITrajectory
             yaw  : -_longitudeOfAscendingNode,    // Y axis
             roll : 0                              // Z axis
         ));
+
+
+    public f64 MeanToTrueAnomaly(f64 meanAnomaly)
+    {
+        double M = meanAnomaly;
+        double e = _eccentricity;
+        
+        // true anomaly
+        double v = 
+            M + 
+            (2*e - 1/4.0D*(e*e*e)) *
+            Math.Sin(M) + 5/4.0D*(e*e) * 
+            Math.Sin(2*M) + 13/12.0D*(e*e*e) *
+            Math.Sin(3*M) /* + O(e*e*e*e)*/;
+
+        return v;
+    }
 }

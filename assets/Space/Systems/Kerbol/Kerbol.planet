@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Kerbol
     Name        = Kerbol
+    Mass        = 1.75654591319326E+28 kg
     Description = {
         [KSP] 
         The Sun is the most well known object in the daytime sky. 
@@ -27,6 +28,10 @@ Planet {
 
     Rotation {
         Day = 432000 s
+    }
+
+    Texture {
+        Color  = Assets/Images/uv_test.dds
     }
 
     Orbit {

@@ -1,6 +1,7 @@
 Planet {
     ID          = Squad.Kerbol.Laythe
     Name        = Laythe
+    Mass        = 2.93973106291216E+22 kg
     Description = { 
         [KSP]
         When Laythe was first discovered, it was not entered in the records because the scientist in charge thought he was looking at Kerbin.
@@ -27,6 +28,11 @@ Planet {
     
     Rotation { 
         Day = 52980.8790593796 s
+    }
+
+    Texture {
+        Color  = Assets/Images/Planets/Colors/Laythe.dds
+        Height = Assets/Images/Planets/Heights/Laythe.dds
     }
 
     Orbit {
