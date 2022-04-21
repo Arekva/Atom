@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Silk.NET.Maths;
 using Atom.Engine.Vulkan;
 using Atom.Game.Config;
@@ -6,6 +7,9 @@ namespace Atom.Engine.Astro;
 
 public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
 {
+    public static ConcurrentDictionary<string, ICelestialBody> CelestialBodies { get; } = new();
+
+
     public string ID { get; }
     public string? Description { get; }
 

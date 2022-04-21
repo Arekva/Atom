@@ -5,6 +5,8 @@ namespace Atom.Engine;
 
 public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
 {
+    private const string DEFAULT_NAME = "Unnamed";
+    
     private static ConcurrentDictionary<Guid, AtomObject> _objects = new ();
     public static IEnumerable<AtomObject> Objects => _objects.Values;
     
@@ -27,10 +29,10 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
         }
     }
 
-    public AtomObject(string? name = "Unnamed")
+    public AtomObject(string? name = DEFAULT_NAME)
     {
         GUID = Guid.NewGuid();
-        _name = name;
+        _name = name ?? DEFAULT_NAME;
         
         _objects.TryAdd(GUID, this);
     }

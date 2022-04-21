@@ -1,6 +1,6 @@
 ﻿namespace Atom.Engine;
 
-public enum AspectRatio
+public enum Resolution
 {
     Automatic,
     Manual

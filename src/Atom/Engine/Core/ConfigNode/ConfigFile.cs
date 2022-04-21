@@ -317,21 +317,13 @@ public class ConfigFile
 [Serializable]
 public class BindNotFoundException : Exception
 {
-    public BindNotFoundException()
-    {
-    }
+    public BindNotFoundException() { }
 
-    public BindNotFoundException(string message) : base(message)
-    {
-    }
+    public BindNotFoundException(string message) : base(message) { }
 
-    public BindNotFoundException(string message, Exception inner) : base(message, inner)
-    {
-    }
+    public BindNotFoundException(string message, Exception inner) : base(message, inner) { }
 
     protected BindNotFoundException(
         SerializationInfo info,
-        StreamingContext context) : base(info, context)
-    {
-    }
+        StreamingContext context) : base(info, context) { }
 }

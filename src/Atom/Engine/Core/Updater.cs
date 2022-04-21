@@ -65,16 +65,7 @@ public static class Updater
             Astrophysics.UniversalTime += delta_time * Astrophysics.TimeWarp;
             
             
-            //== 2- Game Logic ==//
-            foreach (AtomObject @object in AtomObject.Objects)
-            {
-                if (@object.IsDeleted) /* just to be sure */ continue;
-
-                try { @object.Frame(); }
-                catch (Exception e) { Log.Error(e); }
-            }
-            
-            //== 3- Space relative transform to cameras ==//
+            //== 2- Move celestial bodies ==//
             /*foreach (Thing thing in AtomObject.Objects.Where(o => o is Thing))
             {
                 if (thing.IsDeleted) continue;
@@ -82,7 +73,17 @@ public static class Updater
                 foreach()
             }*/
             
-            //= 3- Render Logic ==//
+            
+            //== 3- Game Logic ==//
+            foreach (AtomObject @object in AtomObject.Objects)
+            {
+                if (@object.IsDeleted) /* just to be sure */ continue;
+
+                try { @object.Frame(); }
+                catch (Exception e) { Log.Error(e); }
+            }
+
+            //= 4- Render Logic ==//
             foreach (AtomObject @object in AtomObject.Objects)
             {
                 if (@object.IsDeleted) continue;

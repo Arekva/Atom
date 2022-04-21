@@ -7,25 +7,8 @@ using Silk.NET.Maths;
 
 namespace Atom.Game;
 
-class SystemStructure
-{
-    private string SystemName { get; }
-    
-    
-}
-
-class BodyInheritence
-{
-    public string ID { get; set; }
-    
-    public List<BodyInheritence> Inheritence { get; set; }
-}
-
-
 public class SpaceScene : AtomObject, IScene, IDrawer
 {
-    private readonly ClassicSkySphere _sky;
-
     private readonly ClassicPlayerController _controller;
 
     private List<CelestialSystem> _systems;
@@ -50,30 +33,29 @@ public class SpaceScene : AtomObject, IScene, IDrawer
         Draw.AssignDrawer(this, 0);
     }
     
-    protected override void Frame()
+    protected internal override void Frame()
     {
         
     }
 
-    protected override void Render()
+    protected internal override void Render()
     {
         base.Render();
         
-        Log.Info(Astrophysics.UniversalTime);
-        
         if (Keyboard.IsPressed(Key.K))
         {
-            VoxelBody minmus = (_systems[0].Satellites
+            VoxelBody minmus = (_systems[1].Satellites
                 .First().Satellites
-                .First(s => s.Name == "Kerbin") as VoxelBody)!;
+                .First(s => s.Name == "Test Planet") as VoxelBody)!;
             
             Location loc = minmus.CelestialSpace.Location;
 
-            _controller.Location = loc + (Vector3D<f64>.UnitY + Vector3D<f64>.UnitZ) * minmus.Radius * 4.0D;
+            _controller.Location = loc + Vector3D<f64>.UnitY * minmus.Radius;
+
         }
     }
 
-    protected override void PhysicsFrame() { /* todo */ }
+    protected internal override void PhysicsFrame() { /* todo */ }
 
     public override void Delete()
     {

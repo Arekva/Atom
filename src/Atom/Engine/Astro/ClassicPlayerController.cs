@@ -17,8 +17,8 @@ public class ClassicPlayerController : Thing
     
     private f64 _moveSpeed  = 1.42D * (double)(1000000.0D);
     private f64 _runSpeed   = 3.61D * (double)(3000000.0D);
-    private f64 _slowSpeed  = 0.2D * (double)(1000000.0D);
-    
+    private f64 _slowSpeed  = 0.2D  * (double)(1000000.0D);
+
     public static ClassicPlayerController Singleton { get; private set; }
 
     public ClassicPlayerController()
@@ -33,7 +33,7 @@ public class ClassicPlayerController : Thing
 
         _camera = new ();
         _camera.Location = new Location(Vector3D<Double>.Zero);
-        _camera.NearPlane = 0.01D;
+        _camera.Perspective.Near = 0.01D;
     }
 
     protected internal override void Frame()

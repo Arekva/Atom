@@ -154,6 +154,10 @@ public class VoxelBody : CelestialBody
         _material.WriteImage<IVertexModule>(name: "_height", texture: _sphereHeight);
 
         isReady = true;
+
+        {
+            
+        }
     }
 
     protected internal override void Frame()

@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "Systems/Kerbol System/Kerbol.md",
+            "file": "Documentation/Engine/Camera.md",
             "mode": "source",
             "source": false
           }
@@ -25,6 +25,7 @@
       {
         "id": "f5f3bd61d8341a41",
         "type": "tabs",
+        "dimension": 76.01918465227818,
         "children": [
           {
             "id": "3a16478cfa9458fd",
@@ -54,6 +55,7 @@
       {
         "id": "9e8dd55aeda62f9a",
         "type": "tabs",
+        "dimension": 23.980815347721823,
         "children": [
           {
             "id": "29b0bacf3651e82d",
@@ -83,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Systems/Kerbol System/Kerbol.md",
+                "file": "Documentation/Engine/Camera.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -103,6 +105,7 @@
   },
   "active": "276dd2507eba344d",
   "lastOpenFiles": [
+    "Documentation/Engine/Camera.md",
     "Systems/Kerbol System/Kerbol.md",
     "Systems/Kerbol System/Sans titre.md",
     "Systems/Kerbol System/Tylo.md",
@@ -111,7 +114,6 @@
     "Systems/Kerbol System/Pol.md",
     "Systems/Kerbol System/Vall.md",
     "Systems/Kerbol System/Laythe.md",
-    "Systems/Kerbol System/Jool.md",
-    "Systems/Kerbol System/Dres.md"
+    "Systems/Kerbol System/Jool.md"
   ]
 }

@@ -38,13 +38,13 @@ public static class Engine
         
         VK.OnInit += () =>
         {
-            CameraData.Initialize();
-            Draw.Initialize();
+            Camera.Initialize();
+            Draw  .Initialize();
         };
         VK.OnTerminate += () =>
         {
-            Draw.Cleanup();
-            CameraData.Cleanup();
+            Draw  .Cleanup();
+            Camera.Cleanup();
         };
         
         try
