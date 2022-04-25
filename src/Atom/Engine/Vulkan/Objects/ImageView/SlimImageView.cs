@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Silk.NET.Vulkan;
 
 namespace Atom.Engine.Vulkan;
 
@@ -11,22 +10,22 @@ public struct SlimImageView
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe SlimImageView(
-        Device device, SlimImage image,
-        ImageViewType viewType, Format format,
+        vk.Device device, SlimImage image,
+        ImageViewType viewType, ImageFormat format,
         ComponentMapping components,
         vk.ImageSubresourceRange subresourceRange,
-        ImageViewCreateFlags flags = 0)
+        vk.ImageViewCreateFlags flags = 0)
     {
-        ImageViewCreateInfo create_info = new(
-          flags: flags,
-          image: image,
-          viewType: viewType,
-          format: format,
-          components: Unsafe.As<ComponentMapping, vk.ComponentMapping>(ref components),
+        vk.ImageViewCreateInfo create_info = new(
+          flags           : flags,
+          image           : image,
+          viewType        : viewType.ToVk(),
+          format          : format.ToVk(),
+          components      : Unsafe.As<ComponentMapping, vk.ComponentMapping>(ref components),
           subresourceRange: subresourceRange
         );
         
-        Result result = VK.API.CreateImageView(device, in create_info, null, out Handle);
+        vk.Result result = VK.API.CreateImageView(device, in create_info, null, out Handle);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,7 +54,7 @@ public struct SlimImageView
 #region Standard API Proxying 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void Destroy(Device device) => VK.API.DestroyImageView(device, Handle, ReadOnlySpan<AllocationCallbacks>.Empty);
+    public readonly unsafe void Destroy(vk.Device device) => VK.API.DestroyImageView(device, Handle, null);
 
 #endregion
 

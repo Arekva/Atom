@@ -111,13 +111,13 @@ public class VoxelBody : CelestialBody
                 segment: _transformsMemory.Segment(0, (u64)Unsafe.SizeOf<Matrix4X4<f32>>() * Graphics.MaxFramesCount)
             )
         );
-        _material.WriteBuffer<IVertexModule>(
+        /*_material.WriteBuffer<IVertexModule>(
             name: "_cameraMatrices",
             subresource: new BufferSubresource(
                 buffer : CameraData.VPMatrices,
                 segment: CameraData.Memory.Whole
             )
-        );
+        );*/
 
         _material.WriteBuffer<IVertexModule>(
             name: "_settings",
@@ -135,7 +135,7 @@ public class VoxelBody : CelestialBody
         Log.Error($"Load {config.Texture?.Color ?? WHITE}");
 
 
-        _sphereAlbedo    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Color ?? WHITE)));
+        /*_sphereAlbedo    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Color ?? WHITE)));
         _material.WriteImage<IFragmentModule>(name: "_albedo", texture: _sphereAlbedo);
         
         _sphereNormal    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Normal ?? WHITE_NORMAL)));
@@ -151,7 +151,7 @@ public class VoxelBody : CelestialBody
         _material.WriteImage<IFragmentModule>(name: "_roughness", texture: _sphereRoughness);
         
         _sphereHeight   = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Height ?? BLACK)));
-        _material.WriteImage<IVertexModule>(name: "_height", texture: _sphereHeight);
+        _material.WriteImage<IVertexModule>(name: "_height", texture: _sphereHeight);*/
 
         isReady = true;
 

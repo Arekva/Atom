@@ -309,19 +309,19 @@ public static class VK
         throw new Exception("No suitable memory type found.");
     }
 
-    public static vk.Format FirstSupportedFormat(
+    public static ImageFormat FirstSupportedFormat(
         vk.PhysicalDevice physicalDevice,
-        ReadOnlySpan<vk.Format> candidates, 
+        ReadOnlySpan<ImageFormat> candidates, 
         vk.ImageTiling tiling,
         vk.FormatFeatureFlags features)
     {
-        foreach(vk.Format format in candidates)
+        foreach(ImageFormat format in candidates)
         {
-            API.GetPhysicalDeviceFormatProperties(physicalDevice, format, out vk.FormatProperties props);
+            API.GetPhysicalDeviceFormatProperties(physicalDevice, format.ToVk(), out vk.FormatProperties props);
 
             switch (tiling)
             {
-                case vk.ImageTiling.Linear when props.LinearTilingFeatures.HasFlag(features): return format;
+                case vk.ImageTiling.Linear  when props.LinearTilingFeatures .HasFlag(features): return format;
                 case vk.ImageTiling.Optimal when props.OptimalTilingFeatures.HasFlag(features): return format;
             }
         }

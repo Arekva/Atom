@@ -1,22 +1,28 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 using Silk.NET.Maths;
 
 using Atom.Engine.Vulkan;
 
+
+
 namespace Atom.Engine;
+
+
 
 public partial class Camera
 {
-    // this matrix is only used to properly represent the camera gpu data onto the cpu
-    struct ViewProjection<T> where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T>
+    // this structure is only used to properly represent the camera matrices gpu data onto the cpu
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ViewProjection<T> where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T>
     {
         public Matrix4X4<T> View, Projection;
     }
 
     private static bool                           _isInitialized ;
-    
+        
     private static VulkanMemory                   _matricesMemory;
                   
     private static SlimBuffer                     _matricesBuffer;
@@ -25,13 +31,15 @@ public partial class Camera
 
     private static ConcurrentBag<i32>             _availableIndices = new(Enumerable.Range(0, (i32)MAX_CAMERA_COUNT).Take((i32)MAX_CAMERA_COUNT));
     
+    //private static CommandPool _renderPools
+    
     
     
     private static vk.Device MatricesDevice => _matricesMemory.Device;
 
 
 
-    public static void Initialize(vk.Device? device = null, u32 queueFamily = 0)
+    public static void Initialize(ReadOnlySpan<u32> queueFamilies, vk.Device? device = null)
     {
         vk.Device used_device = device ?? VK.Device;
 
@@ -39,7 +47,7 @@ public partial class Camera
             device     : used_device,
             size       : (u64)(MAX_CAMERA_COUNT * Unsafe.SizeOf<ViewProjection<f32>>() * Graphics.MaxFramesCount),
             usage      : BufferUsageFlags.StorageBuffer,
-            sharingMode: vk.SharingMode.Exclusive, queueFamily.AsSpan(), 
+            sharingMode: vk.SharingMode.Exclusive, queueFamilies, 
             flags      : 0
         );
 

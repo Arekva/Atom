@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-
+using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
 
 
@@ -10,10 +10,25 @@ namespace Atom.Engine;
 
 public partial class Camera : Thing
 {
-    public const u32                MAX_CAMERA_COUNT    = 1023U       ;
+    public const u32                MAX_CAMERA_COUNT    = 1024U       ;
     public const i32                UNINITIALIZED_INDEX = i32.MaxValue;
     
     private static ConcurrentDictionary<string, Camera> _cameras = new(concurrencyLevel: 6, capacity: (i32)MAX_CAMERA_COUNT);
+
+    private static Camera? _world        ;
+    private static Camera? _userInterface;
+    
+    public static Camera? World
+    {
+        get => _world;
+        set => _world = value;
+    }
+
+    public static Camera? UserInterface
+    {
+        get => _userInterface;
+        set => _userInterface = value;
+    }
 
 
     
@@ -29,14 +44,16 @@ public partial class Camera : Thing
 
     private PerspectiveProjection  _perspective        ;
     private OrthographicProjection _orthographic       ;
+    
+    private RenderTarget[]         _targets            ;
 
 
 
     public string Identifier => _identifier;
 
-    public i32 Index => _index;
+    public i32    Index      => _index     ;
     
-    public Space Space => _space;
+    public Space  Space      => _space     ;
 
     public Projection ProjectionMode
     {
@@ -71,7 +88,7 @@ public partial class Camera : Thing
             {
                 if (previous_resolution != value)
                 {
-                    SetProjectionsAspectRatio();
+                    Resize();
                 }
             }
             else
@@ -95,8 +112,8 @@ public partial class Camera : Thing
         ? ref _perspective .ProjectionMatrix
         : ref _orthographic.ProjectionMatrix;
     
-
-
+    
+    
     public Camera(
         string? identifier = null, Space? parent = null,
         Projection projectionMode = Projection.Perspective,
@@ -107,14 +124,16 @@ public partial class Camera : Thing
         
         // if there is a parent, use it, otherwise create a space.
         _space = parent == null ? new Space(thing: this) : new Space(parent: parent);
+        _identifier = identifier ?? GUID.ToString();
 
-        if (!_cameras.TryAdd(identifier ?? GUID.ToString(), this))
+        if (!_cameras.TryAdd(_identifier, this))
         {
+            // ReSharper disable once VirtualMemberCallInConstructor
             Delete();
             throw new Exception("A camera with the same identifier already is existing.");
         }
 
-        _perspective  = new PerspectiveProjection() ;
+        _perspective  = new PerspectiveProjection ();
         _orthographic = new OrthographicProjection();
 
         _projectionMode = projectionMode;
@@ -134,6 +153,12 @@ public partial class Camera : Thing
 
         SetProjectionsAspectRatio(AspectRatio);
 
+        _targets = new RenderTarget[Graphics.MaxFramesCount];
+        for (int i = 0; i < Graphics.MaxFramesCount; i++)
+        {
+            _targets[i] = new RenderTarget(Resolution);
+        }
+
         // ReSharper disable once VariableHidesOuterVariable
         Video.OnResolutionChanged += resolution =>
         {
@@ -142,6 +167,8 @@ public partial class Camera : Thing
             _automaticResolution = resolution;
 
             if (_resolutionMode == Atom.Engine.Resolution.Manual) return;
+            
+            Resize();
 
             SetProjectionsAspectRatio();
         };
@@ -154,6 +181,11 @@ public partial class Camera : Thing
         RetrieveIndex();
         _space.Delete();
         _cameras.TryRemove(_identifier, out _);
+
+        for (i32 i = 0; i < _targets.Length; i++)
+        {
+            _targets[i].Delete();
+        }
     }
     
     
@@ -198,8 +230,23 @@ public partial class Camera : Thing
         target[0] = ViewMatrix(reference);
         target[1] = ProjectionMatrix     ;
     }
-    
-    
+
+    public RenderTarget Render(SlimCommandBuffer cmd, u32 frameIndex)
+    {
+        ScreenResolution resolution = Resolution;
+
+        RenderTarget target = _targets[frameIndex];
+        
+        target.Resize(resolution); // resize target if required
+
+        return target;
+    }
+
+
+    private void Resize()
+    {
+        SetProjectionsAspectRatio();
+    }
 
     private void SetProjectionsAspectRatio()
     {

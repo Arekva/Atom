@@ -4,22 +4,22 @@ namespace Atom.Engine;
 
 public static class ImageFormatMapper
 {
-    private static Dictionary<Type, ImageFormat> _photonToVkMap;
-    private static Dictionary<ImageFormat, Type> _vkToPhotonMap;
+    private static Dictionary<Type, ImageFormat> _atomToVkMap;
+    private static Dictionary<ImageFormat, Type> _vkToAtomMap;
     
 
-    public static Type Map(ImageFormat vkImageFormat) => _vkToPhotonMap[vkImageFormat];
-    public static ImageFormat Map(Type dataFormat) => _photonToVkMap[dataFormat];
+    public static Type Map(ImageFormat vkImageFormat) => _vkToAtomMap[vkImageFormat];
+    public static ImageFormat Map(Type dataFormat) => _atomToVkMap[dataFormat];
 
     static ImageFormatMapper()
     {
-        _photonToVkMap = new Dictionary<Type, ImageFormat>(capacity: 255);
-        _vkToPhotonMap = new Dictionary<ImageFormat, Type>(capacity: 255);
+        _atomToVkMap = new Dictionary<Type, ImageFormat>(capacity: 255);
+        _vkToAtomMap = new Dictionary<ImageFormat, Type>(capacity: 255);
         
-        AddOrMapping(Assembly.GetExecutingAssembly());
+        AddToMapping(Assembly.GetExecutingAssembly());
     }
 
-    public static void AddOrMapping(Assembly assembly)
+    public static void AddToMapping(Assembly assembly)
     {
         if (assembly == null) throw new ArgumentNullException(nameof(assembly));
         
@@ -39,15 +39,15 @@ public static class ImageFormatMapper
             }
             else
             {
-                if (_photonToVkMap.ContainsKey(formatType))
+                if (_atomToVkMap.ContainsKey(formatType))
                 {
-                    _photonToVkMap[formatType] = formatAttribute.Format;
-                    _vkToPhotonMap[formatAttribute.Format] = formatType;
+                    _atomToVkMap[formatType] = formatAttribute.Format;
+                    _vkToAtomMap[formatAttribute.Format] = formatType;
                 }
                 else
                 {
-                    _photonToVkMap.Add(formatType, formatAttribute.Format);
-                    _vkToPhotonMap.Add(formatAttribute.Format, formatType);
+                    _atomToVkMap.Add(formatType, formatAttribute.Format);
+                    _vkToAtomMap.Add(formatAttribute.Format, formatType);
                 }
             }
         }

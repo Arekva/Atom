@@ -15,7 +15,7 @@ public struct Image
 #region Creation & Non-API stuff
 
     public Image(
-        ImageType type, Format format, Extent3D extent,
+        ImageType type, ImageFormat format, Extent3D extent,
         uint mipLevels, uint arrayLayers,
         SampleCountFlags samples,
         ImageTiling tiling, ImageUsageFlags usage,

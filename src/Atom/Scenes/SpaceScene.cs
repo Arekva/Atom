@@ -11,14 +11,14 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 {
     private readonly ClassicPlayerController _controller;
 
-    private List<CelestialSystem> _systems;
+    //private List<CelestialSystem> _systems;
 
     public SpaceScene()
     {
         _controller = new ClassicPlayerController();
 
         
-        Dictionary<string, PlanetConfig> planet_configs = Directory
+        /*Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<PlanetConfig>)
             .ToDictionary(planet => planet.ID);
@@ -27,10 +27,11 @@ public class SpaceScene : AtomObject, IScene, IDrawer
             .GetFiles("assets/Space/", "*.system", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<SystemConfig>),
             planet_configs
-        ).ToList();
+        ).ToList();*/
         
 
-        Draw.AssignDrawer(this, 0);
+        
+        //Draw.AssignDrawer(this, 0);
     }
     
     protected internal override void Frame()
@@ -42,7 +43,7 @@ public class SpaceScene : AtomObject, IScene, IDrawer
     {
         base.Render();
         
-        if (Keyboard.IsPressed(Key.K))
+        /*if (Keyboard.IsPressed(Key.K))
         {
             VoxelBody minmus = (_systems[1].Satellites
                 .First().Satellites
@@ -52,7 +53,7 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 
             _controller.Location = loc + Vector3D<f64>.UnitY * minmus.Radius;
 
-        }
+        }*/
     }
 
     protected internal override void PhysicsFrame() { /* todo */ }
@@ -61,12 +62,12 @@ public class SpaceScene : AtomObject, IScene, IDrawer
     {
         base.Delete();
 
-        Draw.UnassignDrawer(this, 0);
+        //Draw.UnassignDrawer(this, 0);
 
-        foreach (CelestialSystem system in _systems)
+        /*foreach (CelestialSystem system in _systems)
         {
             system.Delete();
-        }
+        }*/
         
         
         _controller      .Dispose(      );
@@ -74,12 +75,12 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 
     public void CmdDraw(SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex)
     {
-        foreach (CelestialSystem system in _systems)
+        /*foreach (CelestialSystem system in _systems)
         {
             foreach (ICelestialBody body in system.Satellites)
             {
                 body.CmdDraw(cmd, extent, cameraIndex, frameIndex);
             }
-        }
+        }*/
     }
 }

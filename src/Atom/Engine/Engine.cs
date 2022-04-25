@@ -38,12 +38,13 @@ public static class Engine
         
         VK.OnInit += () =>
         {
-            Camera.Initialize();
-            Draw  .Initialize();
+            u32 queue = 0;
+            Camera.Initialize(queue.AsSpan());
+            //Draw  .Initialize();
         };
         VK.OnTerminate += () =>
         {
-            Draw  .Cleanup();
+            //Draw  .Cleanup();
             Camera.Cleanup();
         };
         

@@ -41,16 +41,16 @@ internal static class DeferredRenderPass
 #region Configuration
     
     // G-Buffer
-    private const vk.Format ALBEDO_LUMINANCE_FORMAT = vk.Format.R32G32B32A32Sfloat;
-    private const vk.Format NORMAL_ROUGHNESS_METALNESS_FORMAT = vk.Format.R32G32B32A32Sfloat;
-    private const vk.Format POSITION_TRANSLUCENCY_FORMAT = vk.Format.R32G32B32A32Sfloat;
-    private static readonly vk.Format[] DEPTH_FORMATS =
+    private const ImageFormat ALBEDO_LUMINANCE_FORMAT = ImageFormat.R32G32B32A32_SFloat;
+    private const ImageFormat NORMAL_ROUGHNESS_METALNESS_FORMAT = ImageFormat.R32G32B32A32_SFloat;
+    private const ImageFormat POSITION_TRANSLUCENCY_FORMAT = ImageFormat.R32G32B32A32_SFloat;
+    private static readonly ImageFormat[] DEPTH_FORMATS =
     {
-        vk.Format.D32Sfloat, vk.Format.D32SfloatS8Uint, vk.Format.D24UnormS8Uint
+        ImageFormat.D32_SFloat, ImageFormat.D32_SFloat_S8_UInt, ImageFormat.D24_UNorm_S8_UInt
     };
     
     // Lit
-    private const vk.Format LIT_FORMAT = vk.Format.R32G32B32A32Sfloat; 
+    private const ImageFormat LIT_FORMAT = ImageFormat.R32G32B32A32_SFloat; 
     
 #endregion
 
@@ -58,7 +58,7 @@ internal static class DeferredRenderPass
     public static vk.Result CreateRenderPass(
         vk.Device device,
         vk.PhysicalDevice physicalDevice, 
-        out Silk.NET.Vulkan.RenderPass renderPass, out vk.Format depthFormat)
+        out Silk.NET.Vulkan.RenderPass renderPass, out ImageFormat depthFormat)
     {
         depthFormat = VK.FirstSupportedFormat(
             physicalDevice,

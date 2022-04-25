@@ -31,9 +31,16 @@ public class ClassicPlayerController : Thing
 
         Singleton = this;
 
-        _camera = new ();
+        _camera = new Camera(identifier: "default_world_viewport");
         _camera.Location = new Location(Vector3D<Double>.Zero);
         _camera.Perspective.Near = 0.01D;
+
+        using (RenderTarget target = new (new Vector2D<UInt32>(1024)))
+        {
+            
+        }
+
+        Camera.World = _camera;
     }
 
     protected internal override void Frame()

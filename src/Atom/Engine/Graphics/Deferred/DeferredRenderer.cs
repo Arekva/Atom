@@ -4,6 +4,11 @@ using Silk.NET.Maths;
 using Silk.NET.Vulkan.Extensions.KHR;
 
 using Atom.Engine.Vulkan;
+using Silk.NET.Vulkan;
+using CommandBufferLevel = Atom.Engine.Vulkan.CommandBufferLevel;
+using CommandPoolCreateFlags = Atom.Engine.Vulkan.CommandPoolCreateFlags;
+using ComponentMapping = Atom.Engine.Vulkan.ComponentMapping;
+using MemoryPropertyFlags = Atom.Engine.Vulkan.MemoryPropertyFlags;
 
 namespace Atom.Engine;
 
@@ -24,7 +29,7 @@ public class DeferredRenderer
 #region Configuration
 
     // -- Defaults
-    public const vk.Format DEFAULT_COLOR_FORMAT = vk.Format.B8G8R8A8Unorm/*B8G8R8A8Srgb*/;
+    public  const ImageFormat DEFAULT_COLOR_FORMAT = ImageFormat.B8G8R8A8_UNorm/*B8G8R8A8Srgb*/;
     private const vk.ColorSpaceKHR DEFAULT_COLOR_SPACE = vk.ColorSpaceKHR.ColorSpaceSrgbNonlinearKhr/*ColorSpaceSrgbNonlinearKhr*/;
     private const vk.ImageUsageFlags SWAPCHAIN_IMAGE_USAGES = vk.ImageUsageFlags.ImageUsageColorAttachmentBit;
     private const vk.CompositeAlphaFlagsKHR ALPHA_COMPOSITING = vk.CompositeAlphaFlagsKHR.CompositeAlphaOpaqueBitKhr;
@@ -82,7 +87,7 @@ public class DeferredRenderer
     
     // surface
     private Vector2D<uint> _extent;
-    private vk.Format _colorFormat = DEFAULT_COLOR_FORMAT;
+    private ImageFormat _colorFormat = DEFAULT_COLOR_FORMAT;
     private vk.ColorSpaceKHR _colorSpace = DEFAULT_COLOR_SPACE;
     private vk.PresentModeKHR _presentMode = DEFAULT_PRESENT_MODE;
     private bool _clip = DEFAULT_CLIPPED;
@@ -92,10 +97,10 @@ public class DeferredRenderer
 
     private uint _swapchainImageCount;
     private uint _frameIndex = 0;
-    private vk.Format _depthFormat;
+    private ImageFormat _depthFormat;
     
     
-    public vk.Format ColorFormat
+    public ImageFormat ColorFormat
     {
         get => _colorFormat;
         set
@@ -112,7 +117,7 @@ public class DeferredRenderer
                 vk.SurfaceFormatKHR available = default;
                 for (int i = 0; i < format_mode_count; i++)
                 {
-                    if (formats[i].Format == value)
+                    if (formats[i].Format.ToAtom() == value)
                     {
                         available = formats[i];
                         break;
@@ -195,6 +200,7 @@ public class DeferredRenderer
             _semaphores[i + MAX_FRAMES_IN_FLIGHT_COUNT] = new SlimSemaphore(_device);
         }
         
+        
         DeferredRenderPass.CreateRenderPass(_device, _physicalDevice, out _renderPass, out _depthFormat);
         Graphics.MainRenderPass = _renderPass;
         _gbufferDrawer = new GBufferDrawer(MAX_FRAMES_IN_FLIGHT_COUNT, device);
@@ -243,14 +249,18 @@ public class DeferredRenderer
         frame_fence.Reset(_device);
         
         // save camera state for this frame
-        CameraData.UpdateFrame(_frameIndex);
+        /*CameraData.UpdateFrame(_frameIndex);
 
         if (Draw.HasUpdates(frameIndex: swap_image_index, cameraIndex: 0))
         {
             Log.Trace($"UPDATE [swap {swap_image_index}][cam {0}]");
             vk.Extent2D extent = new(_extent.X, _extent.Y);
             BuildCommands(swap_image_index, extent);
-        }
+        }*/
+        
+        vk.Extent2D extent = new(_extent.X, _extent.Y);
+        BuildCommands(swap_image_index, extent);
+        
 
         SlimCommandBuffer command = _commands[command_buffer_index];
 
@@ -324,7 +334,7 @@ public class DeferredRenderer
         vk.SwapchainCreateInfoKHR swapchain_info = new(
             surface: _surface,
             minImageCount: image_count,
-            imageFormat: _colorFormat,
+            imageFormat: _colorFormat.ToVk(),
             imageColorSpace: _colorSpace,
             imageExtent: *(vk.Extent2D*)&extent,
             imageUsage: SWAPCHAIN_IMAGE_USAGES,
@@ -504,15 +514,25 @@ public class DeferredRenderer
 
         using (CommandRecorder command = new (cmd))
         {
+            if (Camera.World == null)
+            {
+                Log.Warning("No world camera assigned.");
+            }
+            else
+            {
+                RenderTarget target = Camera.World.Render(cmd, swapImageIndex);
+            }
+            
+            
+            
             using (CommandRecorder.RenderPassRecorder render_pass = command.RenderPass(
                        _renderPass, area, _framebuffers[swapImageIndex], RENDER_PASS_CLEAR.Array))
             {
-                // draw meshes in gbuffer
-                // just consider 1 camera for now.
+                
+
+
                 Vector2D<u32> vec_extent = new(extent.Width, extent.Height);
-                
-                Draw.UpdateFrame(cmd, vec_extent, cameraIndex: 0, frameIndex: swapImageIndex);
-                
+
                 render_pass.NextSubpass();
                 
                 // draw lit render
@@ -535,11 +555,11 @@ public class DeferredRenderer
         SlimImage gbuffer_depth_image   = _images[image_index + 2];
         SlimImage lit_image             = _images[image_index + 3];
 
-        void create_view(SlimImage image, vk.Format format, ImageAspectFlags aspect, out SlimImageView view, uint layer = 0)
+        void create_view(SlimImage image, ImageFormat format, ImageAspectFlags aspect, out SlimImageView view, uint layer = 0)
         {
             view = new SlimImageView(
                 _device,  image,
-                viewType: vk.ImageViewType.ImageViewType2D,
+                viewType: ImageViewType.Dim2D,
                 format:   format,
                 components: ComponentMapping.Identity,
                 subresourceRange: new vk.ImageSubresourceRange(
@@ -549,7 +569,7 @@ public class DeferredRenderer
             );
         }
 
-        const vk.Format GBUFFER_FORMAT = vk.Format.R32G32B32A32Sfloat;
+        const ImageFormat GBUFFER_FORMAT = ImageFormat.R32G32B32A32_SFloat;
         
         // albedo / luminance | normal / roughness / metalness | position / translucency
         for (u32 i = 0; i < 3; i++) // 3 views for the main g buffer
@@ -621,7 +641,7 @@ public class DeferredRenderer
 
         uint fam_index = _renderFamily.Index;
 
-        void create_image(vk.Format format, uint arrayLayers, vk.ImageUsageFlags usages, out SlimImage image)
+        void create_image(ImageFormat format, uint arrayLayers, ImageUsageFlags usages, out SlimImage image)
         {
             uint f = fam_index;
             image = new SlimImage(
@@ -640,23 +660,23 @@ public class DeferredRenderer
         _images[image_index] = swapImage;
 
         create_image( /* gBuffer main */
-            format: vk.Format.R32G32B32A32Sfloat, 
+            format: ImageFormat.R32G32B32A32_SFloat, 
             arrayLayers: 3,
-            usages: vk.ImageUsageFlags.ImageUsageColorAttachmentBit | vk.ImageUsageFlags.ImageUsageInputAttachmentBit,
+            usages: ImageUsageFlags.ColorAttachment | ImageUsageFlags.InputAttachment,
             out _images[image_index + 1]
         );
         
         create_image( /* gBuffer depth */
             format: _depthFormat, 
             arrayLayers: 1,
-            usages: vk.ImageUsageFlags.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageFlags.ImageUsageInputAttachmentBit,
+            usages: ImageUsageFlags.DepthStencilAttachment | ImageUsageFlags.InputAttachment,
             out _images[image_index + 2]
         );
         
         create_image( /* lit */
-            format: vk.Format.R32G32B32A32Sfloat, 
+            format: ImageFormat.R32G32B32A32_SFloat, 
             arrayLayers: 1,
-            usages: vk.ImageUsageFlags.ImageUsageColorAttachmentBit | vk.ImageUsageFlags.ImageUsageSampledBit,
+            usages: ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
             out _images[image_index + 3]
         );
     }

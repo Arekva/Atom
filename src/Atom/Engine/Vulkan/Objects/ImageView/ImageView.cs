@@ -16,7 +16,7 @@ public struct ImageView
 
     public ImageView(
         SlimImage image,
-        ImageViewType viewType, Format format,
+        ImageViewType viewType, ImageFormat format,
         ComponentMapping components,
         vk.ImageSubresourceRange subresourceRange,
         ImageViewCreateFlags flags = 0,

@@ -2,8 +2,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Atom.Engine.Vulkan;
-using CommandBufferLevel = Atom.Engine.Vulkan.CommandBufferLevel;
-using MemoryPropertyFlags = Atom.Engine.Vulkan.MemoryPropertyFlags;
+using Silk.NET.Maths;
 
 namespace Atom.Engine.Loaders;
 
@@ -56,7 +55,11 @@ public static class DDS
             $"DirectX format {dxformat} (Alpha: {alphaMode}) is not a valid DirectDraw format.")
     };
 
-    public static unsafe IImageOptimalDevice2D Load(Stream stream, vk.Device? device = null)
+    public static unsafe Image Load(Stream stream,
+        ReadOnlySpan<u32> queueFamilies,
+        vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
+        vk.SampleCountFlags samples = vk.SampleCountFlags.SampleCount1Bit,
+        vk.Device? device = null)
     {
         vk.Device used_device = device ?? VK.Device;
         
@@ -119,47 +122,49 @@ public static class DDS
             linear_size = Math.Max(min_linear_size, linear_size / 4);
         }
 
-        const vk.SampleCountFlags FINAL_SAMPLES = vk.SampleCountFlags.SampleCount1Bit;
-        const vk.ImageTiling      FINAL_TILING  = vk.ImageTiling.Optimal;
-        const vk.ImageUsageFlags  FINAL_USAGES  = vk.ImageUsageFlags.ImageUsageTransferDstBit | 
-                                                  vk.ImageUsageFlags.ImageUsageSampledBit     ;
-        const vk.SharingMode      FINAL_SHARING = vk.SharingMode.Exclusive;
-        const vk.ImageLayout      FINAL_LAYOUT  = vk.ImageLayout.Undefined;
+        ref readonly vk.SharingMode      final_sharing = ref sharingMode  ;
+        ref readonly ReadOnlySpan<u32>   final_queues  = ref queueFamilies;
+        ref readonly vk.SampleCountFlags final_samples = ref samples      ;
+        
+        const vk.ImageTiling      FINAL_TILING          = vk.ImageTiling.Optimal              ;
+        const ImageUsageFlags     FINAL_USAGES          = ImageUsageFlags.TransferDestination | 
+                                                          ImageUsageFlags.Sampled             ;
+        const vk.ImageLayout      FINAL_INITIAL_LAYOUT  = vk.ImageLayout.Undefined            ;
+        const vk.ImageLayout      FINAL_LAYOUT          = vk.ImageLayout.ShaderReadOnlyOptimal;
 
         vk.Extent3D image_extent  = new(vk_width, vk_height, vk_depth);
-        vk.Format   api_format    = Unsafe.As<ImageFormat, vk.Format>(ref vk_format);
         
         // Create the final image
         SlimImage final_image = new(
-            device            : used_device            ,
-            type              : vk_image_type          ,
-            format            : api_format             ,
-            extent            : image_extent           ,
-            mipLevels         : vk_mip_levels          ,
-            arrayLayers       : vk_array_layers        ,
-            samples           : FINAL_SAMPLES          , /* unrelated to DDS */
-            tiling            : FINAL_TILING           , /* unrelated to DDS */
-            usage             : FINAL_USAGES           , /* unrelated to DDS */
-            sharingMode       : FINAL_SHARING          ,
-            queueFamilyIndices: ReadOnlySpan<u32>.Empty,
-            initialLayout     : FINAL_LAYOUT             /* unrelated to DDS */
+            device            : used_device    ,
+            type              : vk_image_type  ,
+            format            : vk_format      ,
+            extent            : image_extent   ,
+            mipLevels         : vk_mip_levels  ,
+            arrayLayers       : vk_array_layers,
+            samples           : final_samples  , /* unrelated to DDS */
+            tiling            : FINAL_TILING   , /* unrelated to DDS */
+            usage             : FINAL_USAGES   , /* unrelated to DDS */
+            sharingMode       : final_sharing  ,
+            queueFamilyIndices: final_queues   ,
+            initialLayout     : FINAL_INITIAL_LAYOUT     /* unrelated to DDS */
         );
         MemorySegment final_memory = final_image.CreateDedicatedMemory(
             device: used_device,
             properties: MemoryPropertyFlags.DeviceLocal
         );
         
-        const vk.SampleCountFlags STAGING_SAMPLES = vk.SampleCountFlags.SampleCount1Bit        ;
-        const vk.ImageTiling      STAGING_TILING  = vk.ImageTiling.Linear                      ;
-        const vk.ImageUsageFlags  STAGING_USAGES  = vk.ImageUsageFlags.ImageUsageTransferSrcBit;
-        const vk.SharingMode      STAGING_SHARING = vk.SharingMode.Exclusive                   ;
-        const vk.ImageLayout      STAGING_LAYOUT  = vk.ImageLayout.Undefined                   ;
+        const vk.SampleCountFlags STAGING_SAMPLES = vk.SampleCountFlags.SampleCount1Bit;
+        const vk.ImageTiling      STAGING_TILING  = vk.ImageTiling.Linear              ;
+        const    ImageUsageFlags  STAGING_USAGES  =    ImageUsageFlags.TransferSource  ;
+        const vk.SharingMode      STAGING_SHARING = vk.SharingMode.Exclusive           ;
+        const vk.ImageLayout      STAGING_LAYOUT  = vk.ImageLayout.Undefined           ;
         
         // create image with max caps for one final resource. so it is used as a buffer for all the other transfers.
         SlimImage staging_image = new( // for now grab the required memory
             device            : used_device            ,
             type              : vk_image_type          ,
-            format            : api_format             ,
+            format            : vk_format              ,
             extent            : image_extent           ,
             mipLevels         : 1                      ,
             arrayLayers       : vk_array_layers        ,
@@ -238,7 +243,7 @@ public static class DDS
                 SlimImage mip_image = staging_images[(i32)i] = new SlimImage(
                     device            : used_device            ,
                     type              : vk_image_type          ,
-                    format            : api_format             ,
+                    format            : vk_format              ,
                     extent            : mip_extent             ,
                     mipLevels         : 1U                     ,
                     arrayLayers       : 1U                     ,
@@ -393,17 +398,21 @@ public static class DDS
             staging_images[(i32)i].Destroy(used_device);
         }
         
-        // oh yes, good ol' thicc reflective instantiation 🤤
-        return (Activator.CreateInstance(
-            type       : StandardImage.GetProceduralType(typeof(OptimalDeviceImage2D<>), vk_format),
-            bindingAttr: BindingFlags.NonPublic | BindingFlags.Instance,
-            binder     : null,
-            args       : new object []
-            {
-                used_device, final_image, final_memory,
-                image_extent, vk_mip_levels, vk_array_layers,
-                FINAL_SAMPLES, vk.ImageLayout.ShaderReadOnlyOptimal, 
-            },
-            culture    : CultureInfo.CurrentCulture) as IImageOptimalDevice2D)!;
+        return new Image(
+            resolution   : Unsafe.As<vk.Extent3D, Vector3D<u32>>(ref image_extent),
+            format       : vk_format        ,
+            imageType    : vk_image_type    ,
+            tiling       : FINAL_TILING     ,
+            usage        : FINAL_USAGES     ,
+            queueFamilies: final_queues     ,
+            mipLevels    : vk_mip_levels    ,
+            arrayLayers  : vk_array_layers  ,
+            multisampling: final_samples    ,
+            sharingMode  : final_sharing    ,
+            layout       : FINAL_LAYOUT     ,
+            memory       : final_memory   ,
+            image        : final_image    ,
+            device       : used_device
+        );
     }
 }

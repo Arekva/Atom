@@ -65,7 +65,7 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
         
         reference.AddSatellite(this);
         
-        Draw.AssignDrawer(this, cameraIndex: 0);
+        //Draw.AssignDrawer(this, cameraIndex: 0);
     }
 
 
@@ -95,8 +95,8 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
     {
         base.Delete();
         
-        Draw.UnassignDrawer(this, cameraIndex: 0);
+        //Draw.UnassignDrawer(this, cameraIndex: 0);
 
-        VK.API.DeviceWaitIdle(VK.Device); // shit but lazy way to sync, for now.
+        //VK.API.DeviceWaitIdle(VK.Device); // shit but lazy way to sync, for now.
     }
 }

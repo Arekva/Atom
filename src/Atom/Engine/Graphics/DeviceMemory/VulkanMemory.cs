@@ -136,13 +136,13 @@ public class VulkanMemory : IDisposable
         VK.API.UnmapMemory(Device, _handle);
     }
 
-    public void Dispose()
+    public void Delete()
     {
         if (IsMapped) // shouldn't happen, because a memory map implicitly means a memory segment object has been
-                      // created, but we never know.
+            // created, but we never know.
         {
             throw new MemoryMapException("Memory is still mapped. Please unmap please unmap your memory before " +
-                                           "disposing ");
+                                         "disposing ");
         }
         
         vk.VkOverloads.FreeMemory(VK.API, Device, _handle, ReadOnlySpan<vk.AllocationCallbacks>.Empty);
@@ -150,10 +150,16 @@ public class VulkanMemory : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    public void Dispose() => Delete();
+
     ~VulkanMemory() => Dispose();
 
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator vk.DeviceMemory(in VulkanMemory memory) => memory._handle;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator u64(in VulkanMemory memory) => 
+        Unsafe.As<vk.DeviceMemory, u64>(ref memory._handle);
 }
