@@ -37,6 +37,9 @@ public class Viewport : IDisposable
     const vk.SharingMode SWAP_SHARING                      = vk.SharingMode.Exclusive                                  ;
     const vk.ImageLayout SWAP_LAYOUT                       = vk.ImageLayout.PresentSrcKhr                              ;
     const u32 MAX_IMAGES_IN_FLIGHT                         = 3U                                                        ;
+
+    private static readonly HashSet<PresentMode> VSYNC_PRESENT_MODES     = new() { PresentMode.Mailbox, PresentMode.Fifo, PresentMode.FifoRelaxed };
+    private static readonly HashSet<PresentMode> NON_VSYNC_PRESENT_MODES = new() { PresentMode.Immediate, PresentMode.SharedDemandRefresh, PresentMode.SharedContinuousRefresh };
     
     private vk.SwapchainKHR _swap           ;
     private u32             _swapImageCount ;
@@ -67,9 +70,9 @@ public class Viewport : IDisposable
     private bool[]                   _swapchainsImagesPipelined;
     
 
-    private Dictionary<ColorSpace, ImageFormat[]> _availableFormats     ;
-    private PresentMode[]                         _availablePresentModes;
-    private ImageUsageFlags                       _supportedUsageFlags  ;
+    private Dictionary<ColorSpace, HashSet<ImageFormat>> _availableFormats     ;
+    private HashSet<PresentMode>                         _availablePresentModes;
+    private ImageUsageFlags                              _supportedUsageFlags  ;
 
 
     private Vector2D<u32>    _resolution   ;
@@ -140,7 +143,16 @@ public class Viewport : IDisposable
                        ImageFormat.B8G8R8A8_UNorm      ;
         _colorSpace  = //ColorSpace.HDR10_ST2084             ;
                        ColorSpace.sRGB_NonLinear       ;
-        _presentMode = PresentMode.Mailbox                 ;
+
+        if (IsVSyncSupported(out _presentMode))
+        {
+            
+        }
+        else
+        {
+            _presentMode = _availablePresentModes!.First();
+        }
+        
         _resolution  = new Vector2D<u32>(x:1024, y:768)    ;
         _clipped     = false                               ;
         
@@ -184,8 +196,23 @@ public class Viewport : IDisposable
 
     ~Viewport() => Dispose();
 
-    
-    
+
+
+    public bool IsVSyncSupported(out PresentMode mode)
+    {
+        foreach (PresentMode vsync_mode in VSYNC_PRESENT_MODES)
+        {
+            if (_availablePresentModes.Contains(vsync_mode))
+            {
+                mode = vsync_mode;
+                return true;
+            }
+        }
+
+        mode = default;
+        return false;
+    }
+
     public bool UpdateSwapchain(bool updateVideoSettings = false)
     {
         _surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(_physicalDevice,
@@ -479,11 +506,12 @@ public class Viewport : IDisposable
         debug_info.AppendJoin(", ", _availableFormats.Select(
             kvp => $"{kvp.Key} {{ {string.Join(", ", kvp.Value.Select(s => s))} }}"
         ));
+        debug_info.Append($"\n* Vertical Sync: {(IsVSyncSupported(out PresentMode vsync_mode) ? $"Supported ({vsync_mode})" : "Unsupported")}");
         debug_info.Append('`');
         Log.Info(debug_info);
     }
 
-    private PresentMode[] AssignPresentModes()
+    private HashSet<PresentMode> AssignPresentModes()
     {
         u32 present_mode_count = 0;
 
@@ -494,17 +522,23 @@ public class Viewport : IDisposable
             present_mode_count.AsSpan(), Span<vk.PresentModeKHR>.Empty 
         );
 
-        _availablePresentModes = new PresentMode[present_mode_count];
+        Span<vk.PresentModeKHR> present_modes = stackalloc vk.PresentModeKHR[(i32)present_mode_count];
 
         khr.KhrSurfaceOverloads.GetPhysicalDeviceSurfacePresentModes(_surfaceExtension,
             _physicalDevice, _surface.Data, 
-            present_mode_count.AsSpan(), Unsafe.As<PresentMode[], vk.PresentModeKHR[]>(ref _availablePresentModes)
+            present_mode_count.AsSpan(), present_modes
         );
+
+        _availablePresentModes = new HashSet<PresentMode>(capacity: (i32)present_mode_count);
+        for (int i = 0; i < present_mode_count; i++)
+        {
+            _availablePresentModes.Add(item: present_modes[i].ToAtom());
+        }
         
         return _availablePresentModes;
     }
 
-    private Dictionary<ColorSpace, ImageFormat[]> AssignColors()
+    private Dictionary<ColorSpace, HashSet<ImageFormat>> AssignColors()
     {
         Span<vk.SurfaceFormatKHR> formats = stackalloc vk.SurfaceFormatKHR[32]; 
         u32 format_count = 0;
@@ -515,7 +549,7 @@ public class Viewport : IDisposable
         khr.KhrSurfaceOverloads.GetPhysicalDeviceSurfaceFormats(_surfaceExtension,
             _physicalDevice, _surface.Data, format_count.AsSpan(), formats);
 
-        Dictionary<ColorSpace, List<ImageFormat>> by_space = new (capacity: (i32)format_count);
+        Dictionary<ColorSpace, HashSet<ImageFormat>> by_space = new (capacity: (i32)format_count);
 
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         for (i32 i = 0; i < format_count; i++)
@@ -523,21 +557,21 @@ public class Viewport : IDisposable
             ref readonly ColorSpace  color_space  = ref Unsafe.As<vk.ColorSpaceKHR, ColorSpace >(ref formats[i].ColorSpace);
             ref readonly ImageFormat color_format = ref Unsafe.As<vk.Format, ImageFormat>(ref formats[i].Format);
 
-            if (by_space.TryGetValue(color_space, out List<ImageFormat> by_space_formats))
+            if (by_space.TryGetValue(color_space, out HashSet<ImageFormat>? by_space_formats))
             {
                 by_space_formats.Add(color_format);
             }
             else
             {
-                by_space.Add(color_space, new List<ImageFormat> { color_format });
+                by_space.Add(color_space, new HashSet<ImageFormat> { color_format });
             }
         }
 
-        _availableFormats = new Dictionary<ColorSpace, ImageFormat[]>(capacity: by_space.Count);
+        _availableFormats = new Dictionary<ColorSpace, HashSet<ImageFormat>>(capacity: by_space.Count);
 
-        foreach ((ColorSpace color_space, List<ImageFormat> color_formats) in by_space)
+        foreach ((ColorSpace color_space, HashSet<ImageFormat> color_formats) in by_space)
         {
-            _availableFormats.Add(color_space, color_formats.ToArray());
+            _availableFormats.Add(color_space, color_formats);
         }
 
         return _availableFormats;
