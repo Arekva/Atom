@@ -2,6 +2,8 @@
 using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
 
+using Atom.Engine.GraphicsPipeline;
+
 namespace Atom.Engine;
 
 public interface IRasterizedMaterial : IMaterial
@@ -16,7 +18,7 @@ public interface IRasterizedMaterial : IMaterial
 
     public Tessellation Tessellation { get; set; }
         
-    public Viewport Viewport { get; set; }
+    public Atom.Engine.GraphicsPipeline.Viewport Viewport { get; set; }
 
     public Rasterizer Rasterizer { get; set; }
 

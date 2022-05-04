@@ -8,7 +8,6 @@ using Silk.NET.Windowing;
 
 using Silk.NET.Core.Native;
 using Silk.NET.Input;
-using Silk.NET.Vulkan;
 
 using Atom.Engine.Vulkan;
 
@@ -22,20 +21,28 @@ public class ViewportWindow : IDisposable
     public bool IsDeleted => _isDeleted;
 
     private KhrSurface _surfaceExtension;
-    private SurfaceKHR _surface;
+    private vk.SurfaceKHR _surface;
     private bool _hasSurface;
     
-    private DeferredRenderer _renderer;
+    // private DeferredRenderer _renderer;
     
-    private Device _device;
+    private vk.Device _device;
     private GPU _gpu;
     private QueueFamily _renderFamily;
 
     private bool _doneFirstResize = false;
+
+    private Viewport _viewport;
+
+    public Viewport Viewport => _viewport; // DEBUG
+
+    public static ViewportWindow Instance; // DEBUG
     
     
     public ViewportWindow()
     {
+        Instance = this;
+        
         _device = VK.Device;
         _gpu = VK.GPU;
         
@@ -49,7 +56,7 @@ public class ViewportWindow : IDisposable
             api: ContextAPI.Vulkan, 
             profile: ContextProfile.Core, // used on OpenGL 3.0, not on Vulkan 
             flags: ContextFlags.Default, // idem
-            apiVersion: new APIVersion((int)vk_version.Major, (int)vk_version.Minor)
+            apiVersion: new APIVersion((i32)vk_version.Major, (i32)vk_version.Minor)
         );
 
         // vsync (refresh once the screen is ready, to avoid tearing)
@@ -57,12 +64,12 @@ public class ViewportWindow : IDisposable
         Video.OnVSyncChanged += vsync => Window!.VSync = vsync;
         
         // resolution (/!\ surface resolution, not window !)
-        Vector2D<uint> resolution = Video.Resolution;
-        options.Size = Unsafe.As<Vector2D<uint>, Vector2D<int>>(source: ref resolution);
+        Vector2D<u32> resolution = Video.Resolution;
+        options.Size = Unsafe.As<Vector2D<u32>, Vector2D<i32>>(source: ref resolution);
         // manually changed: only if the window is resized via the external scripts
         Video.OnResolutionManuallyChanged += resolution =>
         {
-            Window!.Size = Unsafe.As<Vector2D<uint>, Vector2D<int>>(source: ref resolution);
+            Window!.Size = Unsafe.As<Vector2D<u32>, Vector2D<i32>>(source: ref resolution);
             // Resize(resolution: size);
         };
         
@@ -108,10 +115,12 @@ public class ViewportWindow : IDisposable
         
         Window.Closing += () =>
         {
-            _renderer!.WaitForRenders();
+            _viewport!.WaitForRenders();
             Dispose();
             
             Engine.Quit();
+            
+            Graphics.SetRenderReady();
         };
         
         Window.Resize += resolution =>
@@ -129,28 +138,28 @@ public class ViewportWindow : IDisposable
         if (Window.VkSurface is null) throw new NotSupportedException($"Windowing platform {Window.GetType().Name} does not support Vulkan.");
         
         InitializeVulkanSurface();
-        
-        _renderer = new DeferredRenderer();
-        _renderer.Setup(
-            _device,
-            VK.GPU.PhysicalDevice,
-            _surfaceExtension!, 
-            _surface, 
-            _renderFamily = VK.GPU.QueueFamilies[0],
-            VK.Queue
+
+        _viewport = new Viewport(
+            surface: new Ownership<vk.SurfaceKHR>(_surface, owned: false),
+            queue: VK.Queue.Data,
+            device: _device,
+            physicalDevice: VK.GPU.PhysicalDevice
         );
-        
-        _fpsWatch.Start();
+
+        //_fpsWatch.Start();
         
         TryResize();
+
+        Graphics.SetRenderReady();
     }
 
     private bool TryResize()
     {
-        return _renderer.Update(updateVideoSettings: true);
+        return _viewport.UpdateSwapchain(updateVideoSettings: true);
+        //return _renderer.Update(updateVideoSettings: true);
     }
 
-    private double _minTime = double.NegativeInfinity;
+    /*private double _minTime = double.NegativeInfinity;
     private double _maxTime = double.PositiveInfinity;
     private List<double> _times = new (10000);
     private Stopwatch _fpsWatch = new();
@@ -181,22 +190,22 @@ public class ViewportWindow : IDisposable
             
             _fpsWatch.Restart();
         }
-    }
+    }*/
 
     private void Render(double deltaTime)
     {
         Updater.WaitUpdate();
 
-        DoFPS(deltaTime);
-
-        _renderer.Render();
+        //DoFPS(deltaTime);
         
+        _viewport.UpdateSwapchain(updateVideoSettings: true);
+
         Updater.NextFrame();
     }
 
     private void InitializeVulkanSurface()
     {
-        Instance instance = VK.Instance;
+        vk.Instance instance = VK.Instance;
         
         if (!VK.API.TryGetInstanceExtension(instance, out _surfaceExtension))
         {
@@ -205,14 +214,14 @@ public class ViewportWindow : IDisposable
         
         unsafe
         {
-            _surface = Silk.NET.Vulkan.StructExtensions.ToSurface(Window.VkSurface!.Create<AllocationCallbacks>(
-                    Unsafe.As<Instance, VkHandle>(ref instance), null
+            _surface = Silk.NET.Vulkan.StructExtensions.ToSurface(Window.VkSurface!.Create<vk.AllocationCallbacks>(
+                    Unsafe.As<vk.Instance, VkHandle>(ref instance), null
                 )
             );
 
             Bool32 supportsSurface;
             if (_surfaceExtension.GetPhysicalDeviceSurfaceSupport(_gpu.PhysicalDevice, _renderFamily.Index, _surface,
-                    out supportsSurface) == Result.Success)
+                    out supportsSurface) == vk.Result.Success)
             {
                 _hasSurface = true;
             }
@@ -230,6 +239,7 @@ public class ViewportWindow : IDisposable
 
         if (Keyboard.IsPressing(Key.F11))
         {
+            Video.Resolution = Resolutions.Standard;
             //Screenshot();
         }
     }
@@ -246,7 +256,7 @@ public class ViewportWindow : IDisposable
         if (_disposed) return;
         _disposed = true;
         
-        _renderer.Dispose();
+        _viewport.Delete();
         if (_hasSurface)
         {
             _surfaceExtension.DestroySurface(VK.Instance, _surface, null);

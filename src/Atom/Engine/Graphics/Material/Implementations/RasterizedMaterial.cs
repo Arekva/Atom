@@ -3,6 +3,7 @@ using Silk.NET.Maths;
 
 using Atom.Engine.Vulkan;
 using Atom.Engine.Shader;
+using Atom.Engine.GraphicsPipeline;
 
 namespace Atom.Engine;
 
@@ -16,7 +17,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     
     public Tessellation Tessellation { get; set; } = Tessellation.Default;
     
-    public Viewport Viewport { get; set; } = Viewport.Default;
+    public Atom.Engine.GraphicsPipeline.Viewport Viewport { get; set; } = Atom.Engine.GraphicsPipeline.Viewport.Default;
     
     public Rasterizer Rasterizer { get; set; } = Rasterizer.Default;
     
@@ -111,6 +112,8 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         {
             CreateLightPipeline(shader.LightShader!.Device);
         }
+
+        MakeReady();
     }
 
     public override unsafe void Delete()

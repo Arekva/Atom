@@ -133,7 +133,7 @@ public class VoxelBody : CelestialBody
         const string WHITE_NORMAL = "assets/Images/white_normal.dds";
         
         Log.Error($"Load {config.Texture?.Color ?? WHITE}");
-
+        
 
         /*_sphereAlbedo    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Color ?? WHITE)));
         _material.WriteImage<IFragmentModule>(name: "_albedo", texture: _sphereAlbedo);
@@ -153,18 +153,12 @@ public class VoxelBody : CelestialBody
         _sphereHeight   = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Height ?? BLACK)));
         _material.WriteImage<IVertexModule>(name: "_height", texture: _sphereHeight);*/
 
-        isReady = true;
-
-        {
-            
-        }
+        MakeReady();
     }
 
     protected internal override void Frame()
     {
         base.Frame();
-
-        if (!isReady) return;
 
         f64 ut = Astrophysics.UniversalTime;
         

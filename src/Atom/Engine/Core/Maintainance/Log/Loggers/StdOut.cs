@@ -18,7 +18,7 @@ public class StdOut
         
         _defaultWriter = Console.Out;
         Stream stdout = Console.OpenStandardOutput();
-        StreamWriter writer = new StreamWriter(stdout, Encoding.Default);
+        StreamWriter writer = new(stdout, Encoding.Default);
         writer.AutoFlush = true;
         Console.SetOut(writer);
     }

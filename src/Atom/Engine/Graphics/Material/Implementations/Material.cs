@@ -19,6 +19,8 @@ public abstract class Material : AtomObject, IMaterial
     public Material(vk.Device? device = null)
     {
         Device = device ?? VK.Device;
+
+        MakeReady();
     }
 
     public override void Delete()

@@ -44,8 +44,8 @@ public static class Updater
         {
             // wait for window thread to ask for an update
             _frameStartEvent.Wait();
-            _frameStartEvent.Reset();
-            _frameDoneEvent .Reset();
+            /*_frameStartEvent.Reset();
+            _frameDoneEvent .Reset();*/
             if (!_isRunning) break;
             
             
@@ -90,6 +90,16 @@ public static class Updater
 
                 try { @object.Render(); }
                 catch (Exception e) { Log.Error(e); }
+            }
+
+            if (Graphics.IsRenderReady && Camera.World != null)
+            {
+                Viewport viewport = ViewportWindow.Instance.Viewport;
+                Camera camera = Camera.World;
+
+                RenderTarget final_render = camera.RenderImmediate(Graphics.FrameIndex, viewport.WaitResizeFinished);
+
+                viewport.Present(final_render!.Color!);
             }
             
             _frameDoneEvent.Set();

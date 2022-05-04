@@ -1,5 +1,4 @@
 ﻿using Atom.Engine.RenderPass;
-using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
@@ -44,30 +43,14 @@ internal static class DeferredRenderPass
     private const ImageFormat ALBEDO_LUMINANCE_FORMAT = ImageFormat.R32G32B32A32_SFloat;
     private const ImageFormat NORMAL_ROUGHNESS_METALNESS_FORMAT = ImageFormat.R32G32B32A32_SFloat;
     private const ImageFormat POSITION_TRANSLUCENCY_FORMAT = ImageFormat.R32G32B32A32_SFloat;
-    private static readonly ImageFormat[] DEPTH_FORMATS =
-    {
-        ImageFormat.D32_SFloat, ImageFormat.D32_SFloat_S8_UInt, ImageFormat.D24_UNorm_S8_UInt
-    };
-    
-    // Lit
-    private const ImageFormat LIT_FORMAT = ImageFormat.R32G32B32A32_SFloat; 
-    
+
 #endregion
 
 
     public static vk.Result CreateRenderPass(
-        vk.Device device,
-        vk.PhysicalDevice physicalDevice, 
-        out Silk.NET.Vulkan.RenderPass renderPass, out ImageFormat depthFormat)
+        vk.Device device, ImageFormat colorFormat, ImageFormat depthFormat,
+        out Silk.NET.Vulkan.RenderPass renderPass)
     {
-        depthFormat = VK.FirstSupportedFormat(
-            physicalDevice,
-            candidates: DEPTH_FORMATS,
-            vk.ImageTiling.Optimal,
-            features: vk.FormatFeatureFlags.FormatFeatureDepthStencilAttachmentBit
-        );
-
-
 #region Attachments
         
     #region G-Buffer
@@ -115,13 +98,13 @@ internal static class DeferredRenderPass
         
     #region Lit
         Attachment lit_attachment = new(
-            format: LIT_FORMAT,
+            format: colorFormat,
             operators: new AttachmentOperator(
-                load: vk.AttachmentLoadOp.DontCare, 
+                load: vk.AttachmentLoadOp.Clear, 
                 store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
                 initial: vk.ImageLayout.Undefined,
-                final: vk.ImageLayout.ShaderReadOnlyOptimal // read from the fullscreen shader
+                final: vk.ImageLayout.General
             )
         );
     #endregion
@@ -158,36 +141,36 @@ internal static class DeferredRenderPass
 
 #region Dependencies
         DependencyInfo external_info = new(
-            subpass: Subpass.External,
-            stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                       vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            subpass   : Subpass.External                         ,
+            stageMask : PipelineStageFlags.ColorAttachmentOutput | 
+                        PipelineStageFlags.EarlyFragmentTests    ,
             accessMask: vk.AccessFlags.AccessNoneKhr
         );
         DependencyInfo g_buffer_info = new(
-            subpass: g_buffer_subpass,
-            stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                       vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            subpass   : g_buffer_subpass                         ,
+            stageMask : PipelineStageFlags.ColorAttachmentOutput | 
+                        PipelineStageFlags.EarlyFragmentTests    ,
             accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit | 
                         vk.AccessFlags.AccessDepthStencilAttachmentWriteBit
         );
         DependencyInfo lit_info = new(
-            subpass: lit_subpass,
-            stageMask: vk.PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                       vk.PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            subpass   : lit_subpass                              ,
+            stageMask : PipelineStageFlags.ColorAttachmentOutput | 
+                        PipelineStageFlags.EarlyFragmentTests    ,
             accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit
         );
         
         Dependency g_buffer_dependency = new(
-            source: external_info, 
+            source     : external_info, 
             destination: g_buffer_info
         );
         Dependency litDependency = new(
-            source: g_buffer_info, 
+            source     : g_buffer_info, 
             destination: lit_info
         );
 #endregion
 
-        RenderPassBuilder builder = new RenderPassBuilder(
+        RenderPassBuilder builder = new(
             subpasses: new []
             {
                 g_buffer_subpass,

@@ -59,6 +59,57 @@ public class Image : AtomObject
         get => _device;
         protected internal init => _device = value;
     }
+    
+    public Image(
+        u32 resolution, ImageFormat format,
+        vk.ImageTiling tiling, ImageUsageFlags usage, ReadOnlySpan<u32> queueFamilies,
+
+        u32 mipLevels = 1U, u32 arrayLayers = 1U,
+        vk.SampleCountFlags multisampling = vk.SampleCountFlags.SampleCount1Bit,
+
+        vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
+        vk.ImageLayout layout = vk.ImageLayout.General,
+
+        Ownership<MemorySegment>? memory = null,
+        Ownership<SlimImage>? image = null,
+        vk.Device? device = null) : this(
+        new (resolution, 1U, 1U) , format, vk.ImageType.ImageType1D, tiling, usage, queueFamilies, mipLevels,
+        arrayLayers, multisampling, sharingMode, layout, memory, image, device)
+    { }
+
+    public Image(
+        Vector2D<u32> resolution, ImageFormat format,
+        vk.ImageTiling tiling, ImageUsageFlags usage, ReadOnlySpan<u32> queueFamilies,
+
+        u32 mipLevels = 1U, u32 arrayLayers = 1U,
+        vk.SampleCountFlags multisampling = vk.SampleCountFlags.SampleCount1Bit,
+
+        vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
+        vk.ImageLayout layout = vk.ImageLayout.General,
+
+        Ownership<MemorySegment>? memory = null,
+        Ownership<SlimImage>? image = null,
+        vk.Device? device = null) : this(
+        new Vector3D<u32>(resolution, 1U), format, vk.ImageType.ImageType2D, tiling, usage, queueFamilies, mipLevels,
+        arrayLayers, multisampling, sharingMode, layout, memory, image, device)
+    { }
+    
+    public Image(
+        Vector3D<u32> resolution, ImageFormat format,
+        vk.ImageTiling tiling, ImageUsageFlags usage, ReadOnlySpan<u32> queueFamilies,
+
+        u32 mipLevels = 1U, u32 arrayLayers = 1U,
+        vk.SampleCountFlags multisampling = vk.SampleCountFlags.SampleCount1Bit,
+
+        vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
+        vk.ImageLayout layout = vk.ImageLayout.General,
+
+        Ownership<MemorySegment>? memory = null,
+        Ownership<SlimImage>? image = null,
+        vk.Device? device = null) : this(
+        resolution, format, vk.ImageType.ImageType3D, tiling, usage, queueFamilies, mipLevels,
+        arrayLayers, multisampling, sharingMode, layout, memory, image, device)
+    { }
 
     public Image(
         Vector3D<u32> resolution, ImageFormat format, vk.ImageType imageType, 
@@ -102,6 +153,8 @@ public class Image : AtomObject
             _initialLayout = vk.ImageLayout.Undefined;
         }
         if (memory != null) _memory = memory;
+
+        MakeReady();
     }
     
     public override void Delete()
@@ -163,7 +216,7 @@ public class Image : AtomObject
             throw new Exception("A slim image must be bound before creating any memory for it.");
         }
 #endif
-        MemorySegment memory = _handle.Data.CreateDedicatedMemory(_device, properties);
+        MemorySegment memory = _handle.Data.CreateDedicatedMemory(_device, properties, false);
         
         if (autoBind)
         {
@@ -223,6 +276,12 @@ public class Image : AtomObject
         mipLevels  : mipLevels   ?? Range.All                    ,
         arrayLayers: arrayLayers ?? Range.All
     );
+
+    public void ApplyPipelineBarrier(vk.ImageLayout layout)
+    {
+        _layout = layout;
+    }
+    
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator SlimImage(in Image image) => image._handle?.Data ?? new SlimImage();

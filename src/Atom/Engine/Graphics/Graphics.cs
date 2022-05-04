@@ -10,11 +10,17 @@ public static class Graphics
 
     public static uint FrameIndex { get; set; } = 0;
 
+    public static bool IsRenderReady { get; private set; } = false;
+
 
 
     private static ManualResetEvent _renderReadyEvent = new(initialState: false);
 
-    public static void SetRenderReady() => _renderReadyEvent.Set();
+    public static void SetRenderReady()
+    {
+        IsRenderReady = true;
+        _renderReadyEvent.Set();
+    } 
 
     public static void WaitRenderReady() => _renderReadyEvent.WaitOne();
 }

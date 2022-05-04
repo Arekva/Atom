@@ -1,5 +1,7 @@
 ﻿// ReSharper disable InconsistentNaming
 
+
+
 using System.Runtime.CompilerServices;
 
 using vki = Silk.NET.Vulkan.ImageViewType;
@@ -10,7 +12,6 @@ namespace Atom.Engine;
 
 
 
-[Flags]
 public enum ImageViewType : uint
 {
     Dim1D       = vki.ImageViewType1D       ,

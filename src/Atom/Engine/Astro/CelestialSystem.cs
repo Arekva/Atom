@@ -30,6 +30,8 @@ public class CelestialSystem : Thing, ICelestialBody
         Description = description;
         _satellites = new List<ICelestialBody>(capacity: 7); // no more than 7 stars per system... i hope?
         CelestialSpace = new Space(this, name + " space");
+
+        MakeReady();
     }
 
     public CelestialSystem(SystemConfig config) : base(config.Location, config.Name)
@@ -39,12 +41,15 @@ public class CelestialSystem : Thing, ICelestialBody
         
         _satellites = new List<ICelestialBody>(capacity: 7);
         CelestialSpace = new Space(this, config.Name + " space");
+        
+        MakeReady();
     }
 
     public CelestialSystem(SystemConfig config, Dictionary<string, PlanetConfig> bodies) : this(config)
     {
-        // load an entire system
+        // todo: load an entire system
         
+        MakeReady();
     }
 
     public string View(i32 level = 0)

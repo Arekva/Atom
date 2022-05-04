@@ -20,8 +20,8 @@ public enum ImageAspectFlags
 
 public static class ImageAspectFlagsConvertion
 {
-    public static vk.ImageAspectFlags ToVk(this ImageAspectFlags @enum) =>
-        (vk.ImageAspectFlags)@enum;
-    public static ImageAspectFlags ToAtom(this vk.ImageAspectFlags @enum) =>
-        (ImageAspectFlags)@enum;
+    public static vk.ImageAspectFlags ToVk(this ImageAspectFlags atom) =>
+        (vk.ImageAspectFlags)atom;
+    public static ImageAspectFlags ToAtom(this vk.ImageAspectFlags vk) =>
+        (ImageAspectFlags)vk;
 }

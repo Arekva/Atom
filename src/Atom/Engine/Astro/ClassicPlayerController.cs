@@ -1,8 +1,13 @@
-﻿using Atom.Engine;
+﻿using Silk.NET.Maths;
 using Silk.NET.Input;
-using Silk.NET.Maths;
+
+using Atom.Engine;
+
+
 
 namespace Atom.Game;
+
+
 
 public class ClassicPlayerController : Thing
 {
@@ -21,7 +26,7 @@ public class ClassicPlayerController : Thing
 
     public static ClassicPlayerController Singleton { get; private set; }
 
-    public ClassicPlayerController()
+    public ClassicPlayerController() : base()
     {
         if (Singleton != null!)
         {
@@ -32,15 +37,12 @@ public class ClassicPlayerController : Thing
         Singleton = this;
 
         _camera = new Camera(identifier: "default_world_viewport");
-        _camera.Location = new Location(Vector3D<Double>.Zero);
+        _camera.Location = Location.Origin;
         _camera.Perspective.Near = 0.01D;
 
-        using (RenderTarget target = new (new Vector2D<UInt32>(1024)))
-        {
-            
-        }
-
         Camera.World = _camera;
+
+        MakeReady();
     }
 
     protected internal override void Frame()

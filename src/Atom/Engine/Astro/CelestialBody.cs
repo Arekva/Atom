@@ -64,7 +64,9 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
         CelestialSpace = new Space(reference.CelestialSpace, $"{config.Name} celestial space");
         
         reference.AddSatellite(this);
-        
+
+        MakeReady();
+
         //Draw.AssignDrawer(this, cameraIndex: 0);
     }
 

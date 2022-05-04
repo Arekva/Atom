@@ -1,9 +1,8 @@
 ﻿using Atom.Engine;
-using Atom.Engine.Astro;
+using Atom.Engine.Loaders;
 using Atom.Engine.Vulkan;
-using Atom.Game.Config;
-using Silk.NET.Input;
 using Silk.NET.Maths;
+using Image = Atom.Engine.Image;
 
 namespace Atom.Game;
 
@@ -13,11 +12,26 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 
     //private List<CelestialSystem> _systems;
 
+    private Viewport _viewport;
+
+    private ImageSubresource _displayResource;
+
     public SpaceScene()
     {
         _controller = new ClassicPlayerController();
 
-        
+
+        u32 queues_fam = 0;
+        Image image = DDS.Load(
+            stream: File.Open("assets/Images/Planets/Colors/Kerbin.dds", FileMode.Open),
+            queueFamilies: queues_fam.AsSpan(),
+            layout: vk.ImageLayout.TransferSrcOptimal, 
+            stage: PipelineStageFlags.Transfer,
+            accessMask: vk.AccessFlags.AccessTransferReadBit,
+            usages: ImageUsageFlags.TransferSource | ImageUsageFlags.Sampled);
+
+        _displayResource = image.CreateSubresource();
+
         /*Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<PlanetConfig>)
@@ -28,32 +42,19 @@ public class SpaceScene : AtomObject, IScene, IDrawer
             .Select(ConfigFile.LoadInto<SystemConfig>),
             planet_configs
         ).ToList();*/
-        
 
-        
-        //Draw.AssignDrawer(this, 0);
+        MakeReady();
     }
     
-    protected internal override void Frame()
-    {
-        
-    }
+    protected internal override void Frame() { }
 
     protected internal override void Render()
     {
         base.Render();
-        
-        /*if (Keyboard.IsPressed(Key.K))
-        {
-            VoxelBody minmus = (_systems[1].Satellites
-                .First().Satellites
-                .First(s => s.Name == "Test Planet") as VoxelBody)!;
-            
-            Location loc = minmus.CelestialSpace.Location;
 
-            _controller.Location = loc + Vector3D<f64>.UnitY * minmus.Radius;
+        if (!Graphics.IsRenderReady) return;
 
-        }*/
+        //ViewportWindow.Instance.Viewport.Present(_displayResource);
     }
 
     protected internal override void PhysicsFrame() { /* todo */ }
@@ -61,9 +62,10 @@ public class SpaceScene : AtomObject, IScene, IDrawer
     public override void Delete()
     {
         base.Delete();
-
-        //Draw.UnassignDrawer(this, 0);
-
+        
+        _displayResource.Delete();
+        _displayResource.Image.Delete();
+        
         /*foreach (CelestialSystem system in _systems)
         {
             system.Delete();

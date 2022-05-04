@@ -1,8 +1,18 @@
 ﻿using Atom.Engine.Vulkan;
+using Silk.NET.Maths;
 
 namespace Atom.Engine.Pipelines;
 
-public interface IPipeline
+public interface IPipeline : IDisposable
 {
-    public void CmdExecutePipeline(SlimCommandBuffer cmd, RenderTarget target, Camera camera);
+    public bool OutputsColor { get; }
+    
+    public bool OutputsDepth { get; }
+
+
+
+
+    public void Resize(Vector2D<u32> resolution, RenderTarget target);
+
+    public void CmdRender(CommandRecorder recorder);
 }

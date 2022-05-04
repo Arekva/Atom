@@ -64,6 +64,8 @@ public class Space : AtomObject
         _thing.AddSpace(this);
 
         _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
+
+        MakeReady();
     }
 
     public Space(Space parent, string? name = "Space") : base(name)
@@ -76,6 +78,8 @@ public class Space : AtomObject
         _parent._subspaces.Add(this);
         
         _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
+
+        MakeReady();
     }
 
     public override void Delete()

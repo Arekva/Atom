@@ -7,7 +7,7 @@ public static class StructExtension
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe Span<T> AsSpan<T>(ref this T @struct) where T : struct =>
-        new (Unsafe.AsPointer(ref @struct), length: 1);
+        new(Unsafe.AsPointer(ref @struct), length: 1);
 
     public static unsafe (SlimBuffer buffer, VulkanMemory memory) CreateVulkanMemory<T>(
         ref this Span<T> span, vk.Device device, BufferUsageFlags usages, MemoryPropertyFlags properties) where T : unmanaged

@@ -38,6 +38,8 @@ public class Game
 
             Graphics.WaitRenderReady();
 
+            if (!Engine.Engine.IsRunning) return;
+
             try
             {
                 Video.FPSLimit = 10;

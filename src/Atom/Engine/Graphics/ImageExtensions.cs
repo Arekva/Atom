@@ -11,7 +11,7 @@ public static class ImageExtensions
     public static void BindMemory(this SlimImage Handle, vk.Device device, MemorySegment segment)
         => VK.API.BindImageMemory(device, Handle, segment.Memory, segment.Offset);
     
-    public static MemorySegment CreateDedicatedMemory(this SlimImage Handle, vk.Device device, MemoryPropertyFlags properties)
+    public static MemorySegment CreateDedicatedMemory(this SlimImage Handle, vk.Device device, MemoryPropertyFlags properties, bool autoBind = true)
     {
         Handle.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
 
@@ -26,7 +26,7 @@ public static class ImageExtensions
 
         MemorySegment segment = memory.Whole;
         
-        Handle.BindMemory(device, segment);
+        if (autoBind) Handle.BindMemory(device, segment);
 
         return memory.Whole;
     }

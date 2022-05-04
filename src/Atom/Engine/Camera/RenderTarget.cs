@@ -9,7 +9,7 @@ public class RenderTarget : IDisposable
 {
     // Both optimal SRGB/UINT/UNORM for R8G8B8A8 and SFLOAT/SINT/UINT for R32G32B32A32 supported on all devices(*).
     // However linear is a less bit supported but should be fine on desktops.
-    public const ImageFormat DEFAULT_COLOR_FORMAT = ImageFormat.R8G8B8A8_UInt;
+    public const ImageFormat DEFAULT_COLOR_FORMAT = ImageFormat.R8G8B8A8_UNorm;
 
     // Both optimal D32_SFloat and D32_SFloat_S8_UInt should be supported on all devices(*).
     // However they are almost not supported as linear, not even on NVIDIA nor AMD.
@@ -52,8 +52,7 @@ public class RenderTarget : IDisposable
 
     public RenderTarget(Vector2D<u32> resolution, 
         ImageFormat colorFormat = DEFAULT_COLOR_FORMAT, ImageFormat depthFormat = DEFAULT_DEPTH_FORMAT,
-        vk.Device? device = null
-        )
+        vk.Device? device = null)
     {
         _device = device ?? VK.Device;
 
@@ -113,9 +112,7 @@ public class RenderTarget : IDisposable
     public void Resize(Vector2D<u32> resolution) // only automatic 
     {
         if (_resolution == resolution) return;
-        
-        Log.Info($"Resize render target to {resolution}");
-        
+
         CreateOwnedData(resolution, ColorFormat, DepthFormat);
 
         _resolution = resolution;
@@ -178,12 +175,13 @@ public class RenderTarget : IDisposable
             }
 
             Image color_image = new(
-                resolution   : res_3d                          ,
-                format       : colorFormat                     ,
-                imageType    : vk.ImageType.ImageType2D        ,
-                tiling       : vk.ImageTiling.Optimal          ,
-                usage        : ImageUsageFlags.ColorAttachment |
-                               ImageUsageFlags.InputAttachment ,
+                resolution   : res_3d                         ,
+                format       : colorFormat                    ,
+                imageType    : vk.ImageType.ImageType2D       ,
+                tiling       : vk.ImageTiling.Optimal         ,
+                usage        : ImageUsageFlags.ColorAttachment|
+                               ImageUsageFlags.InputAttachment|
+                               ImageUsageFlags.TransferSource ,
                 queueFamilies: _queueFamilies                 ,
                 device       : _device
             );

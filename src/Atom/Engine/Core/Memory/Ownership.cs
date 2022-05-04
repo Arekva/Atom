@@ -1,7 +1,9 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Atom.Engine;
 
+[DebuggerDisplay("{ToString}")]
 public class Ownership<T> : IDisposable
 {
     public delegate void DoOwnedDelegate(ref T data);
@@ -39,11 +41,16 @@ public class Ownership<T> : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Ownership<T>(T data) => new (data, owned: true);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator T(Ownership<T> wrapper) => wrapper._data;
 
     public void Do(DoOwnedDelegate action)
     {
         if (_owned) action(ref _data);
     }
+
+    public override string ToString() => Owned ? "Owned" : "Borrowed";
 
     public void Dispose()
     {

@@ -229,6 +229,8 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
 
         fence.         Destroy(_device);
         pool.          Destroy(_device);
+
+        MakeReady();
     }
 
 
@@ -269,6 +271,8 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
             indices       : indices         ,
             targetResource: targetResource
         );
+
+        MakeReady();
     }
 
     public ReadOnlyMesh(
@@ -347,6 +351,8 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
             indices       : indices          ,
             targetResource: whole_subresource
         );
+
+        MakeReady();
     }
 
     private void CreateSubresources(

@@ -80,8 +80,6 @@ public class ImageSubresource : ISubresource, IDisposable
                 layerCount    : array_count
             )
         );
-
-        
     }
 
     public void Delete()

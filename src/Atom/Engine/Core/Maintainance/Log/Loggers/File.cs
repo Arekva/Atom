@@ -59,7 +59,7 @@ public class File
             str.AppendLine(msg);
         }
 
-        using StreamWriter file = FIO.AppendText(Path);
+        using StreamWriter file = new(Path, Encoding.Default, new FileStreamOptions { Mode = FileMode.Append, Access = FileAccess.Write});
         file.Write(str);
     }
     

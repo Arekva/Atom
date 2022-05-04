@@ -4,11 +4,6 @@ using Silk.NET.Maths;
 using Silk.NET.Vulkan.Extensions.KHR;
 
 using Atom.Engine.Vulkan;
-using Silk.NET.Vulkan;
-using CommandBufferLevel = Atom.Engine.Vulkan.CommandBufferLevel;
-using CommandPoolCreateFlags = Atom.Engine.Vulkan.CommandPoolCreateFlags;
-using ComponentMapping = Atom.Engine.Vulkan.ComponentMapping;
-using MemoryPropertyFlags = Atom.Engine.Vulkan.MemoryPropertyFlags;
 
 namespace Atom.Engine;
 
@@ -520,7 +515,7 @@ public class DeferredRenderer
             }
             else
             {
-                RenderTarget target = Camera.World.Render(cmd, swapImageIndex);
+                RenderTarget world_target = Camera.World.Render(swapImageIndex);
             }
             
             

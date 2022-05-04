@@ -59,6 +59,10 @@ public static class DDS
         ReadOnlySpan<u32> queueFamilies,
         vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
         vk.SampleCountFlags samples = vk.SampleCountFlags.SampleCount1Bit,
+        vk.ImageLayout layout = vk.ImageLayout.ShaderReadOnlyOptimal,
+        PipelineStageFlags stage = PipelineStageFlags.FragmentShader,
+        vk.AccessFlags accessMask = vk.AccessFlags.AccessShaderReadBit,
+        ImageUsageFlags usages = ImageUsageFlags.Sampled,
         vk.Device? device = null)
     {
         vk.Device used_device = device ?? VK.Device;
@@ -68,7 +72,7 @@ public static class DDS
         u64 index = 0UL;
         
         // First verify if this is a (modern) DDS texture
-        uint magic = 0U;
+        u32 magic = 0U ;
         stream.Read(buffer: new Span<u8>(&magic, 4));
 
         if (DDS_MAGIC != magic)
@@ -85,7 +89,7 @@ public static class DDS
         header.PixelFormat.ThrowIfWrongSize();
 
         DXT10Header dxt10_header;
-        stream.Read(buffer: new Span<u8>(&dxt10_header, Unsafe.SizeOf<DXT10Header>()));
+        stream.Read(buffer: new Span<u8>(&dxt10_header, length: Unsafe.SizeOf<DXT10Header>()));
         
         
         // Some sanitary header checking
@@ -115,7 +119,7 @@ public static class DDS
             ? 8UL // dxt1 is 8bit while dxt2-5 are 16bit (for square texture)
             : 16UL;
         
-        Span<u64> mip_lengths = stackalloc u64[(int)vk_mip_levels];
+        Span<u64> mip_lengths = stackalloc u64[(i32)vk_mip_levels];
         for (i32 mip = 0; mip < vk_mip_levels; mip++)
         {
             mip_lengths[mip] = linear_size;
@@ -126,11 +130,10 @@ public static class DDS
         ref readonly ReadOnlySpan<u32>   final_queues  = ref queueFamilies;
         ref readonly vk.SampleCountFlags final_samples = ref samples      ;
         
-        const vk.ImageTiling      FINAL_TILING          = vk.ImageTiling.Optimal              ;
-        const ImageUsageFlags     FINAL_USAGES          = ImageUsageFlags.TransferDestination | 
-                                                          ImageUsageFlags.Sampled             ;
-        const vk.ImageLayout      FINAL_INITIAL_LAYOUT  = vk.ImageLayout.Undefined            ;
-        const vk.ImageLayout      FINAL_LAYOUT          = vk.ImageLayout.ShaderReadOnlyOptimal;
+        const vk.ImageTiling         FINAL_TILING          = vk.ImageTiling.Optimal  ;
+        ImageUsageFlags final_usages  =  usages | ImageUsageFlags.TransferDestination;
+        const vk.ImageLayout         FINAL_INITIAL_LAYOUT  = vk.ImageLayout.Undefined;
+        ref readonly vk.ImageLayout  final_layout          = ref layout              ;
 
         vk.Extent3D image_extent  = new(vk_width, vk_height, vk_depth);
         
@@ -144,7 +147,7 @@ public static class DDS
             arrayLayers       : vk_array_layers,
             samples           : final_samples  , /* unrelated to DDS */
             tiling            : FINAL_TILING   , /* unrelated to DDS */
-            usage             : FINAL_USAGES   , /* unrelated to DDS */
+            usage             : final_usages   , /* unrelated to DDS */
             sharingMode       : final_sharing  ,
             queueFamilyIndices: final_queues   ,
             initialLayout     : FINAL_INITIAL_LAYOUT     /* unrelated to DDS */
@@ -212,10 +215,10 @@ public static class DDS
         vk.ImageMemoryBarrier image_end_barrier = image_ready_barrier with
         {
             SrcAccessMask      = vk.AccessFlags.AccessTransferWriteBit,
-            DstAccessMask      = vk.AccessFlags.AccessShaderReadBit   ,
+            DstAccessMask      = accessMask                           ,
 
             OldLayout          = vk.ImageLayout.TransferDstOptimal    ,
-            NewLayout          = vk.ImageLayout.ShaderReadOnlyOptimal ,
+            NewLayout          = layout                               ,
         };
 
         Span<SlimImage> staging_images = stackalloc SlimImage[(i32)total_staging_images];
@@ -318,11 +321,11 @@ public static class DDS
         
         using (CommandRecorder recorder = new(
             commandBuffer: cmd,
-            vk.CommandBufferUsageFlags.CommandBufferUsageOneTimeSubmitBit))
+            CommandBufferUsageFlags.OneTimeSubmit))
         {
             recorder.PipelineBarrier(
-                sourceStageMask     : vk.PipelineStageFlags.PipelineStageTopOfPipeBit,
-                destinationStageMask: vk.PipelineStageFlags.PipelineStageTransferBit,
+                sourceStageMask     : PipelineStageFlags.TopOfPipe,
+                destinationStageMask: PipelineStageFlags.Transfer,
                 imageMemoryBarriers : make_transfer_ready_barriers
             );
 
@@ -369,10 +372,11 @@ public static class DDS
             }
             
             recorder.PipelineBarrier(
-                sourceStageMask     : vk.PipelineStageFlags.PipelineStageTransferBit,
-                destinationStageMask: vk.PipelineStageFlags.PipelineStageFragmentShaderBit,
+                sourceStageMask     : PipelineStageFlags.Transfer,
+                destinationStageMask: stage                      ,
                 imageMemoryBarriers : image_end_barrier.AsSpan()
             );
+
         }
 
         vk.CommandBuffer* p_cmd = (vk.CommandBuffer*)&cmd;
@@ -403,13 +407,13 @@ public static class DDS
             format       : vk_format        ,
             imageType    : vk_image_type    ,
             tiling       : FINAL_TILING     ,
-            usage        : FINAL_USAGES     ,
+            usage        : final_usages     ,
             queueFamilies: final_queues     ,
             mipLevels    : vk_mip_levels    ,
             arrayLayers  : vk_array_layers  ,
             multisampling: final_samples    ,
             sharingMode  : final_sharing    ,
-            layout       : FINAL_LAYOUT     ,
+            layout       : final_layout     ,
             memory       : final_memory   ,
             image        : final_image    ,
             device       : used_device

@@ -1,4 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Atom.Engine.Pipelines;
 using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
 
@@ -46,6 +48,10 @@ public partial class Camera : Thing
     private OrthographicProjection _orthographic       ;
     
     private RenderTarget[]         _targets            ;
+    private IPipeline[]            _renderPipelines    ;
+
+    private SlimCommandPool        _pipelinesPool      ;
+    private SlimCommandBuffer[]    _pipelinesCommands  ;
 
 
 
@@ -154,11 +160,20 @@ public partial class Camera : Thing
         SetProjectionsAspectRatio(AspectRatio);
 
         _targets = new RenderTarget[Graphics.MaxFramesCount];
+        _renderPipelines = new IPipeline[Graphics.MaxFramesCount];
         for (int i = 0; i < Graphics.MaxFramesCount; i++)
         {
             _targets[i] = new RenderTarget(Resolution);
+            _renderPipelines[i] = new GamePipeline(VK.Device);
         }
 
+        _pipelinesPool = new SlimCommandPool(VK.Device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
+        _pipelinesPool.AllocateCommandBuffers(VK.Device, CommandBufferLevel.Primary, Graphics.MaxFramesCount, out _pipelinesCommands);
+
+        
+        
+        
+        
         // ReSharper disable once VariableHidesOuterVariable
         Video.OnResolutionChanged += resolution =>
         {
@@ -172,19 +187,28 @@ public partial class Camera : Thing
 
             SetProjectionsAspectRatio();
         };
+        
+
+        MakeReady();
     }
 
     public override void Delete()
     {
         base.Delete()  ;
 
+        if (World == this) World = null;
+        if (UserInterface == this) UserInterface = null;
+
         RetrieveIndex();
         _space.Delete();
         _cameras.TryRemove(_identifier, out _);
 
+        _pipelinesPool.Destroy(VK.Device);
+
         for (i32 i = 0; i < _targets.Length; i++)
         {
             _targets[i].Delete();
+            _renderPipelines[i].Dispose();
         }
     }
     
@@ -230,17 +254,42 @@ public partial class Camera : Thing
         target[0] = ViewMatrix(reference);
         target[1] = ProjectionMatrix     ;
     }
-
-    public RenderTarget Render(SlimCommandBuffer cmd, u32 frameIndex)
+    
+    public RenderTarget RenderImmediate(u32 frameIndex, Action? wait = null)
     {
+        ThrowIfDeleted();
+        
+        wait?.Invoke();
+        
         ScreenResolution resolution = Resolution;
 
         RenderTarget target = _targets[frameIndex];
+        IPipeline pipeline = _renderPipelines[frameIndex];
         
         target.Resize(resolution); // resize target if required
+        pipeline.Resize(resolution, target);
+
+        SlimCommandBuffer cmd = _pipelinesCommands[frameIndex];
+        cmd.Reset();
+
+        using (CommandRecorder recorder = new(cmd, CommandBufferUsageFlags.OneTimeSubmit))
+        {
+            pipeline.CmdRender(recorder);
+        }
+
+        ref SlimQueue queue = ref Unsafe.As<vk.Queue, SlimQueue>(ref VK.Queue.Data);
+
+        SlimFence fence = new (VK.Device);
+        
+        queue.Submit(cmd, PipelineStageFlags.TopOfPipe, fence);
+
+        fence.Wait(VK.Device);
+        fence.Destroy(VK.Device);
 
         return target;
     }
+
+    public RenderTarget RenderImmediate(Action? wait = null) => RenderImmediate(Graphics.FrameIndex, wait);
 
 
     private void Resize()

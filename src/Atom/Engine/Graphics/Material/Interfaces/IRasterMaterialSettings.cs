@@ -1,3 +1,3 @@
-﻿namespace Atom.Engine;
+﻿namespace Atom.Engine.GraphicsPipeline;
 
 public interface IRasterSettings : IMaterialSettings { }

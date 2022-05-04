@@ -33,8 +33,6 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
     {
         GUID = Guid.NewGuid();
         _name = name ?? DEFAULT_NAME;
-        
-        _objects.TryAdd(GUID, this);
     }
 
     protected void ThrowDeleted() => throw new ObjectDeletedException($"Cannot access {new StackFrame(1).GetMethod()!.Name}: object is deleted.");
@@ -50,6 +48,8 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
     public void Dispose() => Delete();
     
     ~AtomObject() => Dispose();
+
+    protected void MakeReady() => _objects.TryAdd(GUID, this);
 
 
     protected internal virtual void Frame() { }
