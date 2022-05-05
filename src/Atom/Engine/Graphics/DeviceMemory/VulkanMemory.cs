@@ -7,8 +7,8 @@ public class VulkanMemory : IDisposable
 {
     private bool _isMapped;
     
-    private vk.DeviceMemory _handle;
-    public ref vk.DeviceMemory Handle => ref _handle;
+    private SlimDeviceMemory _handle;
+    public ref SlimDeviceMemory Handle => ref _handle;
     
     public Silk.NET.Vulkan.Device Device { get; }
 
@@ -29,14 +29,12 @@ public class VulkanMemory : IDisposable
     {
         Device = device;
         
-        vk.MemoryAllocateInfo mem = new (allocationSize: size, memoryTypeIndex: memoryTypeIndex);
-        VK.API.AllocateMemory(
-            device,
-            pAllocateInfo: in mem, 
-            pAllocator: null, 
-            out _handle
+        _handle = new SlimDeviceMemory(
+            device         : device         ,
+            allocationSize : size           ,
+            memoryTypeIndex: memoryTypeIndex
         );
-        
+
         Size = size;
 
         Whole = new MemorySegment(this, offset: 0UL, size);
@@ -161,5 +159,5 @@ public class VulkanMemory : IDisposable
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator u64(in VulkanMemory memory) => 
-        Unsafe.As<vk.DeviceMemory, u64>(ref memory._handle);
+        Unsafe.As<SlimDeviceMemory, u64>(ref memory._handle);
 }

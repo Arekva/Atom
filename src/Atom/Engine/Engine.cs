@@ -118,7 +118,7 @@ public static class Engine
     
     public static void WaitForShutdown() => _stopResetEvent.WaitOne();
 
-    private static unsafe void DisplayWelcomeBanner() => Log.Put($"{Engine.Name} version {Engine.Version} x{sizeof(IntPtr)*8}" + (Debug ? " [DEBUG]" : ""));
+    private static unsafe void DisplayWelcomeBanner() => Log.Put($"{Engine.Name} version {Engine.Version} x{sizeof(IntPtr) * 8}" + (Debug ? " [DEBUG]" : ""));
 
     private static void DisplayGoodbyeBanner() => Log.Put("Goodbye.");
     

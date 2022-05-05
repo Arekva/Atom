@@ -21,7 +21,7 @@ public static class Log
     private static readonly LevelInfo ErrorInfo =   new() { DisplayName = "|#FF0000,Error|"   };
     private static readonly LevelInfo FatalInfo =   new() { DisplayName = "|,#FF0000Fatal|"   };
     
-    private const string THREAD_SEPARER_COLOR = "#404040";
+    public const string THREAD_SEPARER_COLOR = "#404040";
 
     private const string BANNER_COLOR = Richtext.ColorCode.FAINT;
     

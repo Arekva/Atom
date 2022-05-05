@@ -34,6 +34,8 @@ public class RenderTarget : IDisposable
     
     private Ownership<MemorySegment>? _memory       ;
     private bool                      _ownsImages   ;
+    
+    private string?                   _name         ;
 
 
     public ImageFormat ColorFormat => _colorImage?.Format ?? ImageFormat.None;
@@ -45,22 +47,29 @@ public class RenderTarget : IDisposable
     public ImageSubresource? Color => _colorImage   ;
     public ImageSubresource? Depth => _depthImage   ;
 
+    
+
 
     public event ResizeDelegate? OnResize;
 
 
 
-    public RenderTarget(Vector2D<u32> resolution, 
+    public RenderTarget(Vector2D<u32> resolution,
         ImageFormat colorFormat = DEFAULT_COLOR_FORMAT, ImageFormat depthFormat = DEFAULT_DEPTH_FORMAT,
+        string? name = null,
         vk.Device? device = null)
     {
         _device = device ?? VK.Device;
+        
+        _name = name;
 
         CreateOwnedData(resolution, colorFormat, depthFormat);
         
         _resolution = resolution;
         _initialized = true;
         _ownsImages  = true;
+
+        
     }
 
     public RenderTarget(Vector2D<u32> resolution,
@@ -185,7 +194,7 @@ public class RenderTarget : IDisposable
                 queueFamilies: _queueFamilies                 ,
                 device       : _device
             );
-            color_image.CreateImage(autoBind: true);
+            color_image.CreateImage(autoBind: true).Data.SetName($"{_name} RenderTarget color Image");
             
             Image depth_image = new(
                 resolution   : res_3d                                 ,
@@ -197,10 +206,12 @@ public class RenderTarget : IDisposable
                 queueFamilies: _queueFamilies                        ,
                 device       : _device
             );
-            depth_image.CreateImage(autoBind: true);
+            depth_image.CreateImage(autoBind: true).Data.SetName($"{_name} RenderTarget depth Image");
             
             ((SlimImage)color_image).GetMemoryRequirements(_device, out vk.MemoryRequirements color_reqs);
             ((SlimImage)depth_image).GetMemoryRequirements(_device, out vk.MemoryRequirements depth_reqs);
+            
+            
 
             u64 color_offset = 0UL;
             u64 color_size   = color_reqs.Size;
@@ -225,8 +236,13 @@ public class RenderTarget : IDisposable
             );
 
             _colorImage = color_image.CreateSubresource(format: colorFormat, aspect: ImageAspectFlags.Color);
+            ((SlimImageView)_colorImage).SetName($"{_name} RenderTarget color ImageSubresource");
+            
             _depthImage = depth_image.CreateSubresource(format: depthFormat, aspect: ImageAspectFlags.Depth);
+            ((SlimImageView)_depthImage).SetName($"{_name} RenderTarget depth ImageSubresource");
+            
             _memory = images_memory.Whole;
+            _memory.Data.Memory.Handle.SetName($"{_name} RenderTarget Owned image's VulkanMemory");
         }
         else // only one image
         {
@@ -271,9 +287,18 @@ public class RenderTarget : IDisposable
             );
             image.CreateImage(autoBind: true);
             _memory = image.CreateMemory(properties: MemoryPropertyFlags.DeviceLocal, autoBind: true);
-            
-            if (ContainsColor) _colorImage = image.CreateSubresource(format: colorFormat, aspect: ImageAspectFlags.Color);
-            else               _depthImage = image.CreateSubresource(format: depthFormat, aspect: ImageAspectFlags.Depth);
+            _memory.Data.Memory.Handle.SetName($"{_name} RenderTarget Owned image's VulkanMemory");
+
+            if (ContainsColor)
+            {
+                _colorImage = image.CreateSubresource(format: colorFormat, aspect: ImageAspectFlags.Color);
+                ((SlimImage)image).SetName($"{_name} RenderTarget color Image");
+            }
+            else
+            {
+                _depthImage = image.CreateSubresource(format: depthFormat, aspect: ImageAspectFlags.Depth);
+                ((SlimImage)image).SetName($"{_name} RenderTarget depth Image");
+            }
         }
     }
 }

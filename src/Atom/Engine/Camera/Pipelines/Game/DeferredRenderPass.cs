@@ -104,7 +104,7 @@ internal static class DeferredRenderPass
                 store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
                 initial: vk.ImageLayout.Undefined,
-                final: vk.ImageLayout.General
+                final: vk.ImageLayout.TransferSrcOptimal
             )
         );
     #endregion

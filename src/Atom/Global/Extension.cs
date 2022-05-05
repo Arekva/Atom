@@ -44,4 +44,45 @@ public static class StructExtension
 
         return (buffer, memory);
     }
+
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static vk.ObjectType GetObjectType<T>()
+    {
+             if (typeof(T) == typeof(SlimCommandBuffer)) return vk.ObjectType.CommandBuffer ;
+        else if (typeof(T) == typeof(SlimCommandPool  )) return vk.ObjectType.CommandPool   ;
+             
+        else if (typeof(T) == typeof(SlimImage        )) return vk.ObjectType.Image         ;
+        else if (typeof(T) == typeof(SlimImageView    )) return vk.ObjectType.ImageView     ;
+             
+        else if (typeof(T) == typeof(SlimDeviceMemory )) return vk.ObjectType.DeviceMemory  ;
+             
+        else if (typeof(T) == typeof(SlimFence        )) return vk.ObjectType.Fence         ;
+        else if (typeof(T) == typeof(SlimSemaphore    )) return vk.ObjectType.Semaphore     ;
+             
+        else if (typeof(T) == typeof(vk.Instance      )) return vk.ObjectType.Instance      ;
+        else if (typeof(T) == typeof(vk.Device        )) return vk.ObjectType.Device        ;
+             
+        else                                             throw new Exception("Type not supported.");
+    }
+
+    public static unsafe void SetName<T>(this T @struct, string name) where T : struct
+    {
+#if DEBUG
+        VK.API.TryGetInstanceExtension(VK.Instance, out ext.ExtDebugUtils ext);
+
+        u8* p_name = LowLevel.GetPointer(name);
+        
+        vk.DebugUtilsObjectNameInfoEXT info = new(
+            objectType  : GetObjectType<T>(),
+            objectHandle: Unsafe.As<T, u64>(ref @struct),
+            pObjectName : p_name
+        );
+        
+        ext.SetDebugUtilsObjectName(VK.Device, in info);
+        
+        LowLevel.Free(p_name);
+#endif
+    }
 }

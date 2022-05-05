@@ -163,7 +163,7 @@ public partial class Camera : Thing
         _renderPipelines = new IPipeline[Graphics.MaxFramesCount];
         for (int i = 0; i < Graphics.MaxFramesCount; i++)
         {
-            _targets[i] = new RenderTarget(Resolution);
+            _targets[i] = new RenderTarget(Resolution, name: $"{Name} #{i}");
             _renderPipelines[i] = new GamePipeline(VK.Device);
         }
 

@@ -10,6 +10,7 @@ using Silk.NET.Core.Native;
 using Silk.NET.Input;
 
 using Atom.Engine.Vulkan;
+using Monitor = Silk.NET.GLFW.Monitor;
 
 namespace Atom.Engine;
 

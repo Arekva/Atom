@@ -118,7 +118,17 @@ public class Viewport : IDisposable
         }
 
         _commandPool = new SlimCommandPool(_device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
+        _commandPool.SetName("Viewport CommandPool");
         _commandPool.AllocateCommandBuffers(_device, CommandBufferLevel.Primary, MAX_IMAGES_IN_FLIGHT, out _commands);
+        
+#if DEBUG
+
+        for (u32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++)
+        {
+            _commands[i].SetName($"Display command #{i}");
+        }
+        
+#endif
 
         _fences     = new SlimFence    [MAX_IMAGES_IN_FLIGHT * 2];
         _semaphores = new SlimSemaphore[MAX_IMAGES_IN_FLIGHT * 2];
@@ -128,11 +138,14 @@ public class Viewport : IDisposable
         for (u32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++)
         {
             _fences[i] = new SlimFence(_device, signaled: true);
+            _fences[i].SetName($"Viewport frame Fence #{i}");
             _semaphores[i] = new SlimSemaphore(_device);
+            _semaphores[i].SetName($"Viewport Image Available Semaphore #{i}");
         }
         for (i32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++) // 2x more semaphores than frames in flight.
         {
             _semaphores[i + MAX_IMAGES_IN_FLIGHT] = new SlimSemaphore(_device);
+            _semaphores[i + MAX_IMAGES_IN_FLIGHT].SetName($"Viewport Display Finished Semaphore #{i}");
         }
 
         AssignPresentModes   ();
@@ -339,6 +352,16 @@ public class Viewport : IDisposable
             );
             swap_image.ApplyPipelineBarrier(ready_transfer_barrier.NewLayout);
 
+            if (swap_image.IsDeleted)
+            {
+                Log.Info("SWAP IMAGE DELETED !");
+            }
+            
+            if (render.Image.IsDeleted)
+            {
+                Log.Info("RENDER IMAGE DELETED !");
+            }
+
             recorder.Blit(source: render.Image, destination: swap_image);
 
             recorder.PipelineBarrier( // make swap image presentable
@@ -371,7 +394,25 @@ public class Viewport : IDisposable
 
     public void WaitForRenders()
     {
-        SlimFence.WaitAll(_device, _fences.AsSpan(0, (i32)MAX_IMAGES_IN_FLIGHT));
+        Span<SlimFence> fences_to_wait = stackalloc SlimFence[(i32)MAX_IMAGES_IN_FLIGHT];
+
+        u32 fences_count = 0;
+
+        for (u32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++)
+        {
+            u32 fence_index = GetImageInFlightFenceIndex(i);
+            SlimFence fence = _fences[fence_index];
+            if (fence.Handle.Handle != 0)
+            {
+                fences_to_wait[(i32)fences_count] = fence;
+                fences_count++;
+            }
+        }
+        
+        if (fences_count != 0)
+        {
+            SlimFence.WaitAll(_device, fences_to_wait, fences_count);
+        }
     }
 
     private unsafe void RecreateSwapchain(in SurfaceCapabilities capabilities)

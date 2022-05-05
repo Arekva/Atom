@@ -30,6 +30,9 @@ public static class VK
     
     public static Version ApplicationVersion { get; private set; }
 
+    
+    private static vk.DebugUtilsMessengerEXT _messenger;
+
 
     public static event Action? OnInit;
 
@@ -96,6 +99,30 @@ public static class VK
         LowLevel.Free(instance_info.PpEnabledLayerNames);
 
         AutoSelectGPU();
+        
+#if DEBUG
+        PfnDebugUtilsMessengerCallbackEXT callback = new(Loggers.Vulkan.VKLog);
+        
+        API.TryGetInstanceExtension(Instance, out ext.ExtDebugUtils ext_debug);
+        vk.DebugUtilsMessengerCreateInfoEXT info = new(
+            messageSeverity:
+            // vk.DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityVerboseBitExt |
+            (DebugUtilsMessageSeverityFlags.Info    |
+             DebugUtilsMessageSeverityFlags.Warning |
+             DebugUtilsMessageSeverityFlags.Error   ).ToVk(),
+            
+            messageType:
+            (DebugUtilsMessageTypeFlags.General     |
+             DebugUtilsMessageTypeFlags.Performance |
+             DebugUtilsMessageTypeFlags.Validation  ).ToVk(),
+            
+            pfnUserCallback: callback
+        );
+
+        vk.DebugUtilsMessengerEXT messenger = default;
+        ext_debug.CreateDebugUtilsMessenger(Instance, &info, null, &messenger);
+        _messenger = messenger;
+#endif
 
         OnInit?.Invoke();
     }
@@ -108,6 +135,8 @@ public static class VK
         
         API.DestroyDevice(_device, null);
         API.DestroyInstance(_instance, null);
+        
+        // debug utils messenger never gets destroyed... or should it be?
     }
 
     private static unsafe void SanitizeExtensionsAvailability(string[] extensions)
