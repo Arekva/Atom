@@ -59,7 +59,7 @@ public class Viewport : IDisposable
     private SlimCommandPool          _commandPool   ;
     private SlimCommandBuffer[]      _commands      ;
     // synchronisation
-    private SlimFence[] _fences;
+    private SlimFence[]              _fences        ;
     // 0..7: image available, 8..15: render finished
     private SlimSemaphore[]          _semaphores    ;
 
@@ -91,6 +91,8 @@ public class Viewport : IDisposable
     private volatile bool _deleted;
     public bool Deleted => _deleted;
 
+
+    private ImageSubresource[] _lastViews;
     
 
     public Viewport(
@@ -128,6 +130,7 @@ public class Viewport : IDisposable
 #endif
 
         _fences     = new SlimFence    [MAX_IMAGES_IN_FLIGHT];
+        _lastViews = new ImageSubresource[MAX_IMAGES_IN_FLIGHT];
         _semaphores = new SlimSemaphore[MAX_IMAGES_IN_FLIGHT * 2];
 
         _swapchainsImagesPipelined = new bool[MAX_IMAGES_IN_FLIGHT];
@@ -262,6 +265,71 @@ public class Viewport : IDisposable
 
     public void WaitResizeFinished() => _resizeFinish.WaitOne();
 
+    private static void RecordCommand(SlimCommandBuffer cmd, ref bool isSwapchainPipelined, Image swapImage, ImageSubresource render)
+    {
+        using CommandRecorder recorder = new(cmd);
+
+        vk.ImageSubresourceRange swap_resource_range = new(
+            aspectMask: vk.ImageAspectFlags.ImageAspectColorBit,
+            baseArrayLayer: 0U,
+            layerCount: 1U,
+            baseMipLevel: 0U,
+            levelCount: 1U
+        );
+
+        vk.ImageMemoryBarrier ready_transfer_barrier;
+        unsafe
+        {
+            ready_transfer_barrier = new vk.ImageMemoryBarrier(
+                srcAccessMask: vk.AccessFlags.AccessNoneKhr,
+                dstAccessMask: vk.AccessFlags.AccessTransferWriteBit,
+
+                oldLayout: vk.ImageLayout.PresentSrcKhr,
+                newLayout: vk.ImageLayout.TransferDstOptimal,
+
+                srcQueueFamilyIndex: 0,
+                dstQueueFamilyIndex: 0,
+
+                image: (SlimImage) swapImage,
+                subresourceRange: swap_resource_range
+            );
+        }
+
+        PipelineStageFlags from_stage = PipelineStageFlags.TopOfPipe;
+
+        if (!isSwapchainPipelined)
+        {
+            ready_transfer_barrier.OldLayout = vk.ImageLayout.Undefined;
+            from_stage = PipelineStageFlags.Transfer;
+            isSwapchainPipelined = true;
+        }
+
+        vk.ImageMemoryBarrier ready_present_barrier = ready_transfer_barrier with
+        {
+            SrcAccessMask = vk.AccessFlags.AccessTransferWriteBit,
+            DstAccessMask = vk.AccessFlags.AccessNone,
+
+            OldLayout = vk.ImageLayout.TransferDstOptimal,
+            NewLayout = vk.ImageLayout.PresentSrcKhr,
+        };
+
+        recorder.PipelineBarrier( // make swap image transferable
+            sourceStageMask: from_stage,
+            destinationStageMask: PipelineStageFlags.Transfer,
+            imageMemoryBarriers: ready_transfer_barrier.AsSpan()
+        );
+        swapImage.ApplyPipelineBarrier(ready_transfer_barrier.NewLayout);
+
+        recorder.Blit(source: render.Image, destination: swapImage);
+
+        recorder.PipelineBarrier( // make swap image presentable
+            sourceStageMask: PipelineStageFlags.Transfer,
+            destinationStageMask: PipelineStageFlags.ColorAttachmentOutput,
+            imageMemoryBarriers: ready_present_barrier.AsSpan()
+        );
+        swapImage.ApplyPipelineBarrier(ready_present_barrier.NewLayout);
+    }
+
     public void Present(ImageSubresource render)
     {
         _renderGate.WaitOne();
@@ -277,76 +345,17 @@ public class Viewport : IDisposable
         UpdateSwapchain();
         
         u32 swap_image_index = default;
-        _swapchainExtension.AcquireNextImage(_device, _swap,
+        _swapchainExtension.AcquireNextImage(_device, _swap, 
             u64.MaxValue, image_available_semaphore, default, ref swap_image_index);
 
         SlimCommandBuffer cmd = _commands[_current_frame];
-        cmd.Reset();
 
-        // todo: cache command
-        using (CommandRecorder recorder = new(cmd, CommandBufferUsageFlags.OneTimeSubmit))
+        if (_lastViews[_current_frame] != render)
         {
-            Image swap_image = _swapImages[_current_frame];
+            _lastViews[_current_frame] = render;
 
-            vk.ImageSubresourceRange swap_resource_range = new(
-                aspectMask: vk.ImageAspectFlags.ImageAspectColorBit,
-                baseArrayLayer: 0U,
-                layerCount: 1U,
-                baseMipLevel: 0U,
-                levelCount: 1U
-            );
-
-            vk.ImageMemoryBarrier ready_transfer_barrier;
-            unsafe
-            {
-                ready_transfer_barrier = new vk.ImageMemoryBarrier(
-                    srcAccessMask: vk.AccessFlags.AccessNoneKhr,
-                    dstAccessMask: vk.AccessFlags.AccessTransferWriteBit,
-
-                    oldLayout: vk.ImageLayout.PresentSrcKhr,
-                    newLayout: vk.ImageLayout.TransferDstOptimal,
-
-                    srcQueueFamilyIndex: 0,
-                    dstQueueFamilyIndex: 0,
-
-                    image: (SlimImage)swap_image,
-                    subresourceRange: swap_resource_range
-                );
-            }
-
-            PipelineStageFlags from_stage = PipelineStageFlags.TopOfPipe;
-
-            if (!_swapchainsImagesPipelined[_current_frame])
-            {
-                ready_transfer_barrier.OldLayout = vk.ImageLayout.Undefined;
-                from_stage = PipelineStageFlags.Transfer;
-                _swapchainsImagesPipelined[_current_frame] = true;
-            }
-
-            vk.ImageMemoryBarrier ready_present_barrier = ready_transfer_barrier with
-            {
-                SrcAccessMask = vk.AccessFlags.AccessTransferWriteBit,
-                DstAccessMask = vk.AccessFlags.AccessNone,
-
-                OldLayout = vk.ImageLayout.TransferDstOptimal,
-                NewLayout = vk.ImageLayout.PresentSrcKhr,
-            };
-
-            recorder.PipelineBarrier( // make swap image transferable
-                sourceStageMask: from_stage,
-                destinationStageMask: PipelineStageFlags.Transfer,
-                imageMemoryBarriers: ready_transfer_barrier.AsSpan()
-            );
-            swap_image.ApplyPipelineBarrier(ready_transfer_barrier.NewLayout);
-
-            recorder.Blit(source: render.Image, destination: swap_image);
-
-            recorder.PipelineBarrier( // make swap image presentable
-                sourceStageMask: PipelineStageFlags.Transfer,
-                destinationStageMask: PipelineStageFlags.ColorAttachmentOutput,
-                imageMemoryBarriers: ready_present_barrier.AsSpan()
-            );
-            swap_image.ApplyPipelineBarrier(ready_present_barrier.NewLayout);
+            cmd.Reset();
+            RecordCommand(cmd, ref _swapchainsImagesPipelined[_current_frame], _swapImages[_current_frame], render);
         }
 
         _queue.Submit(
@@ -462,6 +471,11 @@ public class Viewport : IDisposable
             _swapImages[i] = atom_image;
 
             _swapchainsImagesPipelined[i] = false;
+        }
+
+        for (int i = 0; i < _lastViews.Length; i++)
+        {
+            _lastViews[i] = null!;
         }
 
         Graphics.FrameIndex = _current_frame = 0;
