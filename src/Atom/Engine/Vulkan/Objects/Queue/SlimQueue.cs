@@ -69,7 +69,7 @@ public struct SlimQueue
         PipelineStageFlags waitStage,
         ReadOnlySpan<SlimCommandBuffer> commandBuffers,
         ReadOnlySpan<SlimSemaphore> signalSemaphores,
-        SlimFence signalFence
+        SlimFence? signalFence = null
     )
     {
         vk.PipelineStageFlags vk_wait_stage = waitStage.ToVk();
@@ -88,7 +88,7 @@ public struct SlimQueue
                 pSignalSemaphores   : (vk.Semaphore*)    p_signal_semaphores
             );
 
-            VK.API.QueueSubmit(Handle, 1U, in info, signalFence);
+            VK.API.QueueSubmit(Handle, 1U, in info, signalFence ?? new SlimFence());
         }
     }
 

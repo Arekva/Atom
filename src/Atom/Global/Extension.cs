@@ -62,7 +62,13 @@ public static class StructExtension
         else if (typeof(T) == typeof(SlimSemaphore    )) return vk.ObjectType.Semaphore     ;
              
         else if (typeof(T) == typeof(vk.Instance      )) return vk.ObjectType.Instance      ;
+        else if (typeof(T) == typeof(vk.PhysicalDevice)) return vk.ObjectType.PhysicalDevice;
         else if (typeof(T) == typeof(vk.Device        )) return vk.ObjectType.Device        ;
+             
+        else if (typeof(T) == typeof(SlimQueue        )) return vk.ObjectType.Queue         ;
+        else if (typeof(T) == typeof(vk.Queue         )) return vk.ObjectType.Queue         ;
+             
+        else if (typeof(T) == typeof(vk.SurfaceKHR    )) return vk.ObjectType.SurfaceKhr    ;
              
         else                                             throw new Exception("Type not supported.");
     }

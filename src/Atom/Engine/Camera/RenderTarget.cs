@@ -195,6 +195,7 @@ public class RenderTarget : IDisposable
                 device       : _device
             );
             color_image.CreateImage(autoBind: true).Data.SetName($"{_name} RenderTarget color Image");
+            color_image.ApplyPipelineBarrier(vk.ImageLayout.TransferSrcOptimal);
             
             Image depth_image = new(
                 resolution   : res_3d                                 ,
@@ -207,6 +208,7 @@ public class RenderTarget : IDisposable
                 device       : _device
             );
             depth_image.CreateImage(autoBind: true).Data.SetName($"{_name} RenderTarget depth Image");
+            depth_image.ApplyPipelineBarrier(vk.ImageLayout.TransferSrcOptimal);
             
             ((SlimImage)color_image).GetMemoryRequirements(_device, out vk.MemoryRequirements color_reqs);
             ((SlimImage)depth_image).GetMemoryRequirements(_device, out vk.MemoryRequirements depth_reqs);
@@ -237,9 +239,11 @@ public class RenderTarget : IDisposable
 
             _colorImage = color_image.CreateSubresource(format: colorFormat, aspect: ImageAspectFlags.Color);
             ((SlimImageView)_colorImage).SetName($"{_name} RenderTarget color ImageSubresource");
+            color_image.ApplyPipelineBarrier(vk.ImageLayout.TransferSrcOptimal);
             
             _depthImage = depth_image.CreateSubresource(format: depthFormat, aspect: ImageAspectFlags.Depth);
             ((SlimImageView)_depthImage).SetName($"{_name} RenderTarget depth ImageSubresource");
+            depth_image.ApplyPipelineBarrier(vk.ImageLayout.TransferSrcOptimal);
             
             _memory = images_memory.Whole;
             _memory.Data.Memory.Handle.SetName($"{_name} RenderTarget Owned image's VulkanMemory");
@@ -289,6 +293,8 @@ public class RenderTarget : IDisposable
             _memory = image.CreateMemory(properties: MemoryPropertyFlags.DeviceLocal, autoBind: true);
             _memory.Data.Memory.Handle.SetName($"{_name} RenderTarget Owned image's VulkanMemory");
 
+            image.ApplyPipelineBarrier(vk.ImageLayout.TransferSrcOptimal);
+            
             if (ContainsColor)
             {
                 _colorImage = image.CreateSubresource(format: colorFormat, aspect: ImageAspectFlags.Color);

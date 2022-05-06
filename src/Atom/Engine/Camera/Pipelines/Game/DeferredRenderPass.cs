@@ -100,7 +100,7 @@ internal static class DeferredRenderPass
         Attachment lit_attachment = new(
             format: colorFormat,
             operators: new AttachmentOperator(
-                load: vk.AttachmentLoadOp.Clear, 
+                load: vk.AttachmentLoadOp.DontCare, 
                 store: vk.AttachmentStoreOp.Store),
             layouts: new LayoutTransition(
                 initial: vk.ImageLayout.Undefined,

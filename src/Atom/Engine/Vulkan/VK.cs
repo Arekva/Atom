@@ -100,6 +100,10 @@ public static class VK
 
         AutoSelectGPU();
         
+        _gpu.PhysicalDevice.SetName(_gpu.Name);
+        _queue.Data.SetName("Main Graphics Queue");
+        _device.SetName("Main Device");
+
 #if DEBUG
         PfnDebugUtilsMessengerCallbackEXT callback = new(Loggers.Vulkan.VKLog);
         
@@ -235,10 +239,6 @@ public static class VK
         string[] extensions = GetRequiredDeviceExtensions();
         vk.DeviceQueueCreateInfo[] queues = GetRequiredQueues();
 
-        vk.PhysicalDeviceFeatures enabled_features = new PhysicalDeviceFeatures(
-            samplerAnisotropy: true
-        );
-        
         fixed (vk.DeviceQueueCreateInfo* p_queues = queues)
         {
             vk.DeviceCreateInfo info = new (
@@ -247,15 +247,18 @@ public static class VK
                 enabledLayerCount      : (u32)layers.Length             ,
                 ppEnabledLayerNames    : LowLevel.GetPointer(layers)    ,
                 queueCreateInfoCount   : (u32)queues.Length             ,
-                pQueueCreateInfos      : p_queues                       ,
-                pEnabledFeatures       : &enabled_features
+                pQueueCreateInfos      : p_queues                       
             );
+            info.AddNext(out vk.PhysicalDeviceFeatures2 enabled_features);
+            enabled_features.Features = new PhysicalDeviceFeatures(samplerAnisotropy: true);
+            enabled_features.AddNext(out vk.PhysicalDeviceTimelineSemaphoreFeatures timeline_features);
+            timeline_features.TimelineSemaphore = true;
             
             VK.API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
             VK.API.GetDeviceQueue(_device, 0, 0, out vk.Queue queue);
             _queue = queue;
-            
-            
+
+
             //Camera.Init(_device, best_gpu, best_gpu.QueueFamilies[0]);
             
             //VK.API.GetDeviceQueue(_device, 1, 0, out Queue transfer_queue);
@@ -275,11 +278,13 @@ public static class VK
 #if DEBUG
         extensions.AddRange(new string []
         {
+            
             // Silk.NET.Vulkan.Extensions.EXT.ExtDebugUtils.ExtensionName,
         });
 #endif
         extensions.AddRange(new string []
         {
+            KhrTimelineSemaphore.ExtensionName,
             KhrSwapchain.ExtensionName,
         });
 

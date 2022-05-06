@@ -18,6 +18,18 @@ public struct SlimSemaphore
         
         Result result = VK.API.CreateSemaphore(device, in create_info, null, out Handle);
     }
+
+    public static unsafe SlimSemaphore CreateTimeline(Device device, u64 initial_value, SemaphoreCreateFlags flags = 0)
+    {
+        SemaphoreCreateInfo create_info = new(flags: (uint)flags);
+        create_info.AddNext(out vk.SemaphoreTypeCreateInfo type_info);
+        type_info.InitialValue = initial_value;
+        type_info.SemaphoreType = vk.SemaphoreType.Timeline;
+        
+        Result result = VK.API.CreateSemaphore(device, in create_info, null, out vk.Semaphore semaphore);
+
+        return Unsafe.As<vk.Semaphore, SlimSemaphore>(ref semaphore);
+    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode() => Handle.GetHashCode();

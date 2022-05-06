@@ -127,7 +127,7 @@ public class Viewport : IDisposable
         }
 #endif
 
-        _fences     = new SlimFence    [MAX_IMAGES_IN_FLIGHT];
+        _fences     = new SlimFence    [MAX_IMAGES_IN_FLIGHT * 2];
         _semaphores = new SlimSemaphore[MAX_IMAGES_IN_FLIGHT * 2];
 
         _swapchainsImagesPipelined = new bool[MAX_IMAGES_IN_FLIGHT];
@@ -267,18 +267,29 @@ public class Viewport : IDisposable
         _renderGate.WaitOne();
         if (_deleted) return;
         
-        SlimFence     frame_fence                = _fences[_current_frame];
+        SlimFence     frame_fence                = _fences[GetFrameInFlightFenceIndex(_current_frame)];
         SlimSemaphore image_available_semaphore  = _semaphores[GetImageAvailableSemaphoreIndex(_current_frame)];
         SlimSemaphore display_finished_semaphore = _semaphores[GetRenderFinishedSemaphoreIndex(_current_frame)];
 
-        frame_fence.Wait (_device);
-        frame_fence.Reset(_device);
-
-        UpdateSwapchain();
+        
+        frame_fence.Wait(_device);
         
         u32 swap_image_index = default;
         _swapchainExtension.AcquireNextImage(_device, _swap,
             u64.MaxValue, image_available_semaphore, default, ref swap_image_index);
+
+        u32 image_in_flight_fence_index = GetImageInFlightFenceIndex(swap_image_index);
+
+        SlimFence image_fence = _fences[image_in_flight_fence_index];
+
+
+        if (image_fence.Handle.Handle != 0)
+        {
+            image_fence.Wait(_device);
+        }
+
+        _fences[image_in_flight_fence_index] = frame_fence;
+        frame_fence.Reset(_device);
 
         SlimCommandBuffer cmd = _commands[_current_frame];
         cmd.Reset();
@@ -371,15 +382,33 @@ public class Viewport : IDisposable
 
     public void WaitForRenders()
     {
-        SlimFence.WaitAll(_device, _fences, MAX_IMAGES_IN_FLIGHT);
+        Span<SlimFence> fences_to_wait = stackalloc SlimFence[(i32)MAX_IMAGES_IN_FLIGHT];
 
-        /*Span<u64> values = stackalloc u64[(i32)MAX_IMAGES_IN_FLIGHT];
+        u32 fences_count = 0;
+
+        for (u32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++)
+        {
+            u32 fence_index = GetImageInFlightFenceIndex(i);
+            SlimFence fence = _fences[fence_index];
+            if (fence.Handle.Handle != 0)
+            {
+                fences_to_wait[(i32)fences_count] = fence;
+                fences_count++;
+            }
+        }
+        
+        if (fences_count != 0)
+        {
+            SlimFence.WaitAll(_device, fences_to_wait, fences_count);
+        }
+
+        Span<u64> values = stackalloc u64[(i32)MAX_IMAGES_IN_FLIGHT];
         for (int i = 0; i < values.Length; i++)
         {
             values[i] = 1;
         }
 
-        SlimSemaphore.Wait(_device, _semaphores.AsSpan(..(i32)MAX_IMAGES_IN_FLIGHT), values);*/
+        SlimSemaphore.Wait(_device, _semaphores.AsSpan(..(i32)MAX_IMAGES_IN_FLIGHT), values);
     }
 
     private unsafe void RecreateSwapchain(in SurfaceCapabilities capabilities)
@@ -594,7 +623,14 @@ public class Viewport : IDisposable
 
         return _supportedUsageFlags = caps.SupportedUsageFlags;
     }
-
+    
+    // array packs both frame in flight and image in flight arrays into one of 2*MAX_FRAMES_IN_FLIGHT_COUNT
+    // frame in flight being the MAX_FRAMES_IN_FLIGHT_COUNT first ones and images in flight
+    // the MAX_FRAMES_IN_FLIGHT_COUNT last ones (ex: with MAX_FRAMES_IN_FLIGHT_COUNT = 8, 0..7 are frame in flight and
+    // 8..15 are image in flight
+    private static u32 GetFrameInFlightFenceIndex(u32 frameIndex) => frameIndex;
+    private static u32 GetImageInFlightFenceIndex(u32 frameIndex) => frameIndex + MAX_IMAGES_IN_FLIGHT;
+    
     private static u32 GetImageAvailableSemaphoreIndex(u32 frameIndex) => frameIndex;
     private static u32 GetRenderFinishedSemaphoreIndex(u32 frameIndex) => frameIndex + MAX_IMAGES_IN_FLIGHT;
 }

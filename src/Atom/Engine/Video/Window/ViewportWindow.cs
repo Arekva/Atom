@@ -139,6 +139,8 @@ public class ViewportWindow : IDisposable
         if (Window.VkSurface is null) throw new NotSupportedException($"Windowing platform {Window.GetType().Name} does not support Vulkan.");
         
         InitializeVulkanSurface();
+        
+        _surface.SetName("Main window Surface (ViewportWindow)");
 
         _viewport = new Viewport(
             surface: new Ownership<vk.SurfaceKHR>(_surface, owned: false),
@@ -156,7 +158,8 @@ public class ViewportWindow : IDisposable
 
     private bool TryResize()
     {
-        return _viewport.UpdateSwapchain(updateVideoSettings: true);
+        return true;
+        // return _viewport.UpdateSwapchain(updateVideoSettings: true);
         //return _renderer.Update(updateVideoSettings: true);
     }
 
@@ -199,7 +202,7 @@ public class ViewportWindow : IDisposable
 
         //DoFPS(deltaTime);
         
-        _viewport.UpdateSwapchain(updateVideoSettings: true);
+        // _viewport.UpdateSwapchain(updateVideoSettings: true);
 
         Updater.NextFrame();
     }

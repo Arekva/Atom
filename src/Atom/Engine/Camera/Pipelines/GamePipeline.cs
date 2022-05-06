@@ -26,7 +26,7 @@ public class GamePipeline : IPipeline
 
     private static Pin<vk.ClearValue> _clearValues = new vk.ClearValue[]
     {
-        new(), new(), new(), new(), new (new vk.ClearColorValue(1.0F, 0.0F, 0.0F, 1.0F))
+        new(), new(), new(), new()
     };
 
 
