@@ -40,6 +40,7 @@ public static class Updater
     {
         double previous_time = Time.Elapsed;
         
+        _fpsWatch.Start();
         while (_isRunning)
         {
             // wait for window thread to ask for an update
@@ -62,6 +63,8 @@ public static class Updater
             previous_time = now;
             
             Time.NextUpdate(delta_time);
+            DoFPS(Time.DeltaTime);
+            
             Astrophysics.UniversalTime += delta_time * Astrophysics.TimeWarp;
             
             
@@ -144,4 +147,38 @@ public static class Updater
     public static void NextFrame() => _frameStartEvent.Set();
 
     public static void WaitUpdate() => _frameDoneEvent.Wait();
+    
+    
+    private static double _minTime = double.NegativeInfinity;
+    private static double _maxTime = double.PositiveInfinity;
+    private static List<double> _times = new (10000);
+    private static Stopwatch _fpsWatch = new();
+    private static double _showRate = 1.0D;
+
+    private static void DoFPS(double deltaTime)
+    {
+        _minTime = Math.Max(_minTime, deltaTime);
+        _maxTime = Math.Min(_maxTime, deltaTime);
+        _times.Add(deltaTime);
+        
+        double elapsed = _fpsWatch.Elapsed.TotalSeconds;
+        if (elapsed >= 1.0D / _showRate)
+        {
+            double avg = _times.Average();
+            double min = _minTime;
+            double max = _maxTime;
+
+            double[] ordered_times = _times.OrderBy(d => d).ToArray();
+            int time_count = ordered_times.Length;
+
+            double tenPct = ordered_times[time_count / 10];
+            Log.Info($"[|#FF9100,FPS|] COUNT: {time_count} | AVG: {1.0D/avg:F0} ({avg*1000.0D:F2} ms) | 10% LOW: {1.0D/tenPct:F0} ({tenPct*1000.0D:F2} ms) /// MIN: {1.0D/min:F0} ({min*1000.0D:F2} ms) / MAX: {1.0D/max:F0} ({max*1.000D:F0} ms) ({elapsed:F2} sec)");
+            
+            _times.Clear();
+            _minTime = double.NegativeInfinity;
+            _maxTime = double.PositiveInfinity;
+            
+            _fpsWatch.Restart();
+        }
+    }
 }
