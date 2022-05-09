@@ -70,6 +70,8 @@ public static class StructExtension
              
         else if (typeof(T) == typeof(vk.SurfaceKHR    )) return vk.ObjectType.SurfaceKhr    ;
              
+        else if (typeof(T) == typeof(vk.RenderPass    )) return vk.ObjectType.RenderPass    ;
+             
         else                                             throw new Exception("Type not supported.");
     }
 

@@ -29,7 +29,16 @@ public partial class Camera
 
     private static MemoryMap<ViewProjection<f32>> _matricesCpuMap;
 
-    private static ConcurrentBag<i32>             _availableIndices = new(Enumerable.Range(0, (i32)MAX_CAMERA_COUNT).Take((i32)MAX_CAMERA_COUNT));
+    private static ConcurrentBag<u32>             _availableIndices;
+
+    static Camera()
+    {
+        _availableIndices = new ();
+        for (u32 i = 0; i < MAX_CAMERA_COUNT; i++)
+        {
+            _availableIndices.Add(i);
+        }
+    }
     
     //private static CommandPool _renderPools
     

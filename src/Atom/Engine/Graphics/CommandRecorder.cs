@@ -87,15 +87,16 @@ public class CommandRecorder : IDisposable
 
     public class RenderPassRecorder : IDisposable
     {
-        public readonly SlimCommandBuffer CommandBuffer;
+        public SlimCommandBuffer CommandBuffer => Recorder.CommandBuffer;
+        public readonly CommandRecorder Recorder;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe RenderPassRecorder(
-            SlimCommandBuffer commandBuffer, vk.RenderPass renderPass,
+            CommandRecorder recorder, vk.RenderPass renderPass,
             vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
             vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
         {
-            CommandBuffer = commandBuffer;
+            Recorder = recorder;
             
             fixed (vk.ClearValue* p_clear_values = clearValues)
             {
@@ -106,7 +107,7 @@ public class CommandRecorder : IDisposable
                     clearValueCount: (u32)clearValues.Length,
                     pClearValues   : p_clear_values
                 );
-                VK.API.CmdBeginRenderPass(commandBuffer, in pass_info, subpassContents);
+                VK.API.CmdBeginRenderPass(CommandBuffer, in pass_info, subpassContents);
             }
         }
 
@@ -127,7 +128,7 @@ public class CommandRecorder : IDisposable
     public RenderPassRecorder RenderPass(vk.RenderPass renderPass,
         vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
         vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
-    => new (CommandBuffer, renderPass, renderArea, framebuffer, clearValues, subpassContents);
+    => new (this, renderPass, renderArea, framebuffer, clearValues, subpassContents);
     
     public void Blit(ImageSubresource source, ImageSubresource destination, 
         vk.Filter filter = vk.Filter.Nearest)

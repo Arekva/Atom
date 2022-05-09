@@ -1,37 +1,25 @@
 ﻿using Atom.Engine;
+using Atom.Engine.Astro;
 using Atom.Engine.Loaders;
 using Atom.Engine.Vulkan;
+using Atom.Game.Config;
 using Silk.NET.Maths;
 using Image = Atom.Engine.Image;
 
 namespace Atom.Game;
 
-public class SpaceScene : AtomObject, IScene, IDrawer
+public class SpaceScene : AtomObject, IScene
 {
     private readonly ClassicPlayerController _controller;
 
-    //private List<CelestialSystem> _systems;
-
-    private Viewport _viewport;
-
-    private ImageSubresource _displayResource;
-
+    private List<CelestialSystem> _systems;
+    
     public SpaceScene()
     {
         _controller = new ClassicPlayerController();
 
-
-        u32 queues_fam = 0;
-        Image image = DDS.Load(
-            stream: File.Open("assets/Images/Planets/Colors/Kerbin.dds", FileMode.Open),
-            queueFamilies: queues_fam.AsSpan(),
-            layout: vk.ImageLayout.TransferSrcOptimal, 
-            stage: PipelineStageFlags.Transfer,
-            accessMask: vk.AccessFlags.AccessTransferReadBit,
-            usages: ImageUsageFlags.TransferSource | ImageUsageFlags.Sampled);
-
-        _displayResource = image.CreateSubresource();
-
+        _controller.Location = new Location(new Vector3D<double>(0.0D, 100.000D, 0.0D));
+        
         /*Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<PlanetConfig>)
@@ -42,7 +30,12 @@ public class SpaceScene : AtomObject, IScene, IDrawer
             .Select(ConfigFile.LoadInto<SystemConfig>),
             planet_configs
         ).ToList();*/
-
+        
+        _systems = new List<CelestialSystem>();
+        CelestialSystem system = new (ConfigFile.LoadInto<SystemConfig>("Assets/Space/Systems/Kerbol/Kerbol.system"));
+        system.AddSatellite(new VoxelBody(ConfigFile.LoadInto<PlanetConfig>("Assets/Space/Systems/Kerbol/Minmus.planet"), system));
+        _systems.Add(system);
+        
         MakeReady();
     }
     
@@ -62,9 +55,6 @@ public class SpaceScene : AtomObject, IScene, IDrawer
     public override void Delete()
     {
         base.Delete();
-        
-        _displayResource.Delete();
-        _displayResource.Image.Delete();
         
         /*foreach (CelestialSystem system in _systems)
         {

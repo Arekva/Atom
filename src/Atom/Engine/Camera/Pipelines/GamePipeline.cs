@@ -1,6 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
+using Silk.NET.Vulkan;
+using MemoryPropertyFlags = Atom.Engine.Vulkan.MemoryPropertyFlags;
 
 namespace Atom.Engine.Pipelines;
 
@@ -14,6 +16,10 @@ public class GamePipeline : IPipeline
     private ImageSubresource[] _workSubresources;
     private SlimFramebuffer _framebuffer;
 
+    private ImageFormat _colorFormat;
+    private ImageFormat _depthFormat;
+    
+
     public ImageSubresource GBufferAlbedoLuminance          => _workSubresources[0];
     public ImageSubresource GBufferNormalRoughnessMetalness => _workSubresources[1];
     public ImageSubresource GBufferPositionTranslucency     => _workSubresources[2];
@@ -24,22 +30,32 @@ public class GamePipeline : IPipeline
     private Vector2D<u32> _resolution;
     private vk.RenderPass _renderPass;
 
+    private Culler _culler;
+
     private static Pin<vk.ClearValue> _clearValues = new vk.ClearValue[]
     {
         new(), new(), new(), new()
     };
 
+    private Drawer.DrawRange[] _drawRanges = new Drawer.DrawRange[1 << 19];
 
     public GamePipeline(vk.Device? device = null)
     {
         _device = device ?? VK.Device;
 
         _workSubresources = new ImageSubresource[3];
+
+        _culler = new Culler();
     }
 
     public void Resize(Vector2D<u32> resolution, RenderTarget target)
     {
         if (_resolution == resolution) return;
+        if (resolution.X == 0 || resolution.Y == 0)
+        {
+            _resolution = resolution;
+            return;
+        }
 
         u32 queue_family = 0;
 
@@ -69,9 +85,26 @@ public class GamePipeline : IPipeline
         views[2] = _workSubresources[2];
         views[3] = target.Depth!;
         views[4] = target.Color!;
-        
-        DeferredRenderPass.CreateRenderPass(_device, target.Color!.Format, target.Depth!.Format, out _renderPass);
-        
+
+        ImageFormat target_depth_format = target.DepthFormat;
+        ImageFormat target_color_format = target.ColorFormat;
+
+        if (target_depth_format != _depthFormat || target_color_format != _colorFormat)
+        {
+            _depthFormat = target_depth_format;
+            _colorFormat = target_color_format;
+            
+            unsafe
+            {
+                VK.API.DestroyRenderPass(_device, _renderPass, null);
+            }
+            
+            DeferredRenderPass.CreateRenderPass(_device, target_color_format, target_depth_format, out _renderPass);
+            _renderPass.SetName("G-Buffer RenderPass (GamePipeline)");
+            
+            Graphics.MainRenderPass = _renderPass;
+        }
+
         _framebuffer = new SlimFramebuffer(_device, _renderPass, views, resolution.X, resolution.Y, 1U);
 
         _resolution = resolution;
@@ -89,34 +122,57 @@ public class GamePipeline : IPipeline
             }
         
             _workImage.Delete();
-
-            unsafe
-            {
-                VK.API.DestroyRenderPass(_device, _renderPass, null);
-            }
         }
     }
 
-    public void CmdRender(CommandRecorder recorder)
+    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, IEnumerable<Drawer> drawers)
     {
-        vk.Rect2D area = new(default, new(_resolution.X, _resolution.Y));
-        using (CommandRecorder.RenderPassRecorder pass = 
-               recorder.RenderPass(_renderPass, area, _framebuffer, _clearValues.Array))
-        {
-            pass.NextSubpass();
-        }
+        if (_resolution.X == 0 || _resolution.Y == 0) return; // do not attempt to draw anything.
+        
+        vk.Rect2D draw_area = new(default, new(_resolution.X, _resolution.Y));
         
         // first : planet shadows
         // for each planet, render its shadow map (doesn't need to be high-resolution)
         
         // second: planet shine
-        // for each planets, get the light from the 
+        // for each planets, get the light from the other surrounding planets with 1 or more passes.
+        
+        
+        using (CommandRecorder.RenderPassRecorder draw_pass = 
+               recorder.RenderPass(_renderPass, draw_area, _framebuffer, _clearValues.Array))
+        {
+            // G-Buffer
+            Span<Drawer.DrawRange> ranges = _drawRanges;
+            
+            foreach (Drawer drawer in drawers)
+            {
+                _culler.CullPerspective(camera.Perspective.FieldOfView, _resolution, 
+                    drawer.GetMeshes(), // get all mesh data
+                    ranges, out i32 culled_count);
+                
+                drawer.Draw(camera, draw_pass, ranges[..culled_count], _resolution, frameIndex);
+            }
+            
+            draw_pass.NextSubpass();
+            
+            // todo: light calculation
+            // use planet lights + star lights for shadowed directional light
+            // ambient light is got from reflection cubemap
+        }
+        
+        
+        
+        
     }
 
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Delete()
     {
+        unsafe
+        {
+            VK.API.DestroyRenderPass(_device, _renderPass, null);
+        }
         CleanResources();
         GC.SuppressFinalize(this);
     }

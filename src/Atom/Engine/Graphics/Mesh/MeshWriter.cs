@@ -24,12 +24,14 @@ public class MeshWriter<TIndex> : IDisposable
     public readonly nint       Indices;
     public readonly u64     IndexCount;
     public readonly u64    IndexOffset;
+
+    public readonly f64 BoundingSphere;
     
     public readonly SlimBuffer  Buffer;
 
 
     public MeshWriter(
-        u64 vertexCount, u64 indexCount,
+        u64 vertexCount, u64 indexCount, f64 boundingSphere,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
     {
         _device         = device         ?? VK.Device            ;
@@ -37,6 +39,8 @@ public class MeshWriter<TIndex> : IDisposable
 
         VertexCount = vertexCount;
         IndexCount  =  indexCount;
+
+        BoundingSphere = boundingSphere;
         
         u64 vertex_data_size = _vertexSize  = (u64)Unsafe.SizeOf<GVertex>() * vertexCount;
         u64 index_data_size  = _indicesSize = (u64)Unsafe.SizeOf<TIndex>()  *  indexCount;

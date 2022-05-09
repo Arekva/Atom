@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using Atom.Engine;
 
 namespace Atom.Loggers;
@@ -20,6 +21,12 @@ public class Vulkan
         { DebugUtilsMessageSeverityFlags.Error  , Log.Error   }
     };
 
+    static readonly List<string> IGNORE_FILTER = new()
+    {
+        "Unloading layer",
+        "Loading layer",
+    };
+
     public static unsafe u32 VKLog(vk.DebugUtilsMessageSeverityFlagsEXT vkSeverity, 
         vk.DebugUtilsMessageTypeFlagsEXT vkType, vk.DebugUtilsMessengerCallbackDataEXT* vkData, void* userData)
     {
@@ -30,6 +37,16 @@ public class Vulkan
 
         string msg = LowLevel.GetString(vkData->PMessage)!.Split('|').Last().TrimStart();
 
+        foreach (string filter in IGNORE_FILTER)
+        {
+            if (msg.Contains(filter))
+            {
+                // skip
+                return vk.Vk.False;
+            }
+        }
+        
+        
         u32 relevant_objects_count = vkData->ObjectCount;
         ReadOnlySpan<vk.DebugUtilsObjectNameInfoEXT> relevant_objects = new(vkData->PObjects, (i32)relevant_objects_count);
 
@@ -41,10 +58,47 @@ public class Vulkan
             link = msg.Substring(link_start + 1, msg.Length - (link_start + 2));
             message = msg.Substring(0, link_start - 1);
         }
-
+        
+        
         StringBuilder builder = new("[|#FF4400,VK| ");
         builder.Append(type_icon);
-        builder.Append("]\n*Message*   : ");
+        builder.Append("] ");
+
+        const i32 MAX_STACK_FRAME = 7;
+        for (i32 i = MAX_STACK_FRAME; i > 1; --i)
+        {
+            StackFrame stack_frame = new (needFileInfo: true, skipFrames: i);
+            string? file_name = stack_frame.GetFileName();
+            if (file_name == null) continue;
+            
+            builder.Append('|');
+            builder.Append(Richtext.ColorCode.PATH);
+            builder.Append(',');
+            builder.Append(file_name.Split('/', '\\').Last());
+            builder.Append("||");
+            builder.Append(Richtext.ColorCode.AT);
+            builder.Append(",:");
+            builder.Append(stack_frame.GetFileLineNumber());
+            builder.Append('|');
+
+            if (i != 0)
+            {
+                builder.Append('|');
+                builder.Append(Richtext.ColorCode.FAINT);
+                builder.Append(",/|");
+            }
+        }
+
+        if (new StackFrame(needFileInfo: true, skipFrames: MAX_STACK_FRAME + 1).GetFileName() != null)
+        {   
+            builder.Append('|');
+            builder.Append(Richtext.ColorCode.FAINT);
+            builder.Append(',');
+            builder.Append("/(stackframe not full)");
+            builder.Append('|');
+        }
+
+        builder.Append("\n*Message*   : ");
         builder.Append('`');
         builder.Append(message);
         builder.Append('`');

@@ -17,23 +17,31 @@ public class VoxelBody : CelestialBody
     private IRasterShader _shader;
     private RasterizedMaterial _material;
     
-    private readonly Texture _sphereAlbedo;
+    /*private readonly Texture _sphereAlbedo;
     private readonly Texture _sphereMetallic;
     private readonly Texture _sphereRoughness;
     private readonly Texture _sphereNormal;
     private readonly Texture _sphereAO;
-    private readonly Texture _sphereHeight;
-    
-    
+    private readonly Texture _sphereHeight;*/
+
+    private readonly Texture _white ;
+    private readonly Texture _black ;
+    private readonly Texture _purple;
+
+
     private readonly SlimBuffer _transformsBuffer;
     private readonly VulkanMemory _transformsMemory;
     
     private readonly SlimBuffer _settingsBuffer;
     private readonly VulkanMemory _settingsMemory;
 
+    private Drawer _drawer;
+
     private bool isReady;
 
     private VertexSettings _vertexSettings = new VertexSettings() { Height = 0.05F };
+
+    private Drawer.MeshBounding _bound;
 
     public f64 BaseRotation { get; set; } = 0.0D;
     public f64 Rotation { get; private set; } = 0.0D;
@@ -131,27 +139,39 @@ public class VoxelBody : CelestialBody
         const string WHITE = "assets/Images/white.dds";
         const string BLACK = "assets/Images/black.dds";
         const string WHITE_NORMAL = "assets/Images/white_normal.dds";
-        
-        Log.Error($"Load {config.Texture?.Color ?? WHITE}");
-        
 
-        /*_sphereAlbedo    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Color ?? WHITE)));
-        _material.WriteImage<IFragmentModule>(name: "_albedo", texture: _sphereAlbedo);
+        u32 queue_family = 0;
+        Span<u32> queue_families = queue_family.AsSpan();
         
-        _sphereNormal    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Normal ?? WHITE_NORMAL)));
-        _material.WriteImage<IFragmentModule>(name: "_normal", texture: _sphereNormal);
+        _white = new Texture(image: dds.Load(stream: File.OpenRead(WHITE), queue_families));
+        _black = new Texture(image: dds.Load(stream: File.OpenRead(BLACK), queue_families));
+        _purple = new Texture(image: dds.Load(stream: File.OpenRead(WHITE_NORMAL), queue_families));
         
-        _sphereAO        = new Texture(image: dds.Load(stream: File.OpenRead(BLACK)));
-        _material.WriteImage<IFragmentModule>(name: "_ambientOcclusion", texture: _sphereAO);
+        //_sphereAlbedo    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Color ?? WHITE)));
+        _material.WriteImage<IFragmentModule>(name: "_albedo", texture: _white);
         
-        _sphereMetallic  = new Texture(image: dds.Load(stream: File.OpenRead(BLACK)));
-        _material.WriteImage<IFragmentModule>(name: "_metalness", texture: _sphereMetallic);
+        //_sphereNormal    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Normal ?? WHITE_NORMAL)));
+        _material.WriteImage<IFragmentModule>(name: "_normal", texture: _purple);
         
-        _sphereRoughness = new Texture(image: dds.Load(stream: File.OpenRead(BLACK)));
-        _material.WriteImage<IFragmentModule>(name: "_roughness", texture: _sphereRoughness);
+        //_sphereAO        = new Texture(image: dds.Load(stream: File.OpenRead(BLACK)));
+        _material.WriteImage<IFragmentModule>(name: "_ambientOcclusion", texture: _black);
         
-        _sphereHeight   = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Height ?? BLACK)));
-        _material.WriteImage<IVertexModule>(name: "_height", texture: _sphereHeight);*/
+        //_sphereMetallic  = new Texture(image: dds.Load(stream: File.OpenRead(BLACK)));
+        _material.WriteImage<IFragmentModule>(name: "_metalness", texture: _black);
+        
+        //_sphereRoughness = new Texture(image: dds.Load(stream: File.OpenRead(BLACK)));
+        _material.WriteImage<IFragmentModule>(name: "_roughness", texture: _black);
+        
+        //_sphereHeight   = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Height ?? BLACK)));
+        _material.WriteImage<IVertexModule>(name: "_height", texture: _black);
+        
+        _bound = new Drawer.MeshBounding
+        {
+            CallIndex = 0,
+            Bounding = Radius
+        };
+
+        _drawer = new Drawer(CmdDraw, GetMeshesBounds, Camera.World);
 
         MakeReady();
     }
@@ -193,9 +213,6 @@ public class VoxelBody : CelestialBody
         
         if (_transformsMemory == null) return;
         
-        
-        
-
         ref Matrix4X4<f64> render_matrix = ref RotatedSpace[0, Graphics.FrameIndex];
         render_matrix = RotatedSpace.RelativeMatrix(ClassicPlayerController.Singleton.Location);
 
@@ -204,31 +221,47 @@ public class VoxelBody : CelestialBody
             Span<Matrix4X4<f32>> frame_data = map.AsSpan(Graphics.FrameIndex, 1);
             frame_data[0] = (Matrix4X4<f32>)render_matrix;
         }
+
+        _bound.Position = (this.RotatedSpace.Location - Camera.World!.Location).Position;
     }
 
-    public override void CmdDraw(SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex)
+    private void CmdDraw(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
+        ReadOnlySpan<Drawer.DrawRange> ranges,
+        Vector2D<u32> resolution, u32 frameIndex)
+        //SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex
+        //)
     {
         if (_material == null!) return;
-        
-        _material.CmdBindMaterial(cmd, extent, cameraIndex, frameIndex);
-        _mesh.CmdBindBuffers(cmd);
-        VK.API.CmdDrawIndexed(cmd, _mesh.IndexCount, 1, 0, 0, 0);
+
+        _material.CmdBindMaterial(renderPass.CommandBuffer, resolution, camera.Index, frameIndex);
+        _mesh.CmdBindBuffers(renderPass.CommandBuffer);
+        VK.API.CmdDrawIndexed(renderPass.CommandBuffer, _mesh.IndexCount, 1, 0, 0, 0);
+    }
+
+    private ReadOnlySpan<Drawer.MeshBounding> GetMeshesBounds()
+    {
+        return _bound.AsSpan();
     }
 
     public override void Delete()
     {
         base.Delete();
         
+        _drawer.Dispose();
+        
         _material.Delete();
         _shader.Dispose();
         _mesh.Delete();
         
-        
-        _sphereAlbedo.Dispose();
+        _white.Dispose();
+        _black.Dispose();
+        _purple.Dispose();
+
+        /*_sphereAlbedo.Dispose();
         _sphereMetallic.Dispose();
         _sphereRoughness.Dispose();
         _sphereNormal.Dispose();
         _sphereAO.Dispose();
-        _sphereHeight.Dispose();
+        _sphereHeight.Dispose();*/
     }
 }

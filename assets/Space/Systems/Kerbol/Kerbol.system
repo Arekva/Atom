@@ -5,5 +5,5 @@ System {
         KSP System
     }
 
-    Location = [784561;84562788;45812456876] <0.0 AU;0.0 AU;0.0 AU>
+    Location = [0;0;0] <0.0 AU;0.0 AU;0.0 AU>
 }

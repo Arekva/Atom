@@ -28,10 +28,6 @@
       <PackageReference Include="Silk.NET.Windowing" Version="2.15.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Include="Engine\Graphics\Viewport.cs_o" />
-    </ItemGroup>
-
     <!--<ItemGroup>
       <ProjectReference Include="Engine\Atom.Engine.csproj" />
     </ItemGroup>-->

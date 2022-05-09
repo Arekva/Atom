@@ -194,6 +194,8 @@ public class Viewport : IDisposable
         for (u32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++)
         {
             _fences[i].Destroy(_device);
+            _fences[i] = new SlimFence();
+            
             _semaphores[i].Destroy(_device);
         }
         for (i32 i = 0; i < MAX_IMAGES_IN_FLIGHT; i++) // 2x more semaphores than frames in flight.
@@ -236,7 +238,7 @@ public class Viewport : IDisposable
 
         _resolution = capabilities.CurrentExtent;
 
-        bool update_resolution = _swapResolution  != _resolution ;
+        bool update_resolution = _swapResolution  != _resolution || _resolution.X == 0 || _resolution.Y == 0;
         bool update_clip       = _swapClipped     != _clipped    ;
         bool update_format     = _swapFormat      != _colorFormat;
         bool update_space      = _swapColorSpace  != _colorSpace ;
@@ -253,11 +255,11 @@ public class Viewport : IDisposable
                 Video.SetResolutionAutoChange(_resolution);
             }
             
-            RecreateSwapchain(in capabilities);
+            bool result = RecreateSwapchain();
 
             _renderGate.ReleaseMutex();
             _resizeFinish.Set();
-            return update_resolution;
+            return result;
         }
 
         return true;
@@ -340,13 +342,15 @@ public class Viewport : IDisposable
         SlimSemaphore display_finished_semaphore = _semaphores[GetRenderFinishedSemaphoreIndex(_current_frame)];
 
         frame_fence.Wait (_device);
-        frame_fence.Reset(_device);
+        
+        bool can_render = UpdateSwapchain();
+        if (!can_render) return;
 
-        UpdateSwapchain();
+        frame_fence.Reset(_device);
         
         u32 swap_image_index = default;
         _swapchainExtension.AcquireNextImage(_device, _swap, 
-            u64.MaxValue, image_available_semaphore, default, ref swap_image_index);
+            timeout: u64.MaxValue, semaphore: image_available_semaphore, fence: default, ref swap_image_index);
 
         SlimCommandBuffer cmd = _commands[_current_frame];
 
@@ -359,19 +363,18 @@ public class Viewport : IDisposable
         }
 
         _queue.Submit(
-            waitSemaphores: image_available_semaphore.AsSpan(),
-            waitStage: PipelineStageFlags.ColorAttachmentOutput,
-            commandBuffers: cmd.AsSpan(),
-            signalSemaphores: display_finished_semaphore.AsSpan(),
-            signalFence: frame_fence
+            waitSemaphores  : image_available_semaphore.AsSpan()     ,
+            waitStage       : PipelineStageFlags.ColorAttachmentOutput,
+            commandBuffers  : cmd.AsSpan()                           ,
+            signalSemaphores: display_finished_semaphore.AsSpan()    ,
+            signalFence     : frame_fence
         );
 
         _queue.Present(_swapchainExtension,
             waitSemaphores: display_finished_semaphore.AsSpan(),
-            swapchains: _swap.AsSpan(),
-            imageIndices: swap_image_index.AsSpan()
+            swapchains    : _swap.AsSpan()                     ,
+            imageIndices  : swap_image_index.AsSpan()
         );
-        
         
         Graphics.FrameIndex = _current_frame = (_current_frame + 1) % MAX_IMAGES_IN_FLIGHT;
         
@@ -381,35 +384,41 @@ public class Viewport : IDisposable
     public void WaitForRenders()
     {
         SlimFence.WaitAll(_device, _fences, MAX_IMAGES_IN_FLIGHT);
-
-        /*Span<u64> values = stackalloc u64[(i32)MAX_IMAGES_IN_FLIGHT];
-        for (int i = 0; i < values.Length; i++)
+    }
+    
+    public void WaitForRender()
+    {
+        SlimFence fence = _fences[Graphics.FrameIndex];
+        if (fence.Handle.Handle != 0UL)
         {
-            values[i] = 1;
+            fence.Wait(_device);
         }
-
-        SlimSemaphore.Wait(_device, _semaphores.AsSpan(..(i32)MAX_IMAGES_IN_FLIGHT), values);*/
     }
 
-    private unsafe void RecreateSwapchain(in SurfaceCapabilities capabilities)
+    private unsafe bool RecreateSwapchain()
     {
         vk.SwapchainKHR previous = _swap;
-
-        _swapResolution  = _resolution ;
+        
         _swapClipped     = _clipped    ;
         _swapFormat      = _colorFormat;
         _swapColorSpace  = _colorSpace ;
         _swapPresentMode = _presentMode;
-
-        ref readonly vk.Extent2D extent = ref Unsafe.As<Vector2D<u32>, vk.Extent2D>(ref _swapResolution);
-
-        if (extent.Width < 16 || extent.Height < 16) return;
-
+        
         u32 queue_family = 0;
+        
+        _surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(_physicalDevice,
+            _surface, out vk.SurfaceCapabilitiesKHR capabilities_khr);
+        SurfaceCapabilities capabilities = Unsafe.As<vk.SurfaceCapabilitiesKHR, SurfaceCapabilities>(ref capabilities_khr);
+        _swapResolution  = _resolution = capabilities.CurrentExtent;    // sometime the image still gets updated while the
+        // method is called, let's resync it here.
+        ref readonly vk.Extent2D extent = ref Unsafe.As<Vector2D<u32>, vk.Extent2D>(ref _swapResolution);
+        
+        if (extent.Width == 0 || extent.Height == 0) return false;
+        
         u32 image_count = GetImageCount(in capabilities);
 
         vk.SwapchainCreateInfoKHR swapchain_info = new(
-            surface              : _surface                ,
+            surface              : _surface               ,
             minImageCount        : image_count             ,
             imageFormat          : _swapFormat.ToVk()      ,
             imageColorSpace      : _swapColorSpace.ToVk()  ,
@@ -429,13 +438,7 @@ public class Viewport : IDisposable
         _swapchainExtension.CreateSwapchain(_device, in swapchain_info, null, out _swap);
         
         u32 previous_swap_image_count = _swapImageCount;
-        /*for (u32 i = 0; i < previous_swap_image_count; i++) // signal all the semaphores.
-        {
-            u32 swap_index = 0;
-            _swapchainExtension.AcquireNextImage(_device, _swap,
-                u64.MaxValue, _semaphores[GetImageAvailableSemaphoreIndex(i)], default, ref swap_index);
-        }*/
-        
+
         DestroyViews(previous_swap_image_count);
         DestroySwapchain(previous);
 
@@ -479,6 +482,8 @@ public class Viewport : IDisposable
         }
 
         Graphics.FrameIndex = _current_frame = 0;
+
+        return true;
     }
     
     private unsafe void DeleteSurface(ref vk.SurfaceKHR surface)

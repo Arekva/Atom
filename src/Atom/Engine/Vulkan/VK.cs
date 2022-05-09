@@ -30,10 +30,13 @@ public static class VK
     
     public static Version ApplicationVersion { get; private set; }
 
+#if DEBUG
     
     private static vk.DebugUtilsMessengerEXT _messenger;
 
-
+#endif
+    
+    
     public static event Action? OnInit;
 
     public static event Action? OnTerminate; 
@@ -138,6 +141,8 @@ public static class VK
         OnTerminate?.Invoke();
         
         API.DestroyDevice(_device, null);
+        API.TryGetInstanceExtension(Instance, out ext.ExtDebugUtils ext_debug);
+        ext_debug.DestroyDebugUtilsMessenger(Instance, _messenger, null);
         API.DestroyInstance(_instance, null);
         
         // debug utils messenger never gets destroyed... or should it be?

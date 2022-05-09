@@ -16,6 +16,7 @@ public partial class Camera : Thing
     public const i32                UNINITIALIZED_INDEX = i32.MaxValue;
     
     private static ConcurrentDictionary<string, Camera> _cameras = new(concurrencyLevel: 6, capacity: (i32)MAX_CAMERA_COUNT);
+    public static IEnumerable<Camera> Cameras => _cameras.Values;
 
     private static Camera? _world        ;
     private static Camera? _userInterface;
@@ -35,7 +36,7 @@ public partial class Camera : Thing
 
     
     private string                 _identifier         ;
-    private i32                    _index              ;
+    private u32                    _index              ;
     private Space                  _space              ;
     
     private Resolution             _resolutionMode     ;
@@ -53,11 +54,15 @@ public partial class Camera : Thing
     private SlimCommandPool        _pipelinesPool      ;
     private SlimCommandBuffer[]    _pipelinesCommands  ;
 
+    private SlimFence[]            _immediateFences    ;
+
+    private ConcurrentDictionary<Guid, Drawer> _drawers;
+
 
 
     public string Identifier => _identifier;
 
-    public i32    Index      => _index     ;
+    public u32    Index      => _index     ;
     
     public Space  Space      => _space     ;
 
@@ -117,9 +122,10 @@ public partial class Camera : Thing
     public ref readonly Matrix4X4<f64> ProjectionMatrix => ref _projectionMode == Projection.Perspective
         ? ref _perspective .ProjectionMatrix
         : ref _orthographic.ProjectionMatrix;
-    
-    
-    
+
+    public IEnumerable<Drawer> Drawers => _drawers.Values;
+
+
     public Camera(
         string? identifier = null, Space? parent = null,
         Projection projectionMode = Projection.Perspective,
@@ -131,6 +137,8 @@ public partial class Camera : Thing
         // if there is a parent, use it, otherwise create a space.
         _space = parent == null ? new Space(thing: this) : new Space(parent: parent);
         _identifier = identifier ?? GUID.ToString();
+        
+        _drawers = new ConcurrentDictionary<Guid, Drawer>();
 
         if (!_cameras.TryAdd(_identifier, this))
         {
@@ -161,17 +169,20 @@ public partial class Camera : Thing
 
         _targets = new RenderTarget[Graphics.MaxFramesCount];
         _renderPipelines = new IPipeline[Graphics.MaxFramesCount];
+        _immediateFences = new SlimFence[Graphics.MaxFramesCount];
+
+        vk.Device device = VK.Device;
+        
         for (int i = 0; i < Graphics.MaxFramesCount; i++)
         {
             _targets[i] = new RenderTarget(Resolution, name: $"{Name} #{i}");
-            _renderPipelines[i] = new GamePipeline(VK.Device);
+            _renderPipelines[i] = new GamePipeline(device);
+            _immediateFences[i] = new SlimFence(device);
         }
 
-        _pipelinesPool = new SlimCommandPool(VK.Device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
-        _pipelinesPool.AllocateCommandBuffers(VK.Device, CommandBufferLevel.Primary, Graphics.MaxFramesCount, out _pipelinesCommands);
+        _pipelinesPool = new SlimCommandPool(device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
+        _pipelinesPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, Graphics.MaxFramesCount, out _pipelinesCommands);
 
-        
-        
         
         
         // ReSharper disable once VariableHidesOuterVariable
@@ -209,6 +220,7 @@ public partial class Camera : Thing
         {
             _targets[i].Delete();
             _renderPipelines[i].Dispose();
+            _immediateFences[i].Destroy(VK.Device);
         }
     }
     
@@ -266,31 +278,47 @@ public partial class Camera : Thing
         RenderTarget target = _targets[frameIndex];
         IPipeline pipeline = _renderPipelines[frameIndex];
         
-        target.Resize(resolution); // resize target if required
-        pipeline.Resize(resolution, target);
-
         SlimCommandBuffer cmd = _pipelinesCommands[frameIndex];
         cmd.Reset();
-
+        
+        target.Resize(resolution); // resize target if required
+        pipeline.Resize(resolution, target);
+        
         using (CommandRecorder recorder = new(cmd, CommandBufferUsageFlags.OneTimeSubmit))
         {
-            pipeline.CmdRender(recorder);
+            pipeline.CmdRender(camera: this, frameIndex, recorder, Drawers);
         }
 
-        ref SlimQueue queue = ref Unsafe.As<vk.Queue, SlimQueue>(ref VK.Queue.Data);
+        vk.Device device = VK.Device;
 
-        SlimFence fence = new (VK.Device);
+        using MutexLock<vk.Queue> vk_queue = VK.Queue.Lock();
+        
+        SlimQueue queue = vk_queue.Data;
+
+        SlimFence fence = _immediateFences[frameIndex];
         
         queue.Submit(cmd, PipelineStageFlags.TopOfPipe, fence);
 
-        fence.Wait(VK.Device);
-        fence.Destroy(VK.Device);
+        fence.Wait(device);
+        fence.Reset(device);
 
         return target;
     }
 
     public RenderTarget RenderImmediate(Action? wait = null) => RenderImmediate(Graphics.FrameIndex, wait);
 
+
+    internal void AddDrawer(Drawer drawer)
+    {
+        ThrowIfDeleted();
+        _drawers.TryAdd(drawer.GUID, drawer);
+    }
+
+    internal void RemoveDrawer(Drawer drawer)
+    {
+        ThrowIfDeleted();
+        _drawers.TryRemove(drawer.GUID, out _);
+    }
 
     private void Resize()
     {

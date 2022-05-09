@@ -100,7 +100,11 @@ public static class Updater
                 Viewport viewport = ViewportWindow.Instance.Viewport;
                 Camera camera = Camera.World;
 
-                RenderTarget final_render = camera.RenderImmediate(Graphics.FrameIndex, viewport.WaitResizeFinished);
+                RenderTarget final_render = camera.RenderImmediate(Graphics.FrameIndex, () =>
+                {
+                    viewport.WaitResizeFinished();
+                    viewport.WaitForRender();
+                });
 
                 viewport.Present(final_render!.Color!);
             }
@@ -172,8 +176,9 @@ public static class Updater
             int time_count = ordered_times.Length;
 
             double tenPct = ordered_times[time_count / 10];
-            Log.Info($"[|#FF9100,FPS|] COUNT: {time_count} | AVG: {1.0D/avg:F0} ({avg*1000.0D:F2} ms) | 10% LOW: {1.0D/tenPct:F0} ({tenPct*1000.0D:F2} ms) /// MIN: {1.0D/min:F0} ({min*1000.0D:F2} ms) / MAX: {1.0D/max:F0} ({max*1.000D:F0} ms) ({elapsed:F2} sec)");
-            
+            Log.Info($"[|#FF9100,FPS|] " + Colour((u32)(1.0D/avg)) + " FPS");
+                     //$"COUNT: {time_count} | AVG: {1.0D/avg:F0} ({avg*1000.0D:F2} ms) | 10% LOW: {1.0D/tenPct:F0} ({tenPct*1000.0D:F2} ms) /// MIN: {1.0D/min:F0} ({min*1000.0D:F2} ms) / MAX: {1.0D/max:F0} ({max*1.000D:F0} ms) ({elapsed:F2} sec)");
+                     
             _times.Clear();
             _minTime = double.NegativeInfinity;
             _maxTime = double.PositiveInfinity;
@@ -181,4 +186,27 @@ public static class Updater
             _fpsWatch.Restart();
         }
     }
+
+    private static string GetColour(u32 fps) => fps switch
+    {
+        < 10    => "#630000",
+        < 20    => "#c40000",
+        < 30    => "#ff0000",
+        < 40    => "#ff6a00",
+        < 50    => "#ffb700",
+        < 60    => "#ffea00",
+        < 80    => "#d0ff00",
+        < 110   => "#91ff00",
+        < 144   => "#62ff00",
+        < 200   => "#00ffc8",
+        < 240   => "#00ddff",
+        < 360   => "#007bff",
+        < 700   => "#001aff",
+        < 1500  => "#8400ff",
+        _       => "#dd00ff",
+    };
+
+    private static string Colour(u32 fps) => $"|{GetColour(fps)},{fps}|";
+
+    private static string Colour(f64 seconds) => $"|{GetColour((u32)(1.0D / seconds))},{seconds:F2}|";
 }

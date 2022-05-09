@@ -44,14 +44,15 @@ public static class Log
 
     private static string FormattedThreadInfo(LevelInfo info) => $"{Thread.CurrentThread.Name ?? "CLR"}|{THREAD_SEPARER_COLOR},/|{info.DisplayName}";
 
-    private static void InternalLog(LevelInfo levelInfo, object? obj)
+    private static void InternalLog(LevelInfo levelInfo, object? obj) => InternalLog(levelInfo, obj?.ToString() ?? "Null");
+    private static void InternalLog(LevelInfo levelInfo, string obj)
     {
         StringBuilder builder = new();
         builder.Append(FormattedNow());
         
         builder.Append(FormattedThreadInfo(levelInfo));
         builder.Append(": ");
-        builder.Append(obj is null ? "Null" : obj.ToString()!);
+        builder.Append(obj);
         
         _fileLogger.EnqueueLog(Parser.FromBeautified(builder.ToString(), false));
 
@@ -110,7 +111,14 @@ public static class Log
     }
     
     public static void Info(object? obj) => InternalLog(InfoInfo, obj);
+    public static void Info(string msg) => InternalLog(InfoInfo, msg);
+    
     public static void Warning(object? obj) => InternalLog(WarningInfo, obj);
+    public static void Warning(string msg) => InternalLog(InfoInfo, msg);
+    
     public static void Error(object? obj) => InternalLog(ErrorInfo, obj);
+    public static void Error(string msg) => InternalLog(InfoInfo, msg);
+    
     public static void Fatal(object? obj) => InternalLog(FatalInfo, obj);
+    public static void Fatal(string msg) => InternalLog(InfoInfo, msg);
 }

@@ -156,7 +156,7 @@ public class RenderTarget : IDisposable
     {
         if (resolution.X == 0U || resolution.Y == 0U)
         {
-            Log.Error("Unable to resize render target with 0 width or 0 height.");
+            // Log.Error("Unable to resize render target with 0 width or 0 height.");
             return;
         }
 

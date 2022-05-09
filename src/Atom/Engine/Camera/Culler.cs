@@ -21,23 +21,49 @@ public class Culler
     }
 
     public void CullPerspective(
-        f64 fov, Vector2D<f64> screenSize,
-        ReadOnlySpan<Vector3D<f64>> relativeLocations, ReadOnlySpan<f64> extents,
-        Span<i32> culledIndices
+        f64 fov, Vector2D<u32> resolution,
+        ReadOnlySpan<Drawer.MeshBounding> bounds, Span<Drawer.DrawRange> culledIndices, out i32 culledCount
+    ) => CullPerspective(fov, (Vector2D<f64>)resolution, bounds, culledIndices, out culledCount);
+
+    public void CullPerspective(
+        f64 fov, Vector2D<f64> resolution,
+        ReadOnlySpan<Drawer.MeshBounding> bounds, Span<Drawer.DrawRange> culledIndices, out i32 culledCount
     )
     {
         if (!_enabled)
         {
-            for (int i = 0; i < relativeLocations.Length; i++)
+            i32 previous_call_index = -1;
+            i32 current_cull_index  = -1;
+            
+            for (int i = 0; i < bounds.Length; i++)
             {
-                culledIndices[i] = i; // cull everything.
+                // cull everything.
+                ref readonly Drawer.MeshBounding bound = ref bounds[i]; 
+                
+                ref readonly i32 call_index = ref bound.CallIndex;
+                
+                ref Drawer.DrawRange range = ref culledIndices[current_cull_index];
+
+                if (previous_call_index != call_index)
+                {
+                    ++current_cull_index; // increase range index
+                    previous_call_index = call_index; // store current call index
+                    range = ref culledIndices[current_cull_index]; // get the range again
+                    range.Start = 0;
+                    range.CallIndex = call_index;
+                }
+                
+                ++range.Length; // simply add everything.
             }
+
+            culledCount = current_cull_index + 1;
 
             return;
         }
         
+        /*
         f64 half_fov = fov / 2.0D;
-        f64 size = Math.Min(screenSize.X, screenSize.Y);
+        f64 size = Math.Max(resolution.X, resolution.Y);
         
         i32 culled_count = 0;
         for (i32 i = 0; i < relativeLocations.Length; i++)
@@ -47,7 +73,9 @@ public class Culler
                 culledIndices[culled_count] = i;
                 ++culled_count;
             }
-        }
+        }*/
+
+        culledCount = 0;
     }
 
     private bool CullPerspective(in f64 halfFov, in f64 size, in Vector3D<f64> relativeLocation, in f64 extent)
