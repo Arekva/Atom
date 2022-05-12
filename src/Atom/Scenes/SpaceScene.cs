@@ -1,41 +1,26 @@
 ﻿using Atom.Engine;
 using Atom.Engine.Astro;
+using Atom.Engine.Loaders;
 using Atom.Engine.Vulkan;
 using Atom.Game.Config;
-using Silk.NET.Input;
 using Silk.NET.Maths;
+using Image = Atom.Engine.Image;
 
 namespace Atom.Game;
 
-class SystemStructure
+public class SpaceScene : AtomObject, IScene
 {
-    private string SystemName { get; }
-    
-    
-}
-
-class BodyInheritence
-{
-    public string ID { get; set; }
-    
-    public List<BodyInheritence> Inheritence { get; set; }
-}
-
-
-public class SpaceScene : AtomObject, IScene, IDrawer
-{
-    private readonly ClassicSkySphere _sky;
-
     private readonly ClassicPlayerController _controller;
 
     private List<CelestialSystem> _systems;
-
+    
     public SpaceScene()
     {
         _controller = new ClassicPlayerController();
 
+        _controller.Location = new Location(new Vector3D<double>(0.0D, 0.0D, -5.0D));
         
-        Dictionary<string, PlanetConfig> planet_configs = Directory
+        /*Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<PlanetConfig>)
             .ToDictionary(planet => planet.ID);
@@ -44,43 +29,33 @@ public class SpaceScene : AtomObject, IScene, IDrawer
             .GetFiles("assets/Space/", "*.system", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<SystemConfig>),
             planet_configs
-        ).ToList();
+        ).ToList();*/
         
-
-        Draw.AssignDrawer(this, 0);
+        _systems = new List<CelestialSystem>();
+        CelestialSystem system = new (ConfigFile.LoadInto<SystemConfig>("Assets/Space/Systems/Kerbol/Kerbol.system"));
+        new VoxelBody(ConfigFile.LoadInto<PlanetConfig>("Assets/Space/Systems/Kerbol/MinmusTest.planet"), system);
+        _systems.Add(system);
+        
+        MakeReady();
     }
     
-    protected override void Frame()
-    {
-        
-    }
+    protected internal override void Frame() { }
 
-    protected override void Render()
+    protected internal override void Render()
     {
         base.Render();
-        
-        Log.Info(Astrophysics.UniversalTime);
-        
-        if (Keyboard.IsPressed(Key.K))
-        {
-            VoxelBody minmus = (_systems[0].Satellites
-                .First().Satellites
-                .First(s => s.Name == "Kerbin") as VoxelBody)!;
-            
-            Location loc = minmus.CelestialSpace.Location;
 
-            _controller.Location = loc + (Vector3D<f64>.UnitY + Vector3D<f64>.UnitZ) * minmus.Radius * 4.0D;
-        }
+        if (!Graphics.IsRenderReady) return;
+
+        //ViewportWindow.Instance.Viewport.Present(_displayResource);
     }
 
-    protected override void PhysicsFrame() { /* todo */ }
+    protected internal override void PhysicsFrame() { /* todo */ }
 
     public override void Delete()
     {
         base.Delete();
-
-        Draw.UnassignDrawer(this, 0);
-
+        
         foreach (CelestialSystem system in _systems)
         {
             system.Delete();
@@ -92,12 +67,12 @@ public class SpaceScene : AtomObject, IScene, IDrawer
 
     public void CmdDraw(SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex)
     {
-        foreach (CelestialSystem system in _systems)
+        /*foreach (CelestialSystem system in _systems)
         {
             foreach (ICelestialBody body in system.Satellites)
             {
                 body.CmdDraw(cmd, extent, cameraIndex, frameIndex);
             }
-        }
+        }*/
     }
 }

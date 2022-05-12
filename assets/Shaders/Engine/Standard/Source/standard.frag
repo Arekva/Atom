@@ -11,12 +11,17 @@ layout(set = 1, binding = 4) uniform sampler2D _roughness;
 
 
 void main() {
-    vec3 albedo = vec3(texture(_albedo, in_uv));
+    const vec2 offset = vec2(0.0);
+    const vec2 tilling = vec2(1000.0);
+
+    vec2 transformed_uv = ((in_uv + offset) * tilling);
+
+    vec3 albedo = vec3(texture(_albedo, transformed_uv));
 
     vec3 tex_normal = normalize((texture(_normal, in_uv).rgb) * 2.0 - 1.0);
-    vec3 normal = in_tbn * tex_normal;
-    vec3 position = in_position.xyz;
-    vec2 uv = in_uv;
+    vec3 normal     = in_tbn * tex_normal                                 ;
+    vec3 position   = in_position.xyz                                     ;
+    vec2 uv         = in_uv                                               ;
 
     float luminance = 0.0;
     float roughness = texture(_roughness, in_uv).r;

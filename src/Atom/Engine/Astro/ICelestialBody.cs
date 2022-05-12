@@ -1,6 +1,6 @@
 namespace Atom.Engine.Astro;
 
-public interface ICelestialBody : IDrawer
+public interface ICelestialBody : IDisposable
 {
     public bool IsStatic { get; }
     

@@ -18,12 +18,10 @@ public abstract class ReadOnlyMesh : AtomObject
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
         where TIndex : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
     {
-        (GVertex[] vertices, TIndex[] indices) = //WavefrontLoader.ImportFile<TIndex>(path);
-        
-        Wavefront.Load<TIndex>(path);
+        (GVertex[] vertices, TIndex[] indices, f64 bounding_sphere) = Wavefront.Load<TIndex>(path);
 
         using MeshWriter<TIndex> writer = new(
-            vertexCount: (u64)vertices.Length, indexCount: (u64)indices.Length, 
+            vertexCount: (u64)vertices.Length, indexCount: (u64)indices.Length, bounding_sphere,
             device, physicalDevice
         );
         
@@ -79,15 +77,17 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
 
 
     /* API               */
-    public static IndexType IndexType   { get; }
-    public        u32       VertexCount { get; }
-    public        u32       IndexCount  { get; }
+    public static IndexType IndexType      { get; }
+    public        u32       VertexCount    { get; }
+    public        u32       IndexCount     { get; }
+    
+    public        f64       BoundingSphere { get; }
 
 
     /* Constructors      */
     private ReadOnlyMesh(
         bool isMemoryOwned,
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices,
+        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
     {
         _isMemoryOwned = isMemoryOwned;
@@ -97,17 +97,20 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
 
         if (vertices.IsEmpty) throw new ArgumentException("Vertices must be set.", nameof(vertices));
 
-        VertexCount = (u32)vertices.Length;
-        IndexCount =  (u32) indices.Length;
+        VertexCount    = (u32)vertices.Length;
+        IndexCount     = (u32) indices.Length;
+
+        BoundingSphere = boundingSphere;
     }
 
     public unsafe ReadOnlyMesh(
         MeshWriter<TIndex> writer, BufferSubresource? targetResource = null, 
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
     : this (
-        isMemoryOwned: targetResource == null, 
-        vertices: new ReadOnlySpan<GVertex>((void*)writer.Vertices, (i32)writer.VertexCount), 
-        indices : new ReadOnlySpan<TIndex> ((void*)writer.Indices , (i32)writer.IndexCount ))
+        isMemoryOwned : targetResource == null, 
+        vertices      : new ReadOnlySpan<GVertex>((void*)writer.Vertices, (i32)writer.VertexCount), 
+        indices       : new ReadOnlySpan<TIndex> ((void*)writer.Indices , (i32)writer.IndexCount ),
+        boundingSphere: writer.BoundingSphere)
     {
         u64 vertex_data_size = (u64)Unsafe.SizeOf<GVertex>() * writer.VertexCount;
         u64 index_data_size  = (u64)Unsafe.SizeOf<TIndex>()  *  writer.IndexCount;
@@ -212,30 +215,22 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
         VK.API.EndCommandBuffer(cmd);
 
         SlimFence fence = new(device: _device, signaled: false);
-        vk.SubmitInfo submit = new(commandBufferCount: 1U, pCommandBuffers: (vk.CommandBuffer*)&cmd);
 
-        using (MutexLock<vk.Queue> queue = VK.Queue.Lock())
-        {
-            VK.API.QueueSubmit(
-                queue      : queue.Data   ,
-                submitCount: 1U, in submit,
-                fence      : fence.Handle
-            );
-            fence.Wait(_device);
-        }
-        
+        VK.Queue.Submit(cmd, signalFence: fence);
 
-        
+        fence.Wait(_device);
 
         fence.         Destroy(_device);
         pool.          Destroy(_device);
+
+        MakeReady();
     }
 
 
     public ReadOnlyMesh(
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, BufferSubresource targetResource,
+        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere, BufferSubresource targetResource,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
-        : this(isMemoryOwned: true, vertices, indices, device, physicalDevice)
+        : this(isMemoryOwned: true, vertices, indices, boundingSphere, device, physicalDevice)
     {
         _isMemoryOwned = false;
 
@@ -269,12 +264,14 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
             indices       : indices         ,
             targetResource: targetResource
         );
+
+        MakeReady();
     }
 
     public ReadOnlyMesh(
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices,
+        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
-        : this(isMemoryOwned: true, vertices, indices, device, physicalDevice)
+        : this(isMemoryOwned: true, vertices, indices, boundingSphere, device, physicalDevice)
     {
         u64 vertex_data_size = (u64)Unsafe.SizeOf<GVertex>() * (u64)vertices.Length;
         u64 index_data_size  = (u64)Unsafe.SizeOf<TIndex>()  * (u64) indices.Length;
@@ -347,6 +344,8 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
             indices       : indices          ,
             targetResource: whole_subresource
         );
+
+        MakeReady();
     }
 
     private void CreateSubresources(
@@ -452,20 +451,10 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
         }
 
         SlimFence fence = new(device: _device, signaled: false);
-        unsafe
-        {
-            vk.SubmitInfo submit = new(commandBufferCount: 1U, pCommandBuffers: (vk.CommandBuffer*)&cmd);
 
-            using (MutexLock<vk.Queue> queue = VK.Queue.Lock())
-            {
-                VK.API.QueueSubmit(
-                    queue      : queue.Data   ,
-                    submitCount: 1U, in submit,
-                    fence      : fence.Handle
-                );
-            }
-            fence.Wait(_device);
-        }
+        VK.Queue.Submit(cmd, signalFence: fence);
+        
+        fence.Wait(_device);
 
         
 

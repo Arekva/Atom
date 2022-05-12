@@ -73,9 +73,9 @@ public struct SlimCommandPool
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe vk.Result AllocateCommandBuffers(vk.Device device, CommandBufferLevel level, uint count, Span<SlimCommandBuffer> commandBuffers)
+    public unsafe vk.Result AllocateCommandBuffers(vk.Device device, CommandBufferLevel level, Span<SlimCommandBuffer> commandBuffers)
     {
-        CommandBufferAllocateInfo info = new(commandPool: Handle, level: level.ToVk(), commandBufferCount: count);
+        CommandBufferAllocateInfo info = new(commandPool: Handle, level: level.ToVk(), commandBufferCount: (u32)commandBuffers.Length);
         fixed (SlimCommandBuffer* p_command_buffers = commandBuffers)
         {
             return VK.API.AllocateCommandBuffers(device, in info, (vk.CommandBuffer*)p_command_buffers);
@@ -83,7 +83,7 @@ public struct SlimCommandPool
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe vk.Result AllocateCommandBuffers(vk.Device device, CommandBufferLevel level, uint count, out SlimCommandBuffer[] commandBuffers)
+    public unsafe vk.Result AllocateCommandBuffers(vk.Device device, CommandBufferLevel level, u32 count, out SlimCommandBuffer[] commandBuffers)
     {
         CommandBufferAllocateInfo info = new(commandPool: Handle, level: level.ToVk(), commandBufferCount: count);
         commandBuffers = new SlimCommandBuffer[(int)count];

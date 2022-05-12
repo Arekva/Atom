@@ -9,27 +9,23 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="../assets/**/*.*">
+      <Content Include="../../assets/**/*.*">
         <Link>Assets/%(RecursiveDir)%(Filename)%(Extension)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Engine\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Remove="Engine\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="Engine\**" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\SPIRV-Cross\SPIRV-Cross.csproj" />
-      <ProjectReference Include="Engine\Atom.Engine.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Silk.NET.Input" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Maths" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Vulkan" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.15.0" />
+      <PackageReference Include="Silk.NET.Windowing" Version="2.15.0" />
     </ItemGroup>
 
     <!--<ItemGroup>

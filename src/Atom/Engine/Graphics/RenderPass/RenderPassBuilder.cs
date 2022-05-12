@@ -127,8 +127,8 @@ public class RenderPassBuilder
                 dstSubpass: dependency.Destination.Subpass == Subpass.External 
                     ? vk.Vk.SubpassExternal 
                     : subpasses[dependency.Destination.Subpass],
-                srcStageMask: dependency.Source.StageMask,
-                dstStageMask: dependency.Destination.StageMask,
+                srcStageMask: dependency.Source.StageMask.ToVk(),
+                dstStageMask: dependency.Destination.StageMask.ToVk(),
                 
                 srcAccessMask: dependency.Source.AccessMask,
                 dstAccessMask: dependency.Destination.AccessMask,

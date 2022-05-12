@@ -1,0 +1,9 @@
+System {
+    ID = Atom.TestSystem
+    Name = Test System
+    Description = {
+        Test System
+    }
+
+    Location = [0;0;0] <0.0 AU;0.0 AU;0.0 AU>
+}

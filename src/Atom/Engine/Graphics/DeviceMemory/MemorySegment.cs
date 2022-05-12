@@ -1,4 +1,6 @@
-﻿namespace Atom.Engine;
+﻿using System.Runtime.CompilerServices;
+
+namespace Atom.Engine;
 
 public struct MemorySegment
 {
@@ -25,7 +27,9 @@ public struct MemorySegment
         Offset = offset;
         Size = size;
     }
+
     
+    public u64 Length<T>() => Size / (u64)Unsafe.SizeOf<T>();
     
     public MemoryMap<T> Map<T>() where T : unmanaged => Memory.Map<T>(this);
     public MemoryMap<byte> Map() => Memory.Map(this);

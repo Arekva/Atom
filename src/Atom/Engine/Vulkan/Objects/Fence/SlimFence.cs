@@ -83,7 +83,7 @@ public struct SlimFence
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public async Task<Result> WaitAsync(Device device, ulong timeout = UInt64.MaxValue)
+    public async Task<Result> WaitAsync(Device device, u64 timeout = u64.MaxValue)
     {
         Silk.NET.Vulkan.Fence handle = Handle;
         return await Task.Run(()
@@ -91,7 +91,7 @@ public struct SlimFence
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Result Wait(Device device, ulong timeout = UInt64.MaxValue) 
+    public Result Wait(Device device, ulong timeout = u64.MaxValue) 
         => VK.API.WaitForFences(device, 1U, in Handle, true, timeout);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

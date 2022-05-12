@@ -4,9 +4,11 @@ namespace Atom.Engine.Mesh;
 
 public static class Wavefront
 {
-    public static (GVertex[], TIndex[]) Load<TIndex>(string path)
+    public static (GVertex[], TIndex[], f64) Load<TIndex>(string path)
         where TIndex : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
     {
+        f64 bounding_sphere = 0.0D;
+        
         const i32 BASE_CAPACITY = (1 << 19) - 1; // 524 287
 
         List<Vector3D<f32>> v  = new(capacity: BASE_CAPACITY);
@@ -70,6 +72,8 @@ public static class Wavefront
                         Vector2D<f32> uv      = vt[i32.Parse(comp_indices[1]) - 1];
                         Vector3D<f32> normal  = vn[i32.Parse(comp_indices[2]) - 1];
 
+                        bounding_sphere = Math.Max(bounding_sphere, Math.Max(Math.Max(Math.Abs(pos.X), Math.Abs(pos.Y)), Math.Abs(pos.Z)));
+
                         vertices.Add(new GVertex
                         {
                             Position = pos,
@@ -108,6 +112,8 @@ public static class Wavefront
                     indices.Add(vertex_count);
                     indices.Add(Scalar.Add(vertex_count, Scalar<TIndex>.Two));
                     indices.Add(Scalar.Add(vertex_count, Scalar.Add(Scalar<TIndex>.One, Scalar<TIndex>.Two)));
+                    
+                    
                 }
                 
                 // tangents
@@ -146,6 +152,6 @@ public static class Wavefront
                 }
             }
         }
-        return (vertices.ToArray(), indices.ToArray());
+        return (vertices.ToArray(), indices.ToArray(), bounding_sphere);
     }
 }

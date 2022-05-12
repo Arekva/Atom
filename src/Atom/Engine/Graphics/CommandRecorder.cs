@@ -1,18 +1,23 @@
 ﻿using System.Runtime.CompilerServices;
+
 using Atom.Engine.Vulkan;
+using Silk.NET.Maths;
+
 
 namespace Atom.Engine;
+
+
 
 public class CommandRecorder : IDisposable
 {
     public readonly SlimCommandBuffer CommandBuffer;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal unsafe CommandRecorder(SlimCommandBuffer commandBuffer, vk.CommandBufferUsageFlags flags = 0)
+    internal unsafe CommandRecorder(SlimCommandBuffer commandBuffer, CommandBufferUsageFlags flags = 0)
     {
         CommandBuffer = commandBuffer;
         
-        vk.CommandBufferBeginInfo begin_info = new(flags: flags);
+        vk.CommandBufferBeginInfo begin_info = new(flags: flags.ToVk());
         VK.API.BeginCommandBuffer(CommandBuffer.Handle, in begin_info);
     }
 
@@ -27,14 +32,14 @@ public class CommandRecorder : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void PipelineBarrier(
-        vk.PipelineStageFlags sourceStageMask,
-        vk.PipelineStageFlags destinationStageMask,
+        PipelineStageFlags sourceStageMask,
+        PipelineStageFlags destinationStageMask,
         ReadOnlySpan<vk.ImageMemoryBarrier> imageMemoryBarriers)
     {
         fixed (vk.ImageMemoryBarrier* p_image_barriers = imageMemoryBarriers) VK.API.CmdPipelineBarrier(
             commandBuffer            :CommandBuffer                  ,
-            srcStageMask             : sourceStageMask                ,
-            dstStageMask             : destinationStageMask           ,
+            srcStageMask             : sourceStageMask.ToVk()         ,
+            dstStageMask             : destinationStageMask.ToVk()    ,
             dependencyFlags          : 0U                             ,
             memoryBarrierCount       : 0U                             ,
             pMemoryBarriers          : null                           ,
@@ -82,15 +87,16 @@ public class CommandRecorder : IDisposable
 
     public class RenderPassRecorder : IDisposable
     {
-        public readonly SlimCommandBuffer CommandBuffer;
+        public SlimCommandBuffer CommandBuffer => Recorder.CommandBuffer;
+        public readonly CommandRecorder Recorder;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe RenderPassRecorder(
-            SlimCommandBuffer commandBuffer, vk.RenderPass renderPass,
+            CommandRecorder recorder, vk.RenderPass renderPass,
             vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
             vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
         {
-            CommandBuffer = commandBuffer;
+            Recorder = recorder;
             
             fixed (vk.ClearValue* p_clear_values = clearValues)
             {
@@ -101,7 +107,7 @@ public class CommandRecorder : IDisposable
                     clearValueCount: (u32)clearValues.Length,
                     pClearValues   : p_clear_values
                 );
-                VK.API.CmdBeginRenderPass(commandBuffer, in pass_info, subpassContents);
+                VK.API.CmdBeginRenderPass(CommandBuffer, in pass_info, subpassContents);
             }
         }
 
@@ -122,5 +128,121 @@ public class CommandRecorder : IDisposable
     public RenderPassRecorder RenderPass(vk.RenderPass renderPass,
         vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
         vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
-    => new (CommandBuffer, renderPass, renderArea, framebuffer, clearValues, subpassContents);
+    => new (this, renderPass, renderArea, framebuffer, clearValues, subpassContents);
+    
+    public void Blit(ImageSubresource source, ImageSubresource destination, 
+        vk.Filter filter = vk.Filter.Nearest)
+    {
+        /*vk.ImageBlit2 whole_region_base_mip = new(
+            srcSubresource: new vk.ImageSubresourceLayers(
+                aspectMask    : source.Aspects.ToVk(),
+                mipLevel      : source.BaseMip       ,
+                baseArrayLayer: source.BaseArray     ,
+                layerCount    : source.ArrayCount
+            ),
+            dstSubresource: new vk.ImageSubresourceLayers(
+                aspectMask    : destination.Aspects.ToVk(),
+                mipLevel      : destination.BaseMip       ,
+                baseArrayLayer: destination.BaseArray     ,
+                layerCount    : destination.ArrayCount
+            )
+        );
+
+        Vector3D<u32> src_res = source.Image.Resolution;
+        vk.Offset3D src_whole = Unsafe.As<Vector3D<u32>, vk.Offset3D>(ref src_res);
+        whole_region_base_mip.SrcOffsets.Element1 = src_whole;
+        
+        Vector3D<u32> dst_res = destination.Image.Resolution;
+        vk.Offset3D dst_whole = Unsafe.As<Vector3D<u32>, vk.Offset3D>(ref dst_res);
+        whole_region_base_mip.DstOffsets.Element1 = dst_whole;
+        
+        
+        vk.BlitImageInfo2 info = new(
+            srcImage      : (SlimImage)source.Image       ,
+            srcImageLayout: source.Image.Layout           ,
+            dstImage      : (SlimImage)destination.Image  ,
+            dstImageLayout: destination.Image.Layout      ,
+            regionCount   : 1U                            ,
+            pRegions      : &whole_region_base_mip        ,
+            filter        : filter 
+        );
+        
+        VK.API.CmdBlitImage2(CommandBuffer, in info);*/
+
+        vk.ImageBlit whole_region_base_mip = new(
+            srcSubresource: new vk.ImageSubresourceLayers(
+                aspectMask    : source.Aspects.ToVk(),
+                mipLevel      : source.BaseMip       ,
+                baseArrayLayer: source.BaseArray     ,
+                layerCount    : source.ArrayCount
+            ),
+            dstSubresource: new vk.ImageSubresourceLayers(
+                aspectMask    : destination.Aspects.ToVk(),
+                mipLevel      : destination.BaseMip       ,
+                baseArrayLayer: destination.BaseArray     ,
+                layerCount    : destination.ArrayCount
+            )
+        );
+        
+        Vector3D<u32> src_res = source.Image.Resolution;
+        vk.Offset3D src_whole = Unsafe.As<Vector3D<u32>, vk.Offset3D>(ref src_res);
+        whole_region_base_mip.SrcOffsets.Element1 = src_whole;
+        
+        Vector3D<u32> dst_res = destination.Image.Resolution;
+        vk.Offset3D dst_whole = Unsafe.As<Vector3D<u32>, vk.Offset3D>(ref dst_res);
+        whole_region_base_mip.DstOffsets.Element1 = dst_whole;
+        
+        VK.API.CmdBlitImage(CommandBuffer,
+            srcImage      : (SlimImage)source.Image,
+            srcImageLayout: source.Image.Layout,
+            dstImage      : (SlimImage)destination.Image,
+            dstImageLayout: destination.Image.Layout,
+            regionCount   : 1U,
+            pRegions      : whole_region_base_mip,
+            filter        : filter
+        );
+    }
+    
+    public void Blit(Image source, Image destination, 
+        ImageAspectFlags aspect = ImageAspectFlags.Color,
+        vk.Filter filter = vk.Filter.Nearest)
+    {
+        vk.ImageBlit whole_region_base_mip = new(
+            srcSubresource: new vk.ImageSubresourceLayers(
+                aspectMask    : aspect.ToVk()     ,
+                mipLevel      : 0U                ,
+                baseArrayLayer: 0U                ,
+                layerCount    : source.ArrayLayers
+            ),
+            dstSubresource: new vk.ImageSubresourceLayers(
+                aspectMask    : aspect.ToVk()     ,
+                mipLevel      : 0U                ,
+                baseArrayLayer: 0U                ,
+                layerCount    : destination.ArrayLayers
+            )
+        );
+        
+        Vector3D<u32> src_res = source.Resolution;
+        vk.Offset3D src_whole = Unsafe.As<Vector3D<u32>, vk.Offset3D>(ref src_res);
+        whole_region_base_mip.SrcOffsets.Element1 = src_whole;
+        
+        Vector3D<u32> dst_res = destination.Resolution;
+        vk.Offset3D dst_whole = Unsafe.As<Vector3D<u32>, vk.Offset3D>(ref dst_res);
+        whole_region_base_mip.DstOffsets.Element1 = dst_whole;
+        
+        VK.API.CmdBlitImage(CommandBuffer,
+            srcImage      : (SlimImage)source,
+            srcImageLayout: source.Layout,
+            dstImage      : (SlimImage)destination,
+            dstImageLayout: destination.Layout,
+            regionCount   : 1U,
+            pRegions      : whole_region_base_mip,
+            filter        : filter
+        );
+    }
+    
+    public void Draw(u32 vertexCount, u32 instanceCount = 1U, u32 firstVertex = 0U, u32 firstInstance = 0U)
+    {
+        VK.API.CmdDraw(CommandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    }
 }

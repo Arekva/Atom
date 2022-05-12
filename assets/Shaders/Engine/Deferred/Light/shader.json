@@ -1,0 +1,13 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "Light",
+    "Description": "TODO",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+
+    "Stages": 
+    {
+        "Vertex": "Modules/deferred.vert.spv",
+        "Fragment": "Modules/deferred.frag.spv"
+    }
+}

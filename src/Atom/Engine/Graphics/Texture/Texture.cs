@@ -8,23 +8,33 @@ public class Texture : IDisposable
 
     public readonly bool IsImageOwned;
 
-    public readonly bool IsSampledOwned;
+    public readonly bool IsSamplerOwned;
 
     public Texture(ImageSubresource subresource, TextureSampler? sampler = null, vk.Device? device = null)
     {
         Subresource = subresource;
-        Sampler = sampler ?? new TextureSampler();
+        Sampler     = sampler!;
+        if (sampler == null)
+        {
+            Sampler = new TextureSampler(device);
+            IsSamplerOwned = true;
+        }
+        else
+        {
+            IsSamplerOwned = false;
+        }
+
+        IsImageOwned = false;
     }
     
     public Texture(
-        IImage image, bool ownImage = true, 
-        TextureSampler? sampler = null, bool ownSampler = true,
-        vk.Device? device = null)
+        Image image, bool ownImage = true, 
+        TextureSampler? sampler = null, bool ownSampler = true)
     {
         Subresource = image.CreateSubresource();
         Sampler = sampler ?? new TextureSampler();
         IsImageOwned = ownImage;
-        IsSampledOwned = ownSampler;
+        IsSamplerOwned = ownSampler;
     }
 
     public void Delete()
@@ -35,7 +45,7 @@ public class Texture : IDisposable
             Subresource.Image.Dispose();
         }
 
-        if (IsSampledOwned)
+        if (IsSamplerOwned)
         {
             Sampler.          Dispose();
         }

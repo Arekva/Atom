@@ -1,7 +1,7 @@
 ﻿//global using static Atom.Engine.Vulkan;
 
-using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Vulkan;
+using AtomQueue = Atom.Engine.Queue;
 
 namespace Atom.Engine.Vulkan;
 
@@ -25,12 +25,18 @@ public static class VK
     private static GPU _gpu;
     public static GPU GPU => _gpu;
 
-    private static Mutex<vk.Queue> _queue;
-    public static Mutex<vk.Queue> Queue => _queue;
+    private static AtomQueue _queue;
+    public static AtomQueue Queue => _queue;
     
     public static Version ApplicationVersion { get; private set; }
 
+#if DEBUG
+    
+    private static vk.DebugUtilsMessengerEXT _messenger;
 
+#endif
+    
+    
     public static event Action? OnInit;
 
     public static event Action? OnTerminate; 
@@ -49,7 +55,7 @@ public static class VK
 
         Version api_version = new (name: "Vulkan", vk_api_version);
 
-        Version version = new ("Vulkan", Vk.Version12);
+        Version version = new ("Vulkan", vk.Vk.Version12);
         
         Log.Info($"Using Vulkan {version.ToString("{M}.{m}")} (API {api_version.ToString("{M}.{m}.{p}")})");
 
@@ -96,6 +102,34 @@ public static class VK
         LowLevel.Free(instance_info.PpEnabledLayerNames);
 
         AutoSelectGPU();
+        
+        _gpu.PhysicalDevice.SetName(_gpu.Name);
+        _queue.Unsafe.SetName("Main Graphics Queue");
+        _device.SetName("Main Device");
+
+#if DEBUG
+        vk.PfnDebugUtilsMessengerCallbackEXT callback = new(Loggers.Vulkan.VKLog);
+        
+        API.TryGetInstanceExtension(Instance, out ext.ExtDebugUtils ext_debug);
+        vk.DebugUtilsMessengerCreateInfoEXT info = new(
+            messageSeverity:
+            // vk.DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityVerboseBitExt |
+            (DebugUtilsMessageSeverityFlags.Info    |
+             DebugUtilsMessageSeverityFlags.Warning |
+             DebugUtilsMessageSeverityFlags.Error   ).ToVk(),
+            
+            messageType:
+            (DebugUtilsMessageTypeFlags.General     |
+             DebugUtilsMessageTypeFlags.Performance |
+             DebugUtilsMessageTypeFlags.Validation  ).ToVk(),
+            
+            pfnUserCallback: callback
+        );
+
+        vk.DebugUtilsMessengerEXT messenger = default;
+        ext_debug.CreateDebugUtilsMessenger(Instance, &info, null, &messenger);
+        _messenger = messenger;
+#endif
 
         OnInit?.Invoke();
     }
@@ -107,7 +141,11 @@ public static class VK
         OnTerminate?.Invoke();
         
         API.DestroyDevice(_device, null);
+        API.TryGetInstanceExtension(Instance, out ext.ExtDebugUtils ext_debug);
+        ext_debug.DestroyDebugUtilsMessenger(Instance, _messenger, null);
         API.DestroyInstance(_instance, null);
+        
+        // debug utils messenger never gets destroyed... or should it be?
     }
 
     private static unsafe void SanitizeExtensionsAvailability(string[] extensions)
@@ -117,7 +155,7 @@ public static class VK
         uint available_extensions_count = 0;
         API.EnumerateInstanceExtensionProperties((string)null!, ref available_extensions_count, null);
         Span<vk.ExtensionProperties> available_extensions = stackalloc vk.ExtensionProperties[(int)available_extensions_count];
-        API.EnumerateInstanceExtensionProperties((string)null!, &available_extensions_count, available_extensions);
+        vk.VkOverloads.EnumerateInstanceExtensionProperties(API, (string)null!, &available_extensions_count, available_extensions);
 
         for (int extension_index = 0; extension_index < extensions.Length; extension_index++)
         {
@@ -146,8 +184,8 @@ public static class VK
         if (layers.Length == 0) return;
         uint available_layers_count = 0;
         API.EnumerateInstanceLayerProperties(ref available_layers_count, pProperties: null);
-        Span<LayerProperties> available_layers = stackalloc LayerProperties[(int)available_layers_count];
-        API.EnumerateInstanceLayerProperties(&available_layers_count, available_layers);
+        Span<vk.LayerProperties> available_layers = stackalloc vk.LayerProperties[(int)available_layers_count];
+        vk.VkOverloads.EnumerateInstanceLayerProperties(API, &available_layers_count, available_layers);
 
         for (int layer_index = 0; layer_index < layers.Length; layer_index++)
         {
@@ -183,7 +221,7 @@ public static class VK
         uint physical_device_count = 0;
         API.EnumeratePhysicalDevices(_instance, ref physical_device_count, null);
         Span<vk.PhysicalDevice> physical_devices = stackalloc vk.PhysicalDevice[(int)physical_device_count];
-        API.EnumeratePhysicalDevices(_instance, &physical_device_count, physical_devices);
+        vk.VkOverloads.EnumeratePhysicalDevices(API, _instance, &physical_device_count, physical_devices);
 
         GPU best_gpu = null!;
         double best_score = 0;
@@ -206,10 +244,6 @@ public static class VK
         string[] extensions = GetRequiredDeviceExtensions();
         vk.DeviceQueueCreateInfo[] queues = GetRequiredQueues();
 
-        vk.PhysicalDeviceFeatures enabled_features = new PhysicalDeviceFeatures(
-            samplerAnisotropy: true
-        );
-        
         fixed (vk.DeviceQueueCreateInfo* p_queues = queues)
         {
             vk.DeviceCreateInfo info = new (
@@ -218,15 +252,21 @@ public static class VK
                 enabledLayerCount      : (u32)layers.Length             ,
                 ppEnabledLayerNames    : LowLevel.GetPointer(layers)    ,
                 queueCreateInfoCount   : (u32)queues.Length             ,
-                pQueueCreateInfos      : p_queues                       ,
-                pEnabledFeatures       : &enabled_features
+                pQueueCreateInfos      : p_queues                       
             );
+            info.AddNext(out vk.PhysicalDeviceFeatures2 enabled_features);
+            enabled_features.Features = new vk.PhysicalDeviceFeatures(samplerAnisotropy: true);
+            enabled_features.AddNext(out vk.PhysicalDeviceTimelineSemaphoreFeatures timeline_features);
+            timeline_features.TimelineSemaphore = true;
             
-            VK.API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
-            VK.API.GetDeviceQueue(_device, 0, 0, out vk.Queue queue);
-            _queue = queue;
-            
-            
+            API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
+
+            const u32 GRAPHICS_FAMILY_NVIDIA = 0;
+
+            API.GetDeviceQueue(_device, GRAPHICS_FAMILY_NVIDIA, 0, out vk.Queue queue);
+            _queue = new AtomQueue(queue, GRAPHICS_FAMILY_NVIDIA);
+
+
             //Camera.Init(_device, best_gpu, best_gpu.QueueFamilies[0]);
             
             //VK.API.GetDeviceQueue(_device, 1, 0, out Queue transfer_queue);
@@ -246,12 +286,14 @@ public static class VK
 #if DEBUG
         extensions.AddRange(new string []
         {
+            
             // Silk.NET.Vulkan.Extensions.EXT.ExtDebugUtils.ExtensionName,
         });
 #endif
         extensions.AddRange(new string []
         {
-            KhrSwapchain.ExtensionName,
+            khr.KhrTimelineSemaphore.ExtensionName,
+            khr.KhrSwapchain.ExtensionName,
         });
 
         return extensions.Distinct().ToArray();
@@ -295,33 +337,33 @@ public static class VK
     };
     
     
-    public static uint FindMemoryType(this vk.PhysicalDevice physicalDevice, uint typeFilter, MemoryPropertyFlags properties)
+    public static uint FindMemoryType(this vk.PhysicalDevice physicalDevice, u32 typeFilter, MemoryPropertyFlags properties)
     {
         API.GetPhysicalDeviceMemoryProperties(physicalDevice, out vk.PhysicalDeviceMemoryProperties mem_properties);
-        for (int i = 0; i < mem_properties.MemoryTypeCount; i++)
+        for (i32 i = 0; i < mem_properties.MemoryTypeCount; i++)
         {
             if ((typeFilter & (1 << i)) > 0 && mem_properties.MemoryTypes[i].PropertyFlags.HasFlag(properties.ToVk()))
             {
-                return (uint)i;
+                return (u32)i;
             }
         }
 
         throw new Exception("No suitable memory type found.");
     }
 
-    public static vk.Format FirstSupportedFormat(
+    public static ImageFormat FirstSupportedFormat(
         vk.PhysicalDevice physicalDevice,
-        ReadOnlySpan<vk.Format> candidates, 
+        ReadOnlySpan<ImageFormat> candidates, 
         vk.ImageTiling tiling,
         vk.FormatFeatureFlags features)
     {
-        foreach(vk.Format format in candidates)
+        foreach(ImageFormat format in candidates)
         {
-            API.GetPhysicalDeviceFormatProperties(physicalDevice, format, out vk.FormatProperties props);
+            API.GetPhysicalDeviceFormatProperties(physicalDevice, format.ToVk(), out vk.FormatProperties props);
 
             switch (tiling)
             {
-                case vk.ImageTiling.Linear when props.LinearTilingFeatures.HasFlag(features): return format;
+                case vk.ImageTiling.Linear  when props.LinearTilingFeatures .HasFlag(features): return format;
                 case vk.ImageTiling.Optimal when props.OptimalTilingFeatures.HasFlag(features): return format;
             }
         }

@@ -96,9 +96,13 @@ public class GPU
         PhysicalDeviceFeatures2
             .Chain(out PhysicalDeviceFeatures2 features)
             .AddNext(out PhysicalDeviceBufferDeviceAddressFeaturesKHR BufferAddressFeatures)
-            .AddNext(out PhysicalDeviceIndexTypeUint8FeaturesEXT IndexU8Features);
+            .AddNext(out PhysicalDeviceIndexTypeUint8FeaturesEXT IndexU8Features)
+            .AddNext(out PhysicalDeviceTimelineSemaphoreFeatures TimelineFeatures);
         VK.API.GetPhysicalDeviceFeatures2(physicalDevice, &features);
+        
         Features = features.Features;
+
+        
 
         uint queue_families_count = 0;
         VK.API.GetPhysicalDeviceQueueFamilyProperties(_physicalDevice, ref queue_families_count, null);

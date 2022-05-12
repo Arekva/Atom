@@ -1,7 +1,7 @@
 ﻿using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 
-namespace Atom.Engine;
+namespace Atom.Engine.GraphicsPipeline;
 
 public class Viewport : IRasterSettings, IDisposable
 {

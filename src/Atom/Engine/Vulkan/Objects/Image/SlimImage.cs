@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Silk.NET.Vulkan;
 
 namespace Atom.Engine.Vulkan;
 
@@ -9,36 +8,42 @@ public struct SlimImage
     
 #region Creation & Non-API stuff
 
+    public SlimImage()
+    {
+        Handle = new vk.Image(handle: 0UL);
+        Log.Warning("Null SlimImage is being created.");
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe SlimImage(
-        Device device, 
-        ImageType type, Format format, Extent3D extent,
-        uint mipLevels, uint arrayLayers,
-        SampleCountFlags samples,
-        ImageTiling tiling, ImageUsageFlags usage,
-        SharingMode sharingMode, ReadOnlySpan<uint> queueFamilyIndices,
-        ImageLayout initialLayout,
-        ImageCreateFlags flags = 0)
+        vk.Device device, 
+        vk.ImageType type, ImageFormat format, vk.Extent3D extent,
+        u32 mipLevels, u32 arrayLayers,
+        vk.SampleCountFlags samples,
+        vk.ImageTiling tiling, ImageUsageFlags usage,
+        vk.SharingMode sharingMode, ReadOnlySpan<u32> queueFamilyIndices,
+        vk.ImageLayout initialLayout,
+        vk.ImageCreateFlags flags = 0)
     {
-        fixed (uint* p_queues = queueFamilyIndices)
+        fixed (u32* p_queues = queueFamilyIndices)
         {
-            ImageCreateInfo create_info = new(
-                imageType: type,
-                format: format,
-                extent: extent,
-                mipLevels: mipLevels,
-                arrayLayers: arrayLayers,
-                samples: samples,
-                tiling: tiling,
-                usage: usage,
-                sharingMode: sharingMode,
-                queueFamilyIndexCount: (uint) queueFamilyIndices.Length,
-                pQueueFamilyIndices: p_queues,
-                initialLayout: initialLayout,
-                flags: flags
+            vk.ImageCreateInfo create_info = new(
+                imageType            : type                           ,
+                format               : format.ToVk()                  ,
+                extent               : extent                         ,
+                mipLevels            : mipLevels                      ,
+                arrayLayers          : arrayLayers                    ,
+                samples              : samples                        ,
+                tiling               : tiling                         ,
+                usage                : usage.ToVk()                   ,
+                sharingMode          : sharingMode                    ,
+                queueFamilyIndexCount: (u32) queueFamilyIndices.Length,
+                pQueueFamilyIndices  : p_queues                       ,
+                initialLayout        : initialLayout                  ,
+                flags                : flags
             );
 
-            Result result = VK.API.CreateImage(device, in create_info, null, out Handle);
+            vk.Result result = VK.API.CreateImage(device, in create_info, null, out Handle);
         }
     }
     
@@ -62,20 +67,24 @@ public struct SlimImage
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator SlimImage(in Silk.NET.Vulkan.Image image)
         => Unsafe.As<Silk.NET.Vulkan.Image, SlimImage>(ref Unsafe.AsRef(in image));
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator u64(in SlimImage image)
+        => Unsafe.As<SlimImage, u64>(ref Unsafe.AsRef(in image));
 
 #endregion
     
 #region Standard API Proxying 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Destroy(Device device) => VK.API.DestroyImage(device, Handle, ReadOnlySpan<AllocationCallbacks>.Empty);
+    public unsafe void Destroy(vk.Device device) => VK.API.DestroyImage(device, Handle, null);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void GetMemoryRequirements(Device device, out MemoryRequirements requirements) 
+    public void GetMemoryRequirements(vk.Device device, out vk.MemoryRequirements requirements) 
         => VK.API.GetImageMemoryRequirements(device, Handle, out requirements);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void BindMemory(Device device, SlimDeviceMemory memory, ulong memoryOffset)
+    public void BindMemory(vk.Device device, SlimDeviceMemory memory, u64 memoryOffset)
         => VK.API.BindImageMemory(device, Handle, memory, memoryOffset);
 
     #endregion

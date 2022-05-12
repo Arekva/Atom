@@ -7,6 +7,8 @@ namespace Atom.Engine;
 
 public static class Resolutions
 {
+    public static readonly Vector2D<uint> Standard = new(1024, 768);
+    
     // 1:1
     public static readonly Vector2D<uint> Res1K = new(1<<10, 1<<10); // 1:1 2^10 - 1024
     public static readonly Vector2D<uint> Res2K = new(1<<11, 1<<11); // 1:1 2^11 - 2048

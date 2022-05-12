@@ -1,150 +1,344 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Atom.Engine.Pipelines;
+using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
+
+
 
 namespace Atom.Engine;
 
-public class Camera : Thing
+
+
+public partial class Camera : Thing
 {
-    public static Camera Main { get; set; }
-
+    public const u32                MAX_CAMERA_COUNT    = 1024U       ;
+    public const i32                UNINITIALIZED_INDEX = i32.MaxValue;
     
-    private double _manualAspectRatio = 1.0D;
+    private static ConcurrentDictionary<string, Camera> _cameras = new(concurrencyLevel: 6, capacity: (i32)MAX_CAMERA_COUNT);
+    public static IEnumerable<Camera> Cameras => _cameras.Values;
 
-    private CameraData _data;
-
+    private static Camera? _world        ;
+    private static Camera? _userInterface;
     
-    public Space Space { get; }
-
-    public Projection Projection { get; set; } = Projection.Perspective;
-
-    public double NearPlane { get; set; } = 0.01D;
-
-    public double FarPlane { get; set; } = 1000.0D;
-
-    public double Width { get; set; } = 10.0D;
-
-    public double Height { get; set; } = 10.0D;
-    
-    /// <summary> The current field of view of the camera in radians. </summary>
-    [EditorExposed("Field of View", typeof(AngleFormatter), ".0D")]
-    public double FieldOfView { get; set; } = 70.0D * AMath.DegToRad;
-
-    public double AspectRatio
+    public static Camera? World
     {
-        get => AspectRatioMode == Atom.Engine.AspectRatio.Automatic ? Video.AspectRatio : _manualAspectRatio;
-        set => _manualAspectRatio = value;
+        get => _world;
+        set => _world = value;
     }
 
-    public AspectRatio AspectRatioMode { get; set; }
-    
-    
-    public uint Index { get; }
-    
-
-    public Camera()
+    public static Camera? UserInterface
     {
-        Index = 0;
-        
-        if (Main == null!) Main = this;
+        get => _userInterface;
+        set => _userInterface = value;
+    }
 
-        Space = new Space(thing: this);
-        
-        _data = new CameraData(Index);
-        _data.OnFrameUpdate += UpdateFrameData;
-        
-        
-        /*if (_cameraCount >= CameraData.MaxCameraCount)
+
+    
+    private string                 _identifier         ;
+    private u32                    _index              ;
+    private Space                  _space              ;
+    
+    private Resolution             _resolutionMode     ;
+    private Projection             _projectionMode     ;
+    
+    private ScreenResolution       _automaticResolution;
+    private ScreenResolution       _manualResolution   ;
+
+    private PerspectiveProjection  _perspective        ;
+    private OrthographicProjection _orthographic       ;
+    
+    private RenderTarget[]         _targets            ;
+    private IPipeline[]            _renderPipelines    ;
+
+    private SlimCommandPool        _pipelinesPool      ;
+    private SlimCommandBuffer[]    _pipelinesCommands  ;
+
+    private SlimFence[]            _immediateFences    ;
+
+    private ConcurrentDictionary<Guid, Drawer> _drawers;
+
+
+
+    public string Identifier => _identifier;
+
+    public u32    Index      => _index     ;
+    
+    public Space  Space      => _space     ;
+
+    public Projection ProjectionMode
+    {
+        get => _projectionMode;
+        set => _projectionMode = value;
+    }
+
+    public Resolution ResolutionMode
+    {
+        get => _resolutionMode;
+        set
         {
-            ++_cameraCount;
-            
-            _cameras.Add(this);
-        }*/
-    }
+            if (value == _resolutionMode) return;
 
-    public void UpdateFrameData(uint frameIndex)
-    {
-        UpdateMatrices(frameIndex);
-    }
+            _resolutionMode = value;
+            ScreenResolution resolution = Resolution;
 
-    private void ComputeViewMatrix(out Matrix4X4<float> view)
-    {
-        if (Main == null!)
-        {
-            Log.Error("Null main camera !");
-            view = default;
-            return;
+            Perspective.AspectRatio = (f64)resolution.X / resolution.Y;
         }
-        
-        /*Location this_loc = Location;
-        Location main_loc = Main.Location;
+    }
 
-        Location rel_loc = main_loc - this_loc;*/
-        
-        Vector3D<double> position = /*rel_loc*/Location.Position;
-        //position.X *= -1.0D; // Invert X position
-        //position.Y *= -1.0D;
-
-        Vector3D<double> forward = Space.Forward;
-        Vector3D<double> up = Space.Up;
-        
-        Matrix4X4<double> view_double = Matrix4X4.CreateLookAt(
-            cameraPosition: position,
-            cameraTarget:   position + forward,
-            cameraUpVector: up);
-
-        Matrix4X4<double> world_axis = Matrix4X4<double>.Identity with
+    public ScreenResolution Resolution
+    {
+        get => _resolutionMode == Atom.Engine.Resolution.Automatic ? _automaticResolution : _manualResolution;
+        set
         {
-            // M11 = -1.0D,
-            // M22 = -1.0D,
-            // M33 = -1.0D
+            ScreenResolution previous_resolution = _manualResolution;
+            _manualResolution = value;
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (_resolutionMode == Atom.Engine.Resolution.Manual)
+            {
+                if (previous_resolution != value)
+                {
+                    Resize();
+                }
+            }
+            else
+            {
+                Log.Info("A manual resolution is set but the camera resolution mode is set on automatic.");
+            }
+        }
+    }
+
+    public f64 AspectRatio
+    {
+        get => _projectionMode == Projection.Perspective ? _perspective.AspectRatio : _orthographic.AspectRatio;
+        set => SetProjectionsAspectRatio(value);
+    }
+
+    public PerspectiveProjection  Perspective  =>  _perspective;
+
+    public OrthographicProjection Orthographic => _orthographic;
+
+    public ref readonly Matrix4X4<f64> ProjectionMatrix => ref _projectionMode == Projection.Perspective
+        ? ref _perspective .ProjectionMatrix
+        : ref _orthographic.ProjectionMatrix;
+
+    public IEnumerable<Drawer> Drawers => _drawers.Values;
+
+
+    public Camera(
+        string? identifier = null, Space? parent = null,
+        Projection projectionMode = Projection.Perspective,
+        Resolution resolutionMode = Atom.Engine.Resolution.Automatic,
+        Vector2D<u32>? resolution = null) : base(name: identifier ?? "Camera")
+    {
+        BorrowIndex();
+        
+        // if there is a parent, use it, otherwise create a space.
+        _space = parent == null ? new Space(thing: this) : new Space(parent: parent);
+        _identifier = identifier ?? GUID.ToString();
+        
+        _drawers = new ConcurrentDictionary<Guid, Drawer>();
+
+        if (!_cameras.TryAdd(_identifier, this))
+        {
+            // ReSharper disable once VirtualMemberCallInConstructor
+            Delete();
+            throw new Exception("A camera with the same identifier already is existing.");
+        }
+
+        _perspective  = new PerspectiveProjection ();
+        _orthographic = new OrthographicProjection();
+
+        _projectionMode = projectionMode;
+
+        // 1024x1024 is the default camera resolution for manual mode
+        Vector2D<u32> default_manual_resolution = new(1024);
+
+        _resolutionMode   = resolutionMode;
+        _manualResolution = resolutionMode == Atom.Engine.Resolution.Manual
+            ? resolution ?? default_manual_resolution
+            : default_manual_resolution;
+
+        _automaticResolution = Video.Resolution;
+
+
+        Orthographic.AspectRatioDriven = resolutionMode != Atom.Engine.Resolution.Manual;
+        
+        SetProjectionsAspectRatio();
+
+        _targets = new RenderTarget[Graphics.MaxFramesCount];
+        _renderPipelines = new IPipeline[Graphics.MaxFramesCount];
+        _immediateFences = new SlimFence[Graphics.MaxFramesCount];
+
+        vk.Device device = VK.Device;
+        
+        for (int i = 0; i < Graphics.MaxFramesCount; i++)
+        {
+            _targets[i] = new RenderTarget(Resolution, name: $"{Name} #{i}");
+            _renderPipelines[i] = new GamePipeline(device);
+            _immediateFences[i] = new SlimFence(device);
+        }
+
+        _pipelinesPool = new SlimCommandPool(device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
+        _pipelinesPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, Graphics.MaxFramesCount, out _pipelinesCommands);
+
+        
+        
+        // ReSharper disable once VariableHidesOuterVariable
+        Video.OnResolutionChanged += resolution =>
+        {
+            if (_automaticResolution == resolution) return;
+
+            _automaticResolution = resolution;
+
+            if (_resolutionMode == Atom.Engine.Resolution.Manual) return;
+            
+            Resize();
+
+            SetProjectionsAspectRatio();
         };
         
-        // view_double.M33 *= -1.0D; // From -Y up to +Y up
 
-        view = (Matrix4X4<float>) Matrix4X4.Multiply(world_axis, view_double);
-    }
-    
-    private void ComputeProjectionMatrix(out Matrix4X4<float> projection)
-    {
-        if (Projection == Projection.Orthographic)
-        {
-            projection = (Matrix4X4<float>)Matrix4X4.CreateOrthographic(
-                Width,
-                Height,
-                NearPlane,
-                FarPlane
-            );
-        }
-        else
-        {
-            f32 f = (f32) (1.0 / Math.Tan(FieldOfView / 2.0D));
-            f32 r = (f32) (f / AspectRatio);
-            f32 n = (f32) NearPlane;
-            
-            projection = new Matrix4X4<f32>(
-                r, 0, 0, 0,
-                0, f, 0, 0,
-                0, 0, 0,-1,
-                0, 0, n, 0
-            );
-        }
-    }
-
-    public void UpdateMatrices(uint frameIndex)
-    {
-        Span<Matrix4X4<float>> vp = stackalloc Matrix4X4<float>[2];
-        ComputeViewMatrix(out vp[0]);
-        ComputeProjectionMatrix(out vp[1]);
-        
-        _data.Update(vp, frameIndex);
+        MakeReady();
     }
 
     public override void Delete()
     {
-        base.Delete();
+        base.Delete()  ;
 
-        _data.Dispose();
-        if (Main == this) Main = null!;
-        //_cameras.Remove(this);
+        if (World == this) World = null;
+        if (UserInterface == this) UserInterface = null;
+
+        RetrieveIndex();
+        _space.Delete();
+        _cameras.TryRemove(_identifier, out _);
+
+        _pipelinesPool.Destroy(VK.Device);
+
+        for (i32 i = 0; i < _targets.Length; i++)
+        {
+            _targets[i].Delete();
+            _renderPipelines[i].Dispose();
+            _immediateFences[i].Destroy(VK.Device);
+        }
+    }
+    
+    
+    
+    public Matrix4X4<f64> ViewMatrix(Camera? reference = null)
+    {
+        // if no reference, consider this as the origin
+        Location location = Space.Location - reference?.Space.Location ?? Location.Origin;
+
+        Vector3D<f64> position = location.Position;
+
+        Vector3D<f64> forward = Space.Forward;
+        Vector3D<f64> up      = Space.Up     ;
+
+        Matrix4X4<f64> view_double = Matrix4X4.CreateLookAt(
+            cameraPosition: position          ,
+            cameraTarget  : position + forward,
+            cameraUpVector: up
+        );
+
+        return view_double;
+    }
+    
+    public void CopyMatrices(Span<Matrix4X4<f32>> target, Camera? reference = null)
+    {
+        if (target.Length < 2)
+        {
+            throw new ArgumentException("Target span must have at least a count of 2.", nameof(target));
+        }
+        
+        target[0] = (Matrix4X4<f32>)ViewMatrix(reference);
+        target[1] = (Matrix4X4<f32>)ProjectionMatrix     ;
+    }
+    
+    public void CopyMatrices(Span<Matrix4X4<f64>> target, Camera? reference = null)
+    {
+        if (target.Length < 2)
+        {
+            throw new ArgumentException("Target span must have at least a count of 2.", nameof(target));
+        }
+        
+        target[0] = ViewMatrix(reference);
+        target[1] = ProjectionMatrix     ;
+    }
+    
+    public RenderTarget RenderImmediate(u32 frameIndex, Action? wait = null)
+    {
+        ThrowIfDeleted();
+        
+        wait?.Invoke();
+        
+        ScreenResolution resolution = Resolution;
+
+        RenderTarget target = _targets[frameIndex];
+        IPipeline pipeline = _renderPipelines[frameIndex];
+        
+        TransferMatricesToGpu(frameIndex, this);
+        
+        SlimCommandBuffer cmd = _pipelinesCommands[frameIndex];
+        cmd.Reset();
+        
+        target.Resize(resolution); // resize target if required
+        pipeline.Resize(resolution, target);
+        
+        using (CommandRecorder recorder = new(cmd, CommandBufferUsageFlags.OneTimeSubmit))
+        {
+            pipeline.CmdRender(camera: this, frameIndex, recorder, Drawers);
+        }
+
+        vk.Device device = VK.Device;
+        
+        SlimFence fence = _immediateFences[frameIndex];
+        
+        VK.Queue.Submit(cmd, PipelineStageFlags.TopOfPipe, fence);
+
+        fence.Wait(device);
+        fence.Reset(device);
+
+        return target;
+    }
+
+    public RenderTarget RenderImmediate(Action? wait = null) => RenderImmediate(Graphics.FrameIndex, wait);
+
+
+    internal void AddDrawer(Drawer drawer)
+    {
+        ThrowIfDeleted();
+        _drawers.TryAdd(drawer.GUID, drawer);
+    }
+
+    internal void RemoveDrawer(Drawer drawer)
+    {
+        ThrowIfDeleted();
+        _drawers.TryRemove(drawer.GUID, out _);
+    }
+
+    private void Resize()
+    {
+        SetProjectionsAspectRatio();
+    }
+
+    private void SetProjectionsAspectRatio()
+    {
+        ScreenResolution resolution = Resolution;
+        f64 aspect_ratio = (f64)resolution.X / resolution.Y;
+        SetProjectionsAspectRatio(aspect_ratio);
+    }
+
+    private void SetProjectionsAspectRatio(f64 aspectRatio)
+    {
+        if (_resolutionMode == Atom.Engine.Resolution.Manual)
+        {
+            Log.Info("Cannot manually set camera's aspect ratio, it is in automatic mode.");
+            return;
+        }
+
+        Perspective .AspectRatio = aspectRatio;
+        Orthographic.AspectRatio = aspectRatio;
     }
 }

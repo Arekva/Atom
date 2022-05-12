@@ -7,8 +7,8 @@ public class VulkanMemory : IDisposable
 {
     private bool _isMapped;
     
-    private vk.DeviceMemory _handle;
-    public ref vk.DeviceMemory Handle => ref _handle;
+    private SlimDeviceMemory _handle;
+    public ref SlimDeviceMemory Handle => ref _handle;
     
     public Silk.NET.Vulkan.Device Device { get; }
 
@@ -29,14 +29,12 @@ public class VulkanMemory : IDisposable
     {
         Device = device;
         
-        vk.MemoryAllocateInfo mem = new (allocationSize: size, memoryTypeIndex: memoryTypeIndex);
-        VK.API.AllocateMemory(
-            device,
-            pAllocateInfo: in mem, 
-            pAllocator: null, 
-            out _handle
+        _handle = new SlimDeviceMemory(
+            device         : device         ,
+            allocationSize : size           ,
+            memoryTypeIndex: memoryTypeIndex
         );
-        
+
         Size = size;
 
         Whole = new MemorySegment(this, offset: 0UL, size);
@@ -136,13 +134,13 @@ public class VulkanMemory : IDisposable
         VK.API.UnmapMemory(Device, _handle);
     }
 
-    public void Dispose()
+    public void Delete()
     {
         if (IsMapped) // shouldn't happen, because a memory map implicitly means a memory segment object has been
-                      // created, but we never know.
+            // created, but we never know.
         {
             throw new MemoryMapException("Memory is still mapped. Please unmap please unmap your memory before " +
-                                           "disposing ");
+                                         "disposing ");
         }
         
         vk.VkOverloads.FreeMemory(VK.API, Device, _handle, ReadOnlySpan<vk.AllocationCallbacks>.Empty);
@@ -150,10 +148,16 @@ public class VulkanMemory : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    public void Dispose() => Delete();
+
     ~VulkanMemory() => Dispose();
 
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator vk.DeviceMemory(in VulkanMemory memory) => memory._handle;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator u64(in VulkanMemory memory) => 
+        Unsafe.As<SlimDeviceMemory, u64>(ref memory._handle);
 }

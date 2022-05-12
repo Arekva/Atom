@@ -14,8 +14,7 @@ public class Space : AtomObject
     private Vector3D<f64>   _localScale      = Vector3D<f64>.One       ;
     
     
-    // Dictionary<CameraIndex, Matrix4X4<f64>[FrameIndex]>
-    private Dictionary<u32, Matrix4X4<f64>[]> _renderMatrices;
+    //private Dictionary<u32, Matrix4X4<f64>[]> _renderMatrices;
 
     
     public Thing Thing => _thing;
@@ -23,7 +22,7 @@ public class Space : AtomObject
     public Space? Parent => _parent;
     public IEnumerable<Space> Subspaces => _subspaces;
 
-    public ref Matrix4X4<f64> this[u32 cameraIndex, u32 frameIndex]
+    /*public ref Matrix4X4<f64> this[u32 cameraIndex, u32 frameIndex]
     {
         get
         {
@@ -50,7 +49,7 @@ public class Space : AtomObject
                 return ref frames[frameIndex];
             }
         }
-    }
+    }*/
     
     
 
@@ -63,7 +62,9 @@ public class Space : AtomObject
         
         _thing.AddSpace(this);
 
-        _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
+        // _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
+
+        MakeReady();
     }
 
     public Space(Space parent, string? name = "Space") : base(name)
@@ -75,7 +76,9 @@ public class Space : AtomObject
         
         _parent._subspaces.Add(this);
         
-        _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
+        // _renderMatrices = new Dictionary<u32, Matrix4X4<f64>[]>(capacity: 15);
+
+        MakeReady();
     }
 
     public override void Delete()
@@ -86,7 +89,7 @@ public class Space : AtomObject
         _thing.RemoveSpace(this);
         _thing = null!;
 
-        _renderMatrices = null!;
+        // _renderMatrices = null!;
     }
 
 

@@ -5,6 +5,8 @@ namespace Atom.Engine;
 
 public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
 {
+    private const string DEFAULT_NAME = "Unnamed";
+    
     private static ConcurrentDictionary<Guid, AtomObject> _objects = new ();
     public static IEnumerable<AtomObject> Objects => _objects.Values;
     
@@ -27,12 +29,10 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
         }
     }
 
-    public AtomObject(string? name = "Unnamed")
+    public AtomObject(string? name = DEFAULT_NAME)
     {
         GUID = Guid.NewGuid();
-        _name = name;
-        
-        _objects.TryAdd(GUID, this);
+        _name = name ?? DEFAULT_NAME;
     }
 
     protected void ThrowDeleted() => throw new ObjectDeletedException($"Cannot access {new StackFrame(1).GetMethod()!.Name}: object is deleted.");
@@ -48,6 +48,8 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
     public void Dispose() => Delete();
     
     ~AtomObject() => Dispose();
+
+    protected void MakeReady() => _objects.TryAdd(GUID, this);
 
 
     protected internal virtual void Frame() { }

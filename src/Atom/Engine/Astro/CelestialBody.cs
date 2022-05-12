@@ -1,11 +1,15 @@
+using System.Collections.Concurrent;
 using Silk.NET.Maths;
 using Atom.Engine.Vulkan;
 using Atom.Game.Config;
 
 namespace Atom.Engine.Astro;
 
-public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
+public abstract class CelestialBody : AtomObject, ICelestialBody
 {
+    public static ConcurrentDictionary<string, ICelestialBody> CelestialBodies { get; } = new();
+
+
     public string ID { get; }
     public string? Description { get; }
 
@@ -60,8 +64,9 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
         CelestialSpace = new Space(reference.CelestialSpace, $"{config.Name} celestial space");
         
         reference.AddSatellite(this);
-        
-        Draw.AssignDrawer(this, cameraIndex: 0);
+
+
+        //Draw.AssignDrawer(this, cameraIndex: 0);
     }
 
 
@@ -85,14 +90,12 @@ public abstract class CelestialBody : AtomObject, ICelestialBody, IDrawer
         return Satellites.Aggregate(info, (current, satellite) => current + satellite.View(level: level + 1));
     }
 
-    public abstract void CmdDraw(SlimCommandBuffer cmd, Vector2D<u32> extent, u32 cameraIndex, u32 frameIndex);
-
     public override void Delete()
     {
         base.Delete();
         
-        Draw.UnassignDrawer(this, cameraIndex: 0);
+        //Draw.UnassignDrawer(this, cameraIndex: 0);
 
-        VK.API.DeviceWaitIdle(VK.Device); // shit but lazy way to sync, for now.
+        //VK.API.DeviceWaitIdle(VK.Device); // shit but lazy way to sync, for now.
     }
 }

@@ -1,25 +1,25 @@
-using Silk.NET.Vulkan;
+using System.Runtime.CompilerServices;
 
 namespace Atom.Engine.RenderPass;
 
 public class Attachment
 {
-    internal AttachmentDescription Description;
+    internal vk.AttachmentDescription Description;
     
-    public AttachmentDescriptionFlags Flags
+    public vk.AttachmentDescriptionFlags Flags
     {
         get => Description.Flags;
         set => Description.Flags = value;
     }
 
     /// <summary> The color format used to store the pixels </summary>
-    public Format ColorFormat
+    public ImageFormat ColorFormat
     {
-        get => Description.Format;
-        set => Description.Format = value;
+        get => Description.Format.ToAtom();
+        set => Description.Format = value.ToVk();
     }
 
-    public SampleCountFlags Multisampling
+    public vk.SampleCountFlags Multisampling
     {
         get => Description.Samples;
         set => Description.Samples = value;
@@ -56,10 +56,10 @@ public class Attachment
     }
 
     public Attachment(
-        Format format,
+        ImageFormat format,
         AttachmentOperator operators, 
         LayoutTransition layouts,
-        SampleCountFlags multisampling = SampleCountFlags.SampleCount1Bit)
+        vk.SampleCountFlags multisampling = vk.SampleCountFlags.SampleCount1Bit)
     {
         Description = default;
         

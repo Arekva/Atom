@@ -9,6 +9,8 @@ global using u64 = System.UInt64;
 global using i64 = System.Int64;
 global using u128 = Atom.Engine.UInt128;
 //global using i128 = Atom.Engine.Int128;
+global using isize = System.IntPtr;
+global using usize = System.UIntPtr;
 
 // floats
 global using f16 = System.Half;
@@ -19,4 +21,6 @@ global using f64 = System.Double;
 //global using char = System.Char;
 global using str = System.ReadOnlySpan<char>;
 
-global using vk = Silk.NET.Vulkan;
+global using Version = Atom.Engine.Version;
+
+global using ScreenResolution = Silk.NET.Maths.Vector2D<uint>;

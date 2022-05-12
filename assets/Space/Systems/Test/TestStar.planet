@@ -1,0 +1,43 @@
+Planet {
+    ID          = Atom.Test.TestStar
+    Name        = Test Star
+    Mass        = 1.98847E+30 kg
+    Description = {
+        [KSP] 
+        Test Star
+    }
+
+    Generation {
+        Generator = Generators/Star.generator
+
+        Parameters {
+            Radius = 695700 km
+
+            Atmosphere {
+                Composition = {
+                    Hydrogen = 100.0 %
+                }
+
+                Height   = 2700 km
+                Pressure = 16 kPa
+            }
+        }
+    }
+
+    Rotation {
+        Day = 25.05 day
+
+        Inclination {
+            Obliquity      = 67.230 °
+            RightAscension = 286.13 °
+        }
+    }
+
+    Texture {
+        Color  = Assets/Images/uv_test.dds
+    }
+
+    Orbit {
+        Parent = Atom.TestSystem
+    }
+}
