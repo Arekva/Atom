@@ -240,11 +240,11 @@ public unsafe class NDCDrawer : IDisposable
         );
         Dependency dependency = new Dependency(
             source: new DependencyInfo(Subpass.External, 
-                PipelineStageFlags.PipelineStageColorAttachmentOutputBit | 
-                PipelineStageFlags.PipelineStageEarlyFragmentTestsBit, 0),
+                PipelineStageFlags.ColorAttachmentOutput | 
+                PipelineStageFlags.EarlyFragmentTests, 0),
             destination: new DependencyInfo(subpass,
-                PipelineStageFlags.PipelineStageColorAttachmentOutputBit |
-                PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+                PipelineStageFlags.ColorAttachmentOutput |
+                PipelineStageFlags.EarlyFragmentTests,
                 AccessFlags.AccessColorAttachmentWriteBit)
         );
         builder.LinkDependency(dependency);

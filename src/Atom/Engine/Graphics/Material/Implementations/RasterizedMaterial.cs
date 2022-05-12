@@ -51,11 +51,17 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     private readonly bool _hasLightShader;
 
     private readonly Queue<(vk.DescriptorBufferInfo buffer, vk.WriteDescriptorSet write)>[] _writeEdits;
+
+    private vk.Pipeline _basePipeline;
+
+    private readonly vk.RenderPass _renderPass;
+
+    private readonly u32 _subpass;
     
 
-    public RasterizedMaterial(IRasterShader shader, vk.Device? device = null) : this(shader, default, device) { }
+    public RasterizedMaterial(IRasterShader shader, vk.RenderPass? renderPass = null, u32? subpass = null, bool createPipeline = true) : this(shader, default, renderPass, subpass, createPipeline) { }
  
-    private RasterizedMaterial(IRasterShader shader, vk.Pipeline basePipeline, vk.Device? device = null) : base(device)
+    private RasterizedMaterial(IRasterShader shader, vk.Pipeline basePipeline, vk.RenderPass? renderPass = null, u32? subpass = null, bool createPipeline = true)
     {
         Shader = shader ?? throw new ArgumentNullException(nameof(shader));
         _hasLightShader = shader.LightShader != null;
@@ -73,6 +79,8 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         int module_count = 0;
         foreach (IShaderModule module in shader.Modules)
         {
+            if (module.DescriptorSetLayout.Handle.Handle == 0U) continue;
+            
             descriptor_set_layouts[module_count] = module.DescriptorSetLayout;
             descriptor_set_stages[module_count] = module.Stage;
             module_count++;
@@ -105,15 +113,20 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
                 }
             }
         }
+
+        _renderPass   = renderPass ?? Graphics.MainRenderPass;
+        _subpass      = subpass    ?? Graphics.MainSubpass;
+        _basePipeline = basePipeline;
         
-        CreatePipeline(shader.Device, basePipeline);
+        if (createPipeline)
+        {
+            CreatePipeline();
+        }
 
         if (_hasLightShader && CastShadows)
         {
             CreateLightPipeline(shader.LightShader!.Device);
         }
-
-        MakeReady();
     }
 
     public override unsafe void Delete()
@@ -145,6 +158,34 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     }
 
     public RasterizedMaterial Clone() => new (Shader, Pipeline);
+
+    public unsafe void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint frameIndex)
+    {
+        vk.Viewport viewport = new(width: extent.X, height: extent.Y, minDepth: 0.0F, maxDepth: 1.0F);
+        vk.Rect2D scissor = new(extent: new vk.Extent2D(extent.X, extent.Y));
+
+        VK.API.CmdBindPipeline(cmd, vk.PipelineBindPoint.Graphics, Pipeline);
+        VK.API.CmdSetViewport(cmd, 0U, 1U, in viewport);
+        VK.API.CmdSetScissor(cmd, 0U, 1U, in scissor);
+        
+        Span<vk.DescriptorSet> sets = stackalloc vk.DescriptorSet[(i32)_moduleCount];
+
+        int desc_index = 0;
+        foreach (vk.DescriptorSet set in DescriptorSets[frameIndex].Values)
+        {
+            sets[desc_index] = set;
+            ++desc_index;
+        }
+        
+        VK.API.CmdBindDescriptorSets(
+            cmd, 
+            vk.PipelineBindPoint.Graphics, 
+            Shader.PipelineLayout,
+            firstSet: 0U,
+            sets, 
+            dynamicOffsetCount: 0U, 
+            pDynamicOffsets: null);
+    }
     
     public override unsafe void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex)
     {
@@ -301,14 +342,22 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         }
     }
 
-    private unsafe void CreatePipeline(vk.Device device, vk.Pipeline basePipeline)
+    public void CreatePipeline()
+    {
+        CreatePipeline(Shader.Device, _basePipeline, _renderPass, _subpass);
+        _basePipeline = default;
+        
+        MakeReady();
+    }
+
+    private unsafe void CreatePipeline(vk.Device device, vk.Pipeline basePipeline, vk.RenderPass? renderPass = null, u32? subpass = null)
     {
         vk.PipelineShaderStageCreateInfo[] stages = Shader.Modules.Select(module => module.StageInfo).ToArray();
 
 
         List<vk.VertexInputAttributeDescription> attribs_list = new();
         List<vk.VertexInputBindingDescription> bindings_list = new();
-        foreach ((uint _, VertexInput input) in Shader.VertexModule.VertexInputs)
+        foreach (VertexInput input in Shader.VertexModule.VertexInputs.Values)
         {
             bindings_list.Add(input.Binding);
             attribs_list.AddRange(input.Attributes.Values
@@ -335,6 +384,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 
             fixed (vk.PipelineShaderStageCreateInfo* p_stages = stages)
             {
+                vk.PipelineRasterizationStateCreateInfo rasterization_state = Rasterizer.State;
                 vk.GraphicsPipelineCreateInfo info = new(
                     flags:               0,
                     stageCount:          (uint)stages.Length,
@@ -343,14 +393,14 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
                     pInputAssemblyState: (vk.PipelineInputAssemblyStateCreateInfo*)Unsafe.AsPointer(ref Topology.State),
                     pTessellationState:  (vk.PipelineTessellationStateCreateInfo*)Unsafe.AsPointer(ref Tessellation.State),
                     pViewportState:      (vk.PipelineViewportStateCreateInfo*)Unsafe.AsPointer(ref Viewport.State),
-                    pRasterizationState: (vk.PipelineRasterizationStateCreateInfo*)Unsafe.AsPointer(ref Rasterizer.State),
+                    pRasterizationState: (vk.PipelineRasterizationStateCreateInfo*)Unsafe.AsPointer(ref rasterization_state),
                     pMultisampleState:   (vk.PipelineMultisampleStateCreateInfo*)Unsafe.AsPointer(ref Multisampling.State),
                     pDepthStencilState:  (vk.PipelineDepthStencilStateCreateInfo*)Unsafe.AsPointer(ref DepthStencil.State),
                     pColorBlendState:    (vk.PipelineColorBlendStateCreateInfo*)Unsafe.AsPointer(ref ColorBlending.State),
                     pDynamicState:       &dynamic_state,
                     layout:              Shader.PipelineLayout,
-                    renderPass:          Graphics.MainRenderPass,
-                    subpass:             Graphics.MainSubpass,
+                    renderPass:          renderPass ?? Graphics.MainRenderPass,
+                    subpass:             subpass    ?? Graphics.MainSubpass   ,
                     basePipelineHandle:  basePipeline,
                     basePipelineIndex:   0
                 );
@@ -397,32 +447,81 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
     }
 
     public unsafe void WriteImage<TStage>(string name, Texture texture,
-        vk.DescriptorType descriptorType = vk.DescriptorType.CombinedImageSampler) where TStage : IRasterModule
+        vk.DescriptorType descriptorType = vk.DescriptorType.CombinedImageSampler, u32? frameIndex = null) where TStage : IRasterModule
     {
         ShaderStageFlags module_type = ModuleAttribute.InterfaceStageMap[typeof(TStage)];
         
         Descriptor desc = Shader[typeof(TStage)]!.NamedDescriptors[name];
         
         vk.DescriptorImageInfo image_info = new(
-            sampler  : texture.Sampler.Sampler,
-            imageView: texture.Subresource.View,
+            sampler    : texture.Sampler.Sampler       ,
+            imageView  : texture.Subresource.View      ,
             imageLayout: texture.Subresource.Image.Layout
         );
-        
-        for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
+
+        if (frameIndex == null)
+        {
+            for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
+            {
+                vk.WriteDescriptorSet write_descriptor = new(
+                    dstSet         : DescriptorSets[frame_index][module_type],
+                    dstBinding     : desc.Binding,
+                    dstArrayElement: 0,
+                    descriptorCount: 1,
+                    descriptorType : descriptorType,
+                    pImageInfo     : &image_info
+                );
+            
+                vk.VkOverloads.UpdateDescriptorSets(VK.API, Device, 
+                    1U, &write_descriptor, 
+                    0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
+            }
+        }
+        else
         {
             vk.WriteDescriptorSet write_descriptor = new(
-                dstSet         : DescriptorSets[frame_index][module_type],
-                dstBinding     : desc.Binding,
-                dstArrayElement: 0,
-                descriptorCount: 1,
-                descriptorType : descriptorType,
-                pImageInfo     : &image_info
-            );
-            
-            vk.VkOverloads.UpdateDescriptorSets(VK.API, Device, 
-                1U, &write_descriptor, 
-                0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
+                 dstSet         : DescriptorSets[frameIndex.Value][module_type],
+                 dstBinding     : desc.Binding,
+                 dstArrayElement: 0,
+                 descriptorCount: 1,
+                 descriptorType : descriptorType,
+                 pImageInfo     : &image_info
+             );
+           
+             vk.VkOverloads.UpdateDescriptorSets(VK.API, Device, 
+                 1U, &write_descriptor, 
+                 0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
         }
+    }
+
+    public unsafe void WriteInput(string name, ImageSubresource image, u32 frameIndex, vk.ImageLayout layout)
+    {
+        if (Shader[typeof(IFragmentModule)] == null)
+        {
+            throw new Exception(
+                "Material's shader does not contain any fragment module. Shader inputs can only be used on fragment modules.");
+        }
+        
+        Descriptor desc = Shader[typeof(IFragmentModule)]!.NamedDescriptors[name];
+
+        vk.DescriptorImageInfo image_info = new(
+            imageView  : image.View       ,
+            sampler    : null               , // Inputs don't have samplers
+            imageLayout: layout
+        );
+        
+        vk.WriteDescriptorSet write_descriptor = new(
+            dstSet         : DescriptorSets[frameIndex][ShaderStageFlags.Fragment],
+            dstBinding     : desc.Binding,
+            dstArrayElement: 0,
+            descriptorCount: 1,
+            descriptorType : vk.DescriptorType.InputAttachment,
+            
+            pImageInfo: &image_info
+        );
+        
+        vk.VkOverloads.UpdateDescriptorSets(VK.API, Device, 
+            1U, write_descriptor.AsSpan(), 
+            0U, ReadOnlySpan<vk.CopyDescriptorSet>.Empty);
     }
 }

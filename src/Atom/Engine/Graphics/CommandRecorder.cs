@@ -240,4 +240,9 @@ public class CommandRecorder : IDisposable
             filter        : filter
         );
     }
+    
+    public void Draw(u32 vertexCount, u32 instanceCount = 1U, u32 firstVertex = 0U, u32 firstInstance = 0U)
+    {
+        VK.API.CmdDraw(CommandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    }
 }

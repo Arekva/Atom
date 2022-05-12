@@ -55,7 +55,7 @@ public class Viewport : IDisposable
     private vk.Device                _device        ;
     private vk.PhysicalDevice        _physicalDevice;
     private Ownership<vk.SurfaceKHR> _surface       ;
-    private SlimQueue                _queue         ;
+    private Queue                    _queue         ;
     private SlimCommandPool          _commandPool   ;
     private SlimCommandBuffer[]      _commands      ;
     // synchronisation
@@ -97,7 +97,7 @@ public class Viewport : IDisposable
 
     public Viewport(
         Ownership<vk.SurfaceKHR> surface,
-        SlimQueue queue,
+        Queue queue,
         vk.Device? device = null,
         vk.PhysicalDevice? physicalDevice = null)
     {
@@ -154,9 +154,9 @@ public class Viewport : IDisposable
         AssignSupportedUsages();
 
         _colorFormat = //ImageFormat.A2B10G10R10_UNorm_Pack32;
-                       ImageFormat.B8G8R8A8_UNorm      ;
+                         ImageFormat.B8G8R8A8_UNorm      ;
         _colorSpace  = //ColorSpace.HDR10_ST2084             ;
-                       ColorSpace.sRGB_NonLinear       ;
+                         ColorSpace.sRGB_NonLinear       ;
 
         if (IsVSyncSupported(out _presentMode))
         {
@@ -166,9 +166,9 @@ public class Viewport : IDisposable
         {
             _presentMode = _availablePresentModes!.First();
         }
-        
-        _resolution  = new Vector2D<u32>(x:1024, y:768)    ;
-        _clipped     = false                               ;
+
+        _resolution  = Resolutions.Standard;
+        _clipped     = false               ;
         
         LogSurfaceInfos   ();
 

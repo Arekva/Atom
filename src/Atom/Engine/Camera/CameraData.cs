@@ -27,6 +27,8 @@ public partial class Camera
                   
     private static SlimBuffer                     _matricesBuffer;
 
+    private static BufferSubresource              _matricesSubresource;
+
     private static MemoryMap<ViewProjection<f32>> _matricesCpuMap;
 
     private static ConcurrentBag<u32>             _availableIndices;
@@ -40,11 +42,14 @@ public partial class Camera
         }
     }
     
+    
     //private static CommandPool _renderPools
     
     
     
     private static vk.Device MatricesDevice => _matricesMemory.Device;
+
+    public static BufferSubresource ShaderData => _matricesSubresource;
 
 
 
@@ -75,6 +80,8 @@ public partial class Camera
         );
 
         _matricesBuffer.BindMemory(_matricesMemory.Whole);
+
+        _matricesSubresource = new BufferSubresource(_matricesBuffer, _matricesMemory.Whole);
 
         _matricesCpuMap = _matricesMemory.Map<ViewProjection<f32>>();
 

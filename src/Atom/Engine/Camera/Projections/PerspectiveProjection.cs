@@ -132,12 +132,22 @@ public class PerspectiveProjection : IProjection
         f64 r = f / _aspectRatio;
         f64 n = _near;
         
-        _projection = new Matrix4X4<f64>(
+        Matrix4X4<f64> infinite_depth = new(
             r, 0, 0, 0,
             0, f, 0, 0,
             0, 0, 0,-1, // infinite far clip
             0, 0, n, 0  // only near clip matters
         );
+
+        // invert X and Y axis
+        Matrix4X4<f64> coordinate_fix = new(
+            -1, 0, 0, 0,
+            0 ,-1, 0, 0,
+            0 , 0, 1, 0,
+            0 , 0, 0, 1
+        );
+
+        _projection = Matrix4X4.Multiply(infinite_depth, coordinate_fix);
         
         OnProjectionMatrixChange?.Invoke(in _projection);
 

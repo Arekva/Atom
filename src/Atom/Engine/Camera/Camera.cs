@@ -164,8 +164,8 @@ public partial class Camera : Thing
 
 
         Orthographic.AspectRatioDriven = resolutionMode != Atom.Engine.Resolution.Manual;
-
-        SetProjectionsAspectRatio(AspectRatio);
+        
+        SetProjectionsAspectRatio();
 
         _targets = new RenderTarget[Graphics.MaxFramesCount];
         _renderPipelines = new IPipeline[Graphics.MaxFramesCount];
@@ -278,6 +278,8 @@ public partial class Camera : Thing
         RenderTarget target = _targets[frameIndex];
         IPipeline pipeline = _renderPipelines[frameIndex];
         
+        TransferMatricesToGpu(frameIndex, this);
+        
         SlimCommandBuffer cmd = _pipelinesCommands[frameIndex];
         cmd.Reset();
         
@@ -290,14 +292,10 @@ public partial class Camera : Thing
         }
 
         vk.Device device = VK.Device;
-
-        using MutexLock<vk.Queue> vk_queue = VK.Queue.Lock();
         
-        SlimQueue queue = vk_queue.Data;
-
         SlimFence fence = _immediateFences[frameIndex];
         
-        queue.Submit(cmd, PipelineStageFlags.TopOfPipe, fence);
+        VK.Queue.Submit(cmd, PipelineStageFlags.TopOfPipe, fence);
 
         fence.Wait(device);
         fence.Reset(device);

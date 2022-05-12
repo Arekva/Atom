@@ -164,7 +164,7 @@ internal static class DeferredRenderPass
             source     : external_info, 
             destination: g_buffer_info
         );
-        Dependency litDependency = new(
+        Dependency lit_dependency = new(
             source     : g_buffer_info, 
             destination: lit_info
         );
@@ -179,7 +179,7 @@ internal static class DeferredRenderPass
             dependencies: new []
             {
                 g_buffer_dependency,
-                litDependency
+                lit_dependency
             }
         );
 

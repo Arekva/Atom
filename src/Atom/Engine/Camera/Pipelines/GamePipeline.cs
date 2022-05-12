@@ -1,8 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
-using Silk.NET.Vulkan;
-using MemoryPropertyFlags = Atom.Engine.Vulkan.MemoryPropertyFlags;
 
 namespace Atom.Engine.Pipelines;
 
@@ -18,6 +16,8 @@ public class GamePipeline : IPipeline
 
     private ImageFormat _colorFormat;
     private ImageFormat _depthFormat;
+
+    private FullScreen? _gBufferLit;
     
 
     public ImageSubresource GBufferAlbedoLuminance          => _workSubresources[0];
@@ -31,6 +31,8 @@ public class GamePipeline : IPipeline
     private vk.RenderPass _renderPass;
 
     private Culler _culler;
+    
+    
 
     private static Pin<vk.ClearValue> _clearValues = new vk.ClearValue[]
     {
@@ -94,6 +96,8 @@ public class GamePipeline : IPipeline
             _depthFormat = target_depth_format;
             _colorFormat = target_color_format;
             
+            _gBufferLit?.Delete();
+            
             unsafe
             {
                 VK.API.DestroyRenderPass(_device, _renderPass, null);
@@ -103,7 +107,14 @@ public class GamePipeline : IPipeline
             _renderPass.SetName("G-Buffer RenderPass (GamePipeline)");
             
             Graphics.MainRenderPass = _renderPass;
+            
+            _gBufferLit = new FullScreen("Engine.Deferred", "Light", _renderPass, 1);
         }
+        
+        _gBufferLit!.SetInputImage("gAlbedo"  , _workSubresources[0]); // albedo   + luminance
+        _gBufferLit!.SetInputImage("gNormal"  , _workSubresources[1]); // normal   + roughness    + metalness 🤘
+        _gBufferLit!.SetInputImage("gPosition", _workSubresources[2]); // position + translucency
+        _gBufferLit!.SetInputImage("gDepth"   , target.Depth        ); // depth (+inf..0) 
 
         _framebuffer = new SlimFramebuffer(_device, _renderPass, views, resolution.X, resolution.Y, 1U);
 
@@ -158,6 +169,8 @@ public class GamePipeline : IPipeline
             // todo: light calculation
             // use planet lights + star lights for shadowed directional light
             // ambient light is got from reflection cubemap
+            
+            _gBufferLit.CmdDraw(recorder, _resolution, frameIndex);
         }
         
         
@@ -169,6 +182,7 @@ public class GamePipeline : IPipeline
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Delete()
     {
+        _gBufferLit?.Delete();
         unsafe
         {
             VK.API.DestroyRenderPass(_device, _renderPass, null);

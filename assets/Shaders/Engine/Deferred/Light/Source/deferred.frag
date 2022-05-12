@@ -9,8 +9,8 @@ layout (input_attachment_index = 1, set = 0, binding = 1) uniform subpassInput g
 layout (input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput gPosition;
 layout (input_attachment_index = 3, set = 0, binding = 3) uniform subpassInput gDepth;
 
-layout(location = 0) in vec2 inUv;
-layout(location = 0) out vec4 outColor;
+layout(location = 0) in vec2 in_uv;
+layout(location = 0) out vec4 out_color;
 
 vec3 map(vec3 value, float oldLow, float oldHigh, float newLow, float newHigh) {
     return newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
@@ -18,10 +18,10 @@ vec3 map(vec3 value, float oldLow, float oldHigh, float newLow, float newHigh) {
 
 void main()
 {
-    vec4 gAlbedo = subpassLoad(gAlbedo);
-    vec4 gNormal = subpassLoad(gNormal);
+    vec4 gAlbedo   = subpassLoad(gAlbedo);
+    vec4 gNormal   = subpassLoad(gNormal);
     vec4 gPosition = subpassLoad(gPosition);
-    vec4 gDepth = subpassLoad(gDepth);
+    vec4 gDepth    = subpassLoad(gDepth);
 
     // gAlbedo: RGB(Albedo)A(Luminance)
     vec3 albedo = gAlbedo.rgb;
@@ -54,5 +54,5 @@ void main()
 
     const vec3 EXPOSURE = vec3(0.00005);
 
-    outColor = vec4(tonemapping_reinhard_exposure(raw_color, EXPOSURE), 1.0);
+    out_color = vec4(tonemapping_reinhard_exposure(raw_color, EXPOSURE), 2.0);
 }

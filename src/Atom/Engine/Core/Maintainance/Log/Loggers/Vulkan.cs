@@ -25,6 +25,7 @@ public class Vulkan
     {
         "Unloading layer",
         "Loading layer",
+        "loader_add_implicit_layer"
     };
 
     public static unsafe u32 VKLog(vk.DebugUtilsMessageSeverityFlagsEXT vkSeverity, 
@@ -65,6 +66,16 @@ public class Vulkan
         builder.Append("] ");
 
         const i32 MAX_STACK_FRAME = 7;
+        
+        if (new StackFrame(needFileInfo: true, skipFrames: MAX_STACK_FRAME + 1).GetFileName() != null)
+        {   
+            builder.Append('|');
+            builder.Append(Richtext.ColorCode.FAINT);
+            builder.Append(',');
+            builder.Append("(stackframe not full) / ");
+            builder.Append('|');
+        }
+        
         for (i32 i = MAX_STACK_FRAME; i > 1; --i)
         {
             StackFrame stack_frame = new (needFileInfo: true, skipFrames: i);
@@ -89,20 +100,9 @@ public class Vulkan
             }
         }
 
-        if (new StackFrame(needFileInfo: true, skipFrames: MAX_STACK_FRAME + 1).GetFileName() != null)
-        {   
-            builder.Append('|');
-            builder.Append(Richtext.ColorCode.FAINT);
-            builder.Append(',');
-            builder.Append("/(stackframe not full)");
-            builder.Append('|');
-        }
-
-        builder.Append("\n*Message*   : ");
-        builder.Append('`');
+        builder.Append("\n*Message*   : `");
         builder.Append(message);
-        builder.Append('`');
-        builder.Append('\n');
+        builder.Append("`\n");
         if (link != null)
         {
             builder.Append("\n*Spec. Link*: |");

@@ -91,6 +91,8 @@ public class RasterShader : Shader, IRasterShader
         foreach (IShaderModule shader_module in Modules)
         {
             IRasterModule raster_module = (IRasterModule) shader_module;
+
+            if (raster_module.BindingCount == 0U) continue;
             
             descriptor_set_layouts[module_count] = raster_module.DescriptorSetLayout;
             
@@ -124,13 +126,13 @@ public class RasterShader : Shader, IRasterShader
 
         List<vk.DescriptorPoolSize> descriptor_sizes = new (capacity: 16);
 
-        foreach ((vk.DescriptorType type, uint count) in descriptors_counts)
+        foreach ((vk.DescriptorType type, u32 count) in descriptors_counts)
         {
             descriptor_sizes.Add(new vk.DescriptorPoolSize(type, count));
         }
 
         vk.PushConstantRange[] push_constants = push_constants_list.ToArray();
-        
+
         PipelineLayout = new SlimPipelineLayout(
             device: Device, 
             setLayouts: descriptor_set_layouts[..module_count], 

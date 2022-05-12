@@ -2,10 +2,9 @@
 using Atom.Engine.Shader;
 using Atom.Game.Config;
 using Silk.NET.Maths;
-using Atom.Engine.Loaders;
 using Atom.Engine.Vulkan;
 using Atom.Game;
-using Silk.NET.Input;
+
 using dds = Atom.Engine.Loaders.DDS;
 
 namespace Atom.Engine.Astro;
@@ -83,8 +82,7 @@ public class VoxelBody : CelestialBody
         
         _shader = Shader.Shader.Load<IRasterShader>("Engine", "Standard"); 
         _material = new RasterizedMaterial(_shader);
-
-
+        
         Span<Matrix4X4<f32>> transforms = stackalloc Matrix4X4<f32>[3];
         for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
         {
@@ -165,6 +163,8 @@ public class VoxelBody : CelestialBody
         //_sphereHeight   = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Height ?? BLACK)));
         _material.WriteImage<IVertexModule>(name: "_height", texture: _black);
         
+        _material.WriteBuffer<IVertexModule>(name: "_cameraMatrices", subresource: Camera.ShaderData);
+        
         _bound = new Drawer.MeshBounding
         {
             CallIndex = 0,
@@ -211,18 +211,20 @@ public class VoxelBody : CelestialBody
     {
         base.Render();
         
-        if (_transformsMemory == null) return;
+        if (ClassicPlayerController.Singleton == null!) return;
         
-        ref Matrix4X4<f64> render_matrix = ref RotatedSpace[0, Graphics.FrameIndex];
-        render_matrix = RotatedSpace.RelativeMatrix(ClassicPlayerController.Singleton.Location);
+        //ref Matrix4X4<f64> render_matrix = ref CelestialSpace[Camera.World!.Index, Graphics.FrameIndex];
+        Matrix4X4<f64> render_matrix = CelestialSpace.RelativeMatrix(Camera.World!.Location);
 
         using (MemoryMap<Matrix4X4<f32>> map = _transformsMemory.Map<Matrix4X4<f32>>())
         {
             Span<Matrix4X4<f32>> frame_data = map.AsSpan(Graphics.FrameIndex, 1);
             frame_data[0] = (Matrix4X4<f32>)render_matrix;
         }
+        
+        Vector3D<f64> rel_pos = (this.CelestialSpace.Location - Camera.World!.Location).Position;
 
-        _bound.Position = (this.RotatedSpace.Location - Camera.World!.Location).Position;
+        _bound.Position = rel_pos;
     }
 
     private void CmdDraw(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
@@ -232,7 +234,7 @@ public class VoxelBody : CelestialBody
         //)
     {
         if (_material == null!) return;
-
+        
         _material.CmdBindMaterial(renderPass.CommandBuffer, resolution, camera.Index, frameIndex);
         _mesh.CmdBindBuffers(renderPass.CommandBuffer);
         VK.API.CmdDrawIndexed(renderPass.CommandBuffer, _mesh.IndexCount, 1, 0, 0, 0);
@@ -256,6 +258,12 @@ public class VoxelBody : CelestialBody
         _white.Dispose();
         _black.Dispose();
         _purple.Dispose();
+        
+        _settingsBuffer.Destroy(VK.Device);
+        _settingsMemory.Delete();
+        
+        _transformsBuffer.Destroy(VK.Device);
+        _transformsMemory.Delete();
 
         /*_sphereAlbedo.Dispose();
         _sphereMetallic.Dispose();

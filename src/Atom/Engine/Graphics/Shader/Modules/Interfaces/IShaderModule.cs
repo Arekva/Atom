@@ -18,6 +18,8 @@ public interface IShaderModule : IDisposable
     /// This is basically: "for x binding, how many resource of y type is there?" 
     public SlimDescriptorSetLayout DescriptorSetLayout { get; }
     
+    public u32 BindingCount { get; }
+    
 #endregion
 
 #region Stage Information

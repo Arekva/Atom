@@ -13,16 +13,16 @@ public class ClassicPlayerController : Thing
 {
     private Camera _camera;
 
-    private Vector3D<f64> _angles = Vector3D<f64>.Zero;
+    private Vector3D<f64> _angles = new (0.0D, 0.0D, 0.0D);
     private const f64 MAX_X_ROT = 89.9D;
 
     private f64 _eyesHeight = 0.0D;//1.75D;
 
     private f64 _mouseSpeed = 45.0D;
     
-    private f64 _moveSpeed  = 1.42D * (double)(1000000.0D);
-    private f64 _runSpeed   = 3.61D * (double)(3000000.0D);
-    private f64 _slowSpeed  = 0.2D  * (double)(1000000.0D);
+    private f64 _moveSpeed  = 1.42D * 10.0D;
+    private f64 _runSpeed   = 3.61D * 10.0D;
+    private f64 _slowSpeed  = 0.2D  * 10.0D;
 
     public static ClassicPlayerController Singleton { get; private set; }
 
@@ -37,7 +37,6 @@ public class ClassicPlayerController : Thing
         Singleton = this;
 
         _camera = new Camera(identifier: "default_world_viewport");
-        _camera.Location = Location.Origin;
         _camera.Perspective.Near = 0.01D;
 
         Camera.World = _camera;
@@ -83,7 +82,7 @@ public class ClassicPlayerController : Thing
         
         Location += dir * delta_time * speed;
 
-
+        _camera.Location = Location + Vector3D<f64>.UnitY * _eyesHeight;
 
 
         if (Keyboard.IsPressing(Key.O)) Astrophysics.TimeWarp *= 10.0D;

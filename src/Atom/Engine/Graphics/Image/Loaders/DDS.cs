@@ -378,20 +378,12 @@ public static class DDS
             );
 
         }
-
-        vk.CommandBuffer* p_cmd = (vk.CommandBuffer*)&cmd;
-
-        vk.SubmitInfo submission = new(
-            commandBufferCount: 1U,
-            pCommandBuffers   : p_cmd
-        );
-
+        
         SlimFence upload_fence = new(used_device);
-        using (MutexLock<vk.Queue> queue = VK.Queue.Lock())
-        {
-            VK.API.QueueSubmit(queue.Data, 1U, in submission, upload_fence);
-            upload_fence.Wait(used_device);
-        }
+        
+        VK.Queue.Submit(cmd, signalFence: upload_fence);
+        
+        upload_fence.Wait(used_device);
 
         // cleanup
         upload_fence.Destroy(used_device);

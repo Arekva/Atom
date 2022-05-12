@@ -13,8 +13,8 @@ public abstract class ShaderModule : IShaderModule
     public vk.Device Device { get; }
     
     public SlimDescriptorSetLayout DescriptorSetLayout { get; private set; }
-    
-#endregion
+
+    #endregion
 
 #region Stage Information
 
@@ -27,6 +27,8 @@ public abstract class ShaderModule : IShaderModule
 #endregion
 
 #region Descriptors
+
+    public u32 BindingCount { get; private set; }
 
     public Dictionary<ResourceType, Descriptor[]> Descriptors { get; private set; }
     
@@ -72,6 +74,7 @@ public abstract class ShaderModule : IShaderModule
     private static readonly ResourceType[] _validDescriptorBindingResources =
     {
         ResourceType.UniformBuffer, ResourceType.SampledImage, ResourceType.StorageImage, ResourceType.StorageBuffer,
+        ResourceType.SubpassInput
     };
 
     protected virtual void Reflect(Program program)
@@ -127,7 +130,7 @@ public abstract class ShaderModule : IShaderModule
         {
             ref readonly ResourceType resource_type = ref _validDescriptorBindingResources[i];
             Descriptor[] descriptors = Descriptors[resource_type];
-
+            
             for (int j = 0; j < descriptors.Length; j++, index++)
             {
                 ref readonly Descriptor descriptor = ref descriptors[j];
@@ -135,20 +138,27 @@ public abstract class ShaderModule : IShaderModule
                 unsafe
                 {
                     bindings[index] = new vk.DescriptorSetLayoutBinding(
-                        binding: descriptor.Binding,
-                        descriptorType: SpirvToVkDescMap[resource_type],
+                        binding        : descriptor.Binding,
+                        descriptorType : SpirvToVkDescMap[resource_type],
                         descriptorCount: descriptor.Array.IsArray ? descriptor.Array.DimensionsLengths[0] : 1U,
-                        stageFlags: (vk.ShaderStageFlags)Stage
+                        stageFlags     : (vk.ShaderStageFlags)Stage
                     );
                 }
             }
         }
+
+        BindingCount = (u32)desc_count;
+
+        if (desc_count != 0)
+        {
+            DescriptorSetLayout = new SlimDescriptorSetLayout(
+                device: Device,
+                bindings: bindings, 
+                flags: 0
+            );
+        }
         
-        DescriptorSetLayout = new SlimDescriptorSetLayout(
-            device: Device,
-            bindings: bindings, 
-            flags: 0
-         );
+        
 
         Descriptor[] push_constants = Descriptors[ResourceType.PushConstant];
         PushConstants = new Dictionary<string, vk.PushConstantRange>(capacity: push_constants.Length);
@@ -184,9 +194,10 @@ public abstract class ShaderModule : IShaderModule
     
     internal static Dictionary<ResourceType, vk.DescriptorType> SpirvToVkDescMap = new ()
     {
-        { ResourceType.UniformBuffer, vk.DescriptorType.UniformBuffer },
-        { ResourceType.SampledImage , vk.DescriptorType.CombinedImageSampler  },
-        { ResourceType.StorageImage , vk.DescriptorType.StorageImage  },
-        { ResourceType.StorageBuffer, vk.DescriptorType.StorageBuffer },
+        { ResourceType.UniformBuffer, vk.DescriptorType.UniformBuffer           },
+        { ResourceType.SampledImage , vk.DescriptorType.CombinedImageSampler    },
+        { ResourceType.StorageImage , vk.DescriptorType.StorageImage            },
+        { ResourceType.StorageBuffer, vk.DescriptorType.StorageBuffer           },
+        { ResourceType.SubpassInput , vk.DescriptorType.InputAttachment         }
     };
 }

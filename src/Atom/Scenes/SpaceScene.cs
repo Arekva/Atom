@@ -18,7 +18,7 @@ public class SpaceScene : AtomObject, IScene
     {
         _controller = new ClassicPlayerController();
 
-        _controller.Location = new Location(new Vector3D<double>(0.0D, 100.000D, 0.0D));
+        _controller.Location = new Location(new Vector3D<double>(0.0D, 0.0D, -5.0D));
         
         /*Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
@@ -33,7 +33,7 @@ public class SpaceScene : AtomObject, IScene
         
         _systems = new List<CelestialSystem>();
         CelestialSystem system = new (ConfigFile.LoadInto<SystemConfig>("Assets/Space/Systems/Kerbol/Kerbol.system"));
-        system.AddSatellite(new VoxelBody(ConfigFile.LoadInto<PlanetConfig>("Assets/Space/Systems/Kerbol/Minmus.planet"), system));
+        new VoxelBody(ConfigFile.LoadInto<PlanetConfig>("Assets/Space/Systems/Kerbol/MinmusTest.planet"), system);
         _systems.Add(system);
         
         MakeReady();
@@ -56,10 +56,10 @@ public class SpaceScene : AtomObject, IScene
     {
         base.Delete();
         
-        /*foreach (CelestialSystem system in _systems)
+        foreach (CelestialSystem system in _systems)
         {
             system.Delete();
-        }*/
+        }
         
         
         _controller      .Dispose(      );

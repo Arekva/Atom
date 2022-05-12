@@ -151,4 +151,14 @@ public class CelestialSystem : Thing, ICelestialBody
             }
         }
     }
+
+    public override void Delete()
+    {
+        base.Delete();
+
+        foreach (ICelestialBody satellite in Satellites)
+        {
+            satellite.Dispose();
+        }
+    }
 }
