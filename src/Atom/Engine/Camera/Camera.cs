@@ -332,12 +332,6 @@ public partial class Camera : Thing
 
     private void SetProjectionsAspectRatio(f64 aspectRatio)
     {
-        if (_resolutionMode == Atom.Engine.Resolution.Manual)
-        {
-            Log.Info("Cannot manually set camera's aspect ratio, it is in automatic mode.");
-            return;
-        }
-
         Perspective .AspectRatio = aspectRatio;
         Orthographic.AspectRatio = aspectRatio;
     }

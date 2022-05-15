@@ -1,0 +1,33 @@
+Planet {
+    ID          = Squad.Ampere.Ampere
+    Name        = Ampere
+    SurfaceG    = 26.0
+    Description = {
+        Test star
+    }
+
+    Generation {
+        Generator = Generators/Star.generator
+
+        Parameters {
+            Radius = 26160 m
+
+            Atmosphere {
+                Composition = {
+                    Hydrogen = 100.0 %
+                }
+
+                Height   = 600 m
+                Pressure = 16 kPa
+            }
+        }
+    }
+
+    Rotation {
+        Day = 432000 s
+    }
+
+    Orbit {
+        Parent = Squad.AmpereSystem
+    }
+}

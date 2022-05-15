@@ -20,11 +20,15 @@ public class ClassicPlayerController : Thing
 
     private f64 _mouseSpeed = 45.0D;
     
-    private f64 _moveSpeed  = 1.42D * 10.0D;
-    private f64 _runSpeed   = 3.61D * 10.0D;
-    private f64 _slowSpeed  = 0.2D  * 10.0D;
+    private f64 _moveSpeed  = 1.42D;
+    private f64 _runSpeed   = 3.61D;
+    private f64 _slowSpeed  = 0.2D ;
 
     public static ClassicPlayerController Singleton { get; private set; }
+
+
+    private f64 _resolutionModifier = 1.0D;
+
 
     public ClassicPlayerController() : base()
     {
@@ -87,6 +91,30 @@ public class ClassicPlayerController : Thing
 
         if (Keyboard.IsPressing(Key.O)) Astrophysics.TimeWarp *= 10.0D;
         if (Keyboard.IsPressing(Key.P)) Astrophysics.TimeWarp *= 0.10D;
+
+        f64 modifier = 0.0D;
+
+        if (Keyboard.IsPressed(Key.B)) modifier = 1.0 - 0.1D * Time.DeltaTime * 5.0D;
+        if (Keyboard.IsPressed(Key.N)) modifier = 1.0 + 0.1D * Time.DeltaTime * 5.0D;
+
+        if (modifier != 0.0D)
+        {
+            _resolutionModifier *= modifier;
+
+            Camera.World!.ResolutionMode = Resolution.Manual;
+            Vector2D<u32> resolution = Video.Resolution;
+
+            resolution.X = Math.Max(1, (u32)(resolution.X * _resolutionModifier));
+            resolution.Y = Math.Max(1, (u32)(resolution.Y * _resolutionModifier));
+
+            Camera.World.AspectRatio = resolution.X / (f64)resolution.Y;
+            Camera.World.Resolution = resolution;
+        }
+
+        if (Keyboard.IsPressing(Key.Escape))
+        {
+            Mouse.GameFocus = false;
+        }
     }
 
     protected internal override void Render()

@@ -18,9 +18,9 @@ public class SpaceScene : AtomObject, IScene
     {
         _controller = new ClassicPlayerController();
 
-        _controller.Location = new Location(new Vector3D<double>(0.0D, 0.0D, -5.0D));
+        _controller.Location = new Location(new Vector3D<double>(0.0D, 0.0D, 13599840256));
         
-        /*Dictionary<string, PlanetConfig> planet_configs = Directory
+        Dictionary<string, PlanetConfig> planet_configs = Directory
             .GetFiles("assets/Space/", "*.planet", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<PlanetConfig>)
             .ToDictionary(planet => planet.ID);
@@ -29,12 +29,14 @@ public class SpaceScene : AtomObject, IScene
             .GetFiles("assets/Space/", "*.system", SearchOption.AllDirectories)
             .Select(ConfigFile.LoadInto<SystemConfig>),
             planet_configs
-        ).ToList();*/
+        ).ToList();
         
-        _systems = new List<CelestialSystem>();
+        Log.Warning("System loaded.");
+        
+        /*_systems = new List<CelestialSystem>();
         CelestialSystem system = new (ConfigFile.LoadInto<SystemConfig>("Assets/Space/Systems/Kerbol/Kerbol.system"));
         new VoxelBody(ConfigFile.LoadInto<PlanetConfig>("Assets/Space/Systems/Kerbol/MinmusTest.planet"), system);
-        _systems.Add(system);
+        _systems.Add(system);*/
         
         MakeReady();
     }
@@ -63,16 +65,5 @@ public class SpaceScene : AtomObject, IScene
         
         
         _controller      .Dispose(      );
-    }
-
-    public void CmdDraw(SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex)
-    {
-        /*foreach (CelestialSystem system in _systems)
-        {
-            foreach (ICelestialBody body in system.Satellites)
-            {
-                body.CmdDraw(cmd, extent, cameraIndex, frameIndex);
-            }
-        }*/
     }
 }

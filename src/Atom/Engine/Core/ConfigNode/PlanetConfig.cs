@@ -14,6 +14,9 @@ public class PlanetConfig
     
     [Bind("Mass", DataType.Mass)] public double Mass { get; set; }
     
+    [Bind("SurfaceG")] public double SurfaceG { get; set; }
+    
+    
     [Bind("Description")] public string Description { get; set; }
     
     [Bind("Generation")] public GenerationConfig Generation { get; set; }

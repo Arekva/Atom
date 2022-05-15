@@ -5,5 +5,5 @@ System {
         Test System
     }
 
-    Location = [0;0;0] <0.0 AU;0.0 AU;0.0 AU>
+    Location = [0;10000;0] <0.0 AU;0.0 AU;0.0 AU>
 }

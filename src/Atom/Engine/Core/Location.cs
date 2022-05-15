@@ -18,7 +18,7 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
     public static readonly Vector3D<f64> SectorCentre = SectorScale / 2.0D                               ;
     public static readonly Vector3D<f64> SectorHalf   = SectorScale / 2.0D                               ;
 
-    public static readonly Location Origin = new(coordinates: new Vector3D<Double>(0.0, 0.0, 0.0));
+    public static readonly Location Origin = new(coordinates: new Vector3D<f64>(0.0, 0.0, 0.0));
     
     
     public Vector3D<f64> Coordinates;
@@ -28,14 +28,14 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
     public Vector3D<f64> Position => new Vector3D<f64>(Sector.X, Sector.Y, Sector.Z) * SectorScale
                                                  + Coordinates;
 
-    public Location(Vector3D<double> coordinates, Vector3D<long> sector)
+    public Location(Vector3D<f64> coordinates, Vector3D<long> sector)
     {
         Coordinates = coordinates;
         Sector = sector;
         ManageOverflow();
     }
 
-    public Location(Vector3D<double> coordinates)
+    public Location(Vector3D<f64> coordinates)
     {
         Coordinates = coordinates;
         Sector = default;

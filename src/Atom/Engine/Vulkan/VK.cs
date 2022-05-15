@@ -142,7 +142,9 @@ public static class VK
         
         API.DestroyDevice(_device, null);
         API.TryGetInstanceExtension(Instance, out ext.ExtDebugUtils ext_debug);
+#if DEBUG
         ext_debug.DestroyDebugUtilsMessenger(Instance, _messenger, null);
+#endif
         API.DestroyInstance(_instance, null);
         
         // debug utils messenger never gets destroyed... or should it be?

@@ -1,0 +1,13 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "Gore Bloom",
+    "Description": "TODO",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+
+    "Stages": 
+    {
+        "Vertex": "Modules/gore_bloom.vert.spv",
+        "Fragment": "Modules/gore_bloom.frag.spv"
+    }
+}

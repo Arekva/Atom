@@ -12,7 +12,7 @@ layout(set = 1, binding = 4) uniform sampler2D _roughness;
 
 void main() {
     const vec2 offset = vec2(0.0);
-    const vec2 tilling = vec2(1000.0);
+    const vec2 tilling = vec2(1.0);
 
     vec2 transformed_uv = ((in_uv + offset) * tilling);
 

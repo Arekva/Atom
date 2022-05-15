@@ -72,7 +72,7 @@ public static class Mouse
         {
             _gameFocus = value;
 
-            _previousFramePosition = new Vector2D<double>(double.PositiveInfinity);
+            _previousFramePosition = new Vector2D<f64>(double.PositiveInfinity);
 
             UpdateCurrentCursorMode();
         }

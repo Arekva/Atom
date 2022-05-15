@@ -71,7 +71,7 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
     private readonly VulkanMemory      _memory        ;
 
     /* Memory accessors  */
-    private readonly bool              _isMemoryOwned ; // should the mesh destroy the buffer + memory on Dispose?
+    private          bool              _isMemoryOwned ; // should the mesh destroy the buffer + memory on Dispose?
     private          BufferSubresource _vertexResource;
     private          BufferSubresource _indexResource ;
 
@@ -471,11 +471,15 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
         {
             _buffer.Destroy(_device);
             _memory.Dispose(       );
+
+            _isMemoryOwned = false;
         }
     }
     
     public void CmdBindBuffers(SlimCommandBuffer cmd)
     {
+        if (IsDeleted) return;
+        
         VK.API.CmdBindVertexBuffers(
             cmd, 
             firstBinding: 0U                            ,

@@ -1,5 +1,5 @@
 Planet {
-    ID          = Squad.Kerbol.Minmus
+    ID          = Squad.Kerbol.MinmusTest
     Name        = Minmus
     Mass        = 2.64575795662095E+19 kg
     Description = { 
@@ -27,7 +27,7 @@ Planet {
     }
 
     Orbit {
-        Parent = Squad.KerbolSystem;
+        Parent = Squad.Kerbol.Kerbol;
     }
 
 

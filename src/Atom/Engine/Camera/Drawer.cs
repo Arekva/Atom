@@ -62,7 +62,7 @@ public class Drawer : IDisposable
     
     public Drawer(DrawCommand command, GetMeshesBounds bounds, Camera camera)
     {
-        _guid = new Guid();
+        _guid = Guid.NewGuid();
         _command = command;
         _bounds = bounds;
 

@@ -1,0 +1,52 @@
+Planet {
+    ID          = Atom.Ampere.Harbor
+    Name        = Harbor
+    SurfaceG    = 1.00
+    Description = {
+        Test place for voxel stuff.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 637.1 m
+
+            Atmosphere {
+                Composition = {
+                    Dioxygen = 100.0 %
+                }
+
+                Height   = 100 m
+                Pressure = 1 atm
+            }
+
+            Ocean {
+                Composition = {
+                    Water = 100 %
+                }
+            }
+        }
+    }
+    
+    Rotation { 
+        Day = 86.4 s
+
+        Inclination {
+            Obliquity      = 00.00 °
+            RightAscension = 00.00 °
+        }
+    }
+
+    Orbit {
+        Parent                   = Squad.Ampere.Ampere
+        
+        SemiMajorAxis            = 1000 km
+
+        Eccentricity             = 0.00
+        Inclination              = 0.00 °
+        LongitudeOfAscendingNode = 0.00 °
+        ArgumentOfPeriapsis      = 0.00 °
+        MeanAnomaly              = 0.00 rad
+    }
+}

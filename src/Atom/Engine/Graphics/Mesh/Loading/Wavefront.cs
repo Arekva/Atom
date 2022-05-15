@@ -37,7 +37,7 @@ public static class Wavefront
                 string[] values = line.Split(' ', count: 3);
                 vt.Add(new Vector2D<f32>(
                     x: f32.Parse(values[1]), 
-                    y: f32.Parse(values[2]))
+                    y: 1.0F - f32.Parse(values[2]))
                 ); 
             }
             else if (line.StartsWith("vt1 "))

@@ -57,7 +57,14 @@ public abstract class CelestialBody : AtomObject, ICelestialBody
 
         Radius = config.Generation.GeneratorParameters.Radius;
 
-        Mass = config.Mass / 1000.0D;
+        if (config.SurfaceG != 0.0D)
+        {
+            Mass = ((config.SurfaceG * Astrophysics.EARTH_SURFACE_GRAVITY) * (Radius * Radius)) / Astrophysics.G;
+        }
+        else
+        {
+            Mass = config.Mass / 1000.0D;
+        }
 
         Reference = reference;
 

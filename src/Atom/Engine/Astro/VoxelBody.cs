@@ -44,8 +44,12 @@ public class VoxelBody : CelestialBody
 
     public f64 BaseRotation { get; set; } = 0.0D;
     public f64 Rotation { get; private set; } = 0.0D;
-
     public f64 Day { get; set; } = 0.0D;
+
+    public ReadOnlyMesh<u16> SimplifiedMesh { get; set; }
+
+
+
 
     struct VertexSettings
     {
@@ -71,6 +75,8 @@ public class VoxelBody : CelestialBody
                                    * Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, tilt.Obliquity);
         
         Day = config.Rotation?.Day ?? 0.0D;
+        
+        
         
         CelestialSpace.LocalRotation = axial_tilt;
 
@@ -171,7 +177,9 @@ public class VoxelBody : CelestialBody
             Bounding = Radius
         };
 
-        _drawer = new Drawer(CmdDraw, GetMeshesBounds, Camera.World);
+        _drawer = new Drawer(CmdDraw, GetMeshesBounds, Camera.World!);
+        
+        Log.Info(Name + " Loaded.");
 
         MakeReady();
     }
@@ -196,7 +204,6 @@ public class VoxelBody : CelestialBody
             f64 rot_at_ut = BaseRotation + (rad_per_sec * ut);
             Rotation = -(rot_at_ut % AMath.TAU);
         }
-
         
         RotatedSpace.LocalRotation = Quaternion<f64>.CreateFromAxisAngle(Vector3D<Double>.UnitY, Rotation);
         
@@ -214,7 +221,7 @@ public class VoxelBody : CelestialBody
         if (ClassicPlayerController.Singleton == null!) return;
         
         //ref Matrix4X4<f64> render_matrix = ref CelestialSpace[Camera.World!.Index, Graphics.FrameIndex];
-        Matrix4X4<f64> render_matrix = CelestialSpace.RelativeMatrix(Camera.World!.Location);
+        Matrix4X4<f64> render_matrix = RotatedSpace.RelativeMatrix(Camera.World!.Location);
 
         using (MemoryMap<Matrix4X4<f32>> map = _transformsMemory.Map<Matrix4X4<f32>>())
         {
@@ -248,8 +255,15 @@ public class VoxelBody : CelestialBody
     public override void Delete()
     {
         base.Delete();
+
+        VK.API.DeviceWaitIdle(VK.Device); // bruh todo: remove that and do proper synchronisation
+
+        foreach (ICelestialBody satellite in Satellites)
+        {
+            satellite.Dispose();
+        }
         
-        _drawer.Dispose();
+        _drawer.Dispose();          
         
         _material.Delete();
         _shader.Dispose();
