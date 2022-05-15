@@ -227,7 +227,7 @@ public class ConfigFile
         object[] added_kvp     = new object[2];
         object[] key_retriever = new object[1];
 
-        foreach (string kvp in kvps.Split("\r\n"))
+        foreach (string kvp in kvps.Split(Environment.NewLine))
         {
             if (string.IsNullOrEmpty(kvp)) continue;
             
