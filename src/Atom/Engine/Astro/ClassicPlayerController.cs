@@ -2,7 +2,7 @@
 using Silk.NET.Input;
 
 using Atom.Engine;
-
+using Atom.Engine.Astro;
 
 
 namespace Atom.Game;
@@ -16,7 +16,7 @@ public class ClassicPlayerController : Thing
     private Vector3D<f64> _angles = new (0.0D, 0.0D, 0.0D);
     private const f64 MAX_X_ROT = 89.9D;
 
-    private f64 _eyesHeight = 0.0D;//1.75D;
+    private f64 _eyesHeight = 1.75D;
 
     private f64 _mouseSpeed = 45.0D;
     
@@ -48,6 +48,12 @@ public class ClassicPlayerController : Thing
         MakeReady();
     }
 
+    public void Teleport(VoxelBody body)
+    {
+        Location = body.CelestialSpace.Location + body.RotatedSpace.Up * body.Radius;
+        _camera.Location = Location + Vector3D<f64>.UnitY * _eyesHeight;
+    }
+
     protected internal override void Frame()
     {
         f64 delta_time = Time.DeltaTime;
@@ -60,6 +66,8 @@ public class ClassicPlayerController : Thing
         _camera.Space.LocalRotation =
             Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitY, _angles.Y * AMath.DegToRad) *
             Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, _angles.X * AMath.DegToRad) ;
+        
+        /*
 
         Vector3D<f64> move_forward = _camera.Space.Forward;
         move_forward.Y = 0.0D;
@@ -87,11 +95,12 @@ public class ClassicPlayerController : Thing
         Location += dir * delta_time * speed;
 
         _camera.Location = Location + Vector3D<f64>.UnitY * _eyesHeight;
-
+*/
 
         if (Keyboard.IsPressing(Key.O)) Astrophysics.TimeWarp *= 10.0D;
         if (Keyboard.IsPressing(Key.P)) Astrophysics.TimeWarp *= 0.10D;
 
+/*
         f64 modifier = 0.0D;
 
         if (Keyboard.IsPressed(Key.B)) modifier = 1.0 - 0.1D * Time.DeltaTime * 5.0D;
@@ -110,6 +119,8 @@ public class ClassicPlayerController : Thing
             Camera.World.AspectRatio = resolution.X / (f64)resolution.Y;
             Camera.World.Resolution = resolution;
         }
+        
+        */
 
         if (Keyboard.IsPressing(Key.Escape))
         {

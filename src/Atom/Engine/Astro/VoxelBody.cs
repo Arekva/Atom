@@ -28,15 +28,11 @@ public class VoxelBody : CelestialBody
     private readonly Texture _purple;
 
 
-    private readonly SlimBuffer _transformsBuffer;
-    private readonly VulkanMemory _transformsMemory;
-    
-    private readonly SlimBuffer _settingsBuffer;
-    private readonly VulkanMemory _settingsMemory;
+    private readonly BufferSubresource _transformsSubresource;
+    private readonly BufferSubresource _settingsSubresource;
+    private MemoryMap<Matrix4X4<f32>> _transformMap;
 
     private Drawer _drawer;
-
-    private bool isReady;
 
     private VertexSettings _vertexSettings = new VertexSettings() { Height = 0.05F };
 
@@ -49,6 +45,7 @@ public class VoxelBody : CelestialBody
     public ReadOnlyMesh<u16> SimplifiedMesh { get; set; }
 
 
+    
 
 
     struct VertexSettings
@@ -64,6 +61,7 @@ public class VoxelBody : CelestialBody
         
     public VoxelBody(PlanetConfig config, ICelestialBody reference) : base(config, reference)
     {
+#region Standard Planet Stuff
         RotatedSpace = new Space(CelestialSpace, $"{config.Name} rotated space");
         RotatedSpace.LocalScale = new Vector3D<f64>(Radius);
         
@@ -76,8 +74,6 @@ public class VoxelBody : CelestialBody
         
         Day = config.Rotation?.Day ?? 0.0D;
         
-        
-        
         CelestialSpace.LocalRotation = axial_tilt;
 
         PlanetConfig.OrbitConfig orbit = config.Orbit;
@@ -86,70 +82,52 @@ public class VoxelBody : CelestialBody
             new NoOrbit() :
             new RailOrbit(this, orbit);
         
+#endregion
+        
+#region Rendering
         _shader = Shader.Shader.Load<IRasterShader>("Engine", "Standard"); 
         _material = new RasterizedMaterial(_shader);
         
-        Span<Matrix4X4<f32>> transforms = stackalloc Matrix4X4<f32>[3];
-        for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
+        // default every transformation to identity
+        Span<Matrix4X4<f32>> transforms = stackalloc Matrix4X4<f32>[(i32)Graphics.MAX_FRAMES_COUNT];
+        Span<VertexSettings> vertex_settings = stackalloc VertexSettings[(i32)Graphics.MAX_FRAMES_COUNT];
+
+        for (i32 i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
         {
             transforms[i] = Matrix4X4<f32>.Identity;
+            vertex_settings[i] = default; // in case memory isn't nulled.
         }
-        (_transformsBuffer, _transformsMemory) = transforms.CreateVulkanMemory(
-            device: _material.Device,
+        
+        _transformsSubresource = transforms.CreateVulkanMemory(
+            device: _material.Device              ,
             usages: BufferUsageFlags.StorageBuffer,
-            properties: MemoryPropertyFlags.HostVisible  |
-                        MemoryPropertyFlags.HostCoherent |
-                        MemoryPropertyFlags.DeviceLocal  );
+            type  : MemoryType.DeviceLocalShared
+        );
 
-        Span<VertexSettings> vertex_settings = stackalloc VertexSettings[3];
-        for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
-        {
-            vertex_settings[i] = new VertexSettings
-            {
-                Height = 0.05F
-            };
-        }
-        (_settingsBuffer, _settingsMemory) = vertex_settings.CreateVulkanMemory(
-            device: _material.Device,  
+        _settingsSubresource = vertex_settings.CreateVulkanMemory(
+            device: _material.Device              ,  
             usages: BufferUsageFlags.UniformBuffer,
-            properties: MemoryPropertyFlags.HostVisible  |
-                        MemoryPropertyFlags.HostCoherent |
-                        MemoryPropertyFlags.DeviceLocal  );
+            type  : MemoryType.DeviceLocalShared
+        );
+        
+        u64 transform_length = (u64)Unsafe.SizeOf<Matrix4X4<f32>>() * Graphics.MAX_FRAMES_COUNT;
         
         _material.WriteBuffer<IVertexModule>(
-            name: "_instanceData",
-            subresource: new BufferSubresource(
-                buffer : _transformsBuffer,
-                segment: _transformsMemory.Segment(0, (u64)Unsafe.SizeOf<Matrix4X4<f32>>() * Graphics.MaxFramesCount)
-            )
+            name        : "_instanceData",
+            subresource : _transformsSubresource.Subresource(start: 0UL, length: transform_length) 
         );
-        /*_material.WriteBuffer<IVertexModule>(
-            name: "_cameraMatrices",
-            subresource: new BufferSubresource(
-                buffer : CameraData.VPMatrices,
-                segment: CameraData.Memory.Whole
-            )
-        );*/
 
         _material.WriteBuffer<IVertexModule>(
-            name: "_settings",
-            subresource: new BufferSubresource(
-                buffer : _settingsBuffer,
-                segment: _settingsMemory.Segment(0, (u64)Unsafe.SizeOf<VertexSettings>())
-            ),
+            name          : "_settings",
+            subresource   : _settingsSubresource.Subresource(start: 0UL, length: (u64)Unsafe.SizeOf<VertexSettings>()),
             descriptorType: vk.DescriptorType.UniformBuffer
         );
-        
-        const string WHITE = "assets/Images/white.dds";
-        const string BLACK = "assets/Images/black.dds";
-        const string WHITE_NORMAL = "assets/Images/white_normal.dds";
 
-        u32 queue_family = 0;
-        Span<u32> queue_families = queue_family.AsSpan();
+        _transformMap = _transformsSubresource.Segment.Map<Matrix4X4<f32>>();
         
-        _white = new Texture(image: dds.Load(stream: File.OpenRead(WHITE), queue_families));
-        _black = new Texture(image: dds.Load(stream: File.OpenRead(BLACK), queue_families));
-        _purple = new Texture(image: dds.Load(stream: File.OpenRead(WHITE_NORMAL), queue_families));
+        _white  = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/white.dds"       )));
+        _black  = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/black.dds"       )));
+        _purple = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/white_normal.dds")));
         
         //_sphereAlbedo    = new Texture(image: dds.Load(stream: File.OpenRead(config.Texture?.Color ?? WHITE)));
         _material.WriteImage<IFragmentModule>(name: "_albedo", texture: _white);
@@ -178,9 +156,9 @@ public class VoxelBody : CelestialBody
         };
 
         _drawer = new Drawer(CmdDraw, GetMeshesBounds, Camera.World!);
-        
-        Log.Info(Name + " Loaded.");
 
+#endregion
+        
         MakeReady();
     }
 
@@ -207,7 +185,7 @@ public class VoxelBody : CelestialBody
         
         RotatedSpace.LocalRotation = Quaternion<f64>.CreateFromAxisAngle(Vector3D<Double>.UnitY, Rotation);
         
-        using (MemoryMap<VertexSettings> map = _settingsMemory.Map<VertexSettings>())
+        using (MemoryMap<VertexSettings> map = _settingsSubresource.Segment.Map<VertexSettings>())
         {
             Span<VertexSettings> frame_data = map.AsSpan(0, 1);
             frame_data[0] = _vertexSettings;
@@ -220,14 +198,10 @@ public class VoxelBody : CelestialBody
         
         if (ClassicPlayerController.Singleton == null!) return;
         
-        //ref Matrix4X4<f64> render_matrix = ref CelestialSpace[Camera.World!.Index, Graphics.FrameIndex];
         Matrix4X4<f64> render_matrix = RotatedSpace.RelativeMatrix(Camera.World!.Location);
 
-        using (MemoryMap<Matrix4X4<f32>> map = _transformsMemory.Map<Matrix4X4<f32>>())
-        {
-            Span<Matrix4X4<f32>> frame_data = map.AsSpan(Graphics.FrameIndex, 1);
-            frame_data[0] = (Matrix4X4<f32>)render_matrix;
-        }
+        Span<Matrix4X4<f32>> frame_data = _transformMap.AsSpan(Graphics.FrameIndex, 1);
+        frame_data[0] = (Matrix4X4<f32>)render_matrix;
         
         Vector3D<f64> rel_pos = (this.CelestialSpace.Location - Camera.World!.Location).Position;
 
@@ -237,10 +211,8 @@ public class VoxelBody : CelestialBody
     private void CmdDraw(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
         ReadOnlySpan<Drawer.DrawRange> ranges,
         Vector2D<u32> resolution, u32 frameIndex)
-        //SlimCommandBuffer cmd, Vector2D<UInt32> extent, UInt32 cameraIndex, UInt32 frameIndex
-        //)
     {
-        if (_material == null!) return;
+        if (_material == null! || IsDeleted) return;
         
         _material.CmdBindMaterial(renderPass.CommandBuffer, resolution, camera.Index, frameIndex);
         _mesh.CmdBindBuffers(renderPass.CommandBuffer);
@@ -255,9 +227,7 @@ public class VoxelBody : CelestialBody
     public override void Delete()
     {
         base.Delete();
-
-        VK.API.DeviceWaitIdle(VK.Device); // bruh todo: remove that and do proper synchronisation
-
+        
         foreach (ICelestialBody satellite in Satellites)
         {
             satellite.Dispose();
@@ -273,11 +243,9 @@ public class VoxelBody : CelestialBody
         _black.Dispose();
         _purple.Dispose();
         
-        _settingsBuffer.Destroy(VK.Device);
-        _settingsMemory.Delete();
-        
-        _transformsBuffer.Destroy(VK.Device);
-        _transformsMemory.Delete();
+        _settingsSubresource.Delete();
+        _transformMap.Dispose();
+        _transformsSubresource.Delete();
 
         /*_sphereAlbedo.Dispose();
         _sphereMetallic.Dispose();

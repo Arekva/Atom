@@ -167,21 +167,23 @@ public partial class Camera : Thing
         
         SetProjectionsAspectRatio();
 
-        _targets = new RenderTarget[Graphics.MaxFramesCount];
-        _renderPipelines = new IPipeline[Graphics.MaxFramesCount];
-        _immediateFences = new SlimFence[Graphics.MaxFramesCount];
+        _targets = new RenderTarget[Graphics.MAX_FRAMES_COUNT];
+        _renderPipelines = new IPipeline[Graphics.MAX_FRAMES_COUNT];
+        _immediateFences = new SlimFence[Graphics.MAX_FRAMES_COUNT];
 
         vk.Device device = VK.Device;
+
+        _pipelinesPool = new SlimCommandPool(device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
+        _pipelinesPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, Graphics.MAX_FRAMES_COUNT, out _pipelinesCommands);
+        _pipelinesPool.SetName($"{Name} Render Pool");
         
-        for (int i = 0; i < Graphics.MaxFramesCount; i++)
+        for (int i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
         {
             _targets[i] = new RenderTarget(Resolution, name: $"{Name} #{i}");
             _renderPipelines[i] = new GamePipeline(device);
             _immediateFences[i] = new SlimFence(device);
+            _pipelinesCommands[i].SetName($"{Name} Render Command #{i}");
         }
-
-        _pipelinesPool = new SlimCommandPool(device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
-        _pipelinesPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, Graphics.MaxFramesCount, out _pipelinesCommands);
 
         
         

@@ -13,6 +13,8 @@ public class SpaceScene : AtomObject, IScene
     private readonly ClassicPlayerController _controller;
 
     private List<CelestialSystem> _systems;
+
+    private VoxelBody _playerBody;
     
     public SpaceScene()
     {
@@ -32,20 +34,23 @@ public class SpaceScene : AtomObject, IScene
         ).ToList();
         
         Log.Warning("System loaded.");
-        
+
+        _playerBody = (VoxelBody)_systems.First(s => s.Name == "Ampere System")
+            .Satellites.First(p => p.Name == "Ampere").Satellites.First(p => p.Name == "Harbor");
+
         /*_systems = new List<CelestialSystem>();
         CelestialSystem system = new (ConfigFile.LoadInto<SystemConfig>("Assets/Space/Systems/Kerbol/Kerbol.system"));
         new VoxelBody(ConfigFile.LoadInto<PlanetConfig>("Assets/Space/Systems/Kerbol/MinmusTest.planet"), system);
         _systems.Add(system);*/
-        
+
         MakeReady();
     }
-    
-    protected internal override void Frame() { }
 
     protected internal override void Render()
     {
         base.Render();
+        
+        _controller.Teleport(_playerBody);
 
         if (!Graphics.IsRenderReady) return;
 

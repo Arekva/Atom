@@ -142,7 +142,7 @@ public class RasterShader : Shader, IRasterShader
         
         DescriptorPool = new SlimDescriptorPool(
             device: Device,
-            maxSets: Graphics.MaxFramesCount * MAX_MATERIAL_PER_SHADER_COUNT,
+            maxSets: Graphics.MAX_FRAMES_COUNT * MAX_MATERIAL_PER_SHADER_COUNT,
             poolSizes: PoolSizes,
             flags: vk.DescriptorPoolCreateFlags.DescriptorPoolCreateFreeDescriptorSetBit
         );

@@ -19,7 +19,18 @@ public class Space : AtomObject
     
     public Thing Thing => _thing;
 
-    public Space? Parent => _parent;
+    public Space? Parent
+    {
+        get => _parent;
+        set
+        {
+            if (value == _parent) return;
+
+            _parent?._subspaces.Remove(this);
+            _parent = value;
+            _parent?._subspaces.Add(this);
+        }
+    }
     public IEnumerable<Space> Subspaces => _subspaces;
 
     /*public ref Matrix4X4<f64> this[u32 cameraIndex, u32 frameIndex]

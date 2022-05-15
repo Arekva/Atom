@@ -85,6 +85,13 @@ public static class Updater
                 try { @object.Frame(); }
                 catch (Exception e) { Log.Error(e); }
             }
+            foreach (AtomObject @object in AtomObject.Objects)
+            {
+                if (@object.IsDeleted) /* just to be sure */ continue;
+
+                try { @object.LateFrame(); }
+                catch (Exception e) { Log.Error(e); }
+            }
 
             //= 4- Render Logic ==//
             foreach (AtomObject @object in AtomObject.Objects)

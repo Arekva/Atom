@@ -54,6 +54,8 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
 
     protected internal virtual void Frame() { }
     
+    protected internal virtual void LateFrame() { }
+    
     protected internal virtual void Render() { }
     
     protected internal virtual void PhysicsFrame() { }
@@ -65,7 +67,8 @@ public abstract class AtomObject : IDeletable, IEquatable<AtomObject>
         {
             if (_isDeleted)
             {
-                ThrowDeleted();
+                //ThrowDeleted();
+                return;
             }
             _isDeleted = true;
             _objects.TryRemove(GUID, out _);

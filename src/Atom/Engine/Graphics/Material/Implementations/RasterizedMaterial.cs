@@ -66,9 +66,9 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
         Shader = shader ?? throw new ArgumentNullException(nameof(shader));
         _hasLightShader = shader.LightShader != null;
         
-        DescriptorSets = new Dictionary<ShaderStageFlags, vk.DescriptorSet>[Graphics.MaxFramesCount];
-        _writeEdits = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>[Graphics.MaxFramesCount];
-        for (i32 i = 0; i < Graphics.MaxFramesCount; i++)
+        DescriptorSets = new Dictionary<ShaderStageFlags, vk.DescriptorSet>[Graphics.MAX_FRAMES_COUNT];
+        _writeEdits = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>[Graphics.MAX_FRAMES_COUNT];
+        for (i32 i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
         {
             _writeEdits[i] = new Queue<(vk.DescriptorBufferInfo, vk.WriteDescriptorSet)>(capacity: 1024);
         }
@@ -97,7 +97,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
                     pSetLayouts: (vk.DescriptorSetLayout*)p_desc_layouts
                 );
 
-                for (int i = 0; i < Graphics.MaxFramesCount; i++)
+                for (int i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
                 {
                     Dictionary<ShaderStageFlags, vk.DescriptorSet> stage_sets = new (capacity: module_count);
                     DescriptorSets[i] = stage_sets;
@@ -138,10 +138,10 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
             VK.API.DestroyPipeline(Shader.LightShader!.Device, _lightPipeline, null);
         }
 
-        u32 total_sets_count = Graphics.MaxFramesCount * _moduleCount;
+        u32 total_sets_count = Graphics.MAX_FRAMES_COUNT * _moduleCount;
         
         Span<vk.DescriptorSet> sets = stackalloc vk.DescriptorSet[(int)total_sets_count];
-        for (u32 i = 0; i < Graphics.MaxFramesCount; i++)
+        for (u32 i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
         {
             u32 j = 0;
             foreach (vk.DescriptorSet set in DescriptorSets[i].Values)
@@ -429,7 +429,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
             range : subresource.Segment.Size 
         );
         
-        for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
+        for (i32 frame_index = 0; frame_index < Graphics.MAX_FRAMES_COUNT; frame_index++)
         {
             vk.WriteDescriptorSet write_descriptor = new(
                 dstSet         : DescriptorSets[frame_index][module_type],
@@ -461,7 +461,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
 
         if (frameIndex == null)
         {
-            for (i32 frame_index = 0; frame_index < Graphics.MaxFramesCount; frame_index++)
+            for (i32 frame_index = 0; frame_index < Graphics.MAX_FRAMES_COUNT; frame_index++)
             {
                 vk.WriteDescriptorSet write_descriptor = new(
                     dstSet         : DescriptorSets[frame_index][module_type],

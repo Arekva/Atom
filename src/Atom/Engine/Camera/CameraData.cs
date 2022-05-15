@@ -59,7 +59,7 @@ public partial class Camera
 
         _matricesBuffer = new SlimBuffer(
             device     : used_device,
-            size       : (u64)(MAX_CAMERA_COUNT * Unsafe.SizeOf<ViewProjection<f32>>() * Graphics.MaxFramesCount),
+            size       : (u64)(MAX_CAMERA_COUNT * Unsafe.SizeOf<ViewProjection<f32>>() * Graphics.MAX_FRAMES_COUNT),
             usage      : BufferUsageFlags.StorageBuffer,
             sharingMode: vk.SharingMode.Exclusive, queueFamilies, 
             flags      : 0
@@ -127,7 +127,7 @@ public partial class Camera
         }
         else
         {
-            return (u64)_index * Graphics.MaxFramesCount + frameIndex;
+            return (u64)_index * Graphics.MAX_FRAMES_COUNT + frameIndex;
         }
     }
 

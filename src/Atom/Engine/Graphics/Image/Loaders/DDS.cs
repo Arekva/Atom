@@ -55,6 +55,16 @@ public static class DDS
             $"DirectX format {dxformat} (Alpha: {alphaMode}) is not a valid DirectDraw format.")
     };
 
+    public static Image Load(Stream stream,
+        vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
+        vk.SampleCountFlags samples = vk.SampleCountFlags.SampleCount1Bit,
+        vk.ImageLayout layout = vk.ImageLayout.ShaderReadOnlyOptimal,
+        PipelineStageFlags stage = PipelineStageFlags.FragmentShader,
+        vk.AccessFlags accessMask = vk.AccessFlags.AccessShaderReadBit,
+        ImageUsageFlags usages = ImageUsageFlags.Sampled,
+        vk.Device? device = null) => Load(stream, ReadOnlySpan<u32>.Empty,
+        sharingMode, samples, layout, stage, accessMask, usages, device);
+
     public static unsafe Image Load(Stream stream,
         ReadOnlySpan<u32> queueFamilies,
         vk.SharingMode sharingMode = vk.SharingMode.Exclusive,
@@ -66,7 +76,13 @@ public static class DDS
         vk.Device? device = null)
     {
         vk.Device used_device = device ?? VK.Device;
-        
+
+        if (queueFamilies.Length == 0)
+        {
+            u32 queue_family = 0;
+            queueFamilies = queue_family.AsSpan();
+        }
+
         const u32 DDS_MAGIC = (u32)FourCharCodes.DDS;
 
         u64 index = 0UL;

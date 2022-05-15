@@ -6,7 +6,7 @@ public static class Graphics
 
     public static uint MainSubpass { get; set; } = 0;
 
-    public static uint MaxFramesCount { get; set; } = 3; // enable triple buffering by default
+    public const uint MAX_FRAMES_COUNT = 3; // triple buffering
 
     public static uint FrameIndex { get; set; } = 0;
 

@@ -10,7 +10,7 @@ Planet {
         Generator = Generators/Rocky.generator
 
         Parameters {
-            Radius = 637.1 m
+            Radius = 6371 km
 
             Atmosphere {
                 Composition = {
@@ -39,9 +39,9 @@ Planet {
     }
 
     Orbit {
-        Parent                   = Squad.Ampere.Ampere
+        Parent                   = Atom.Ampere.Ampere
         
-        SemiMajorAxis            = 1000 km
+        SemiMajorAxis            = 1 AU
 
         Eccentricity             = 0.00
         Inclination              = 0.00 °

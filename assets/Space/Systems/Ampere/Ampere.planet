@@ -1,5 +1,5 @@
 Planet {
-    ID          = Squad.Ampere.Ampere
+    ID          = Atom.Ampere.Ampere
     Name        = Ampere
     SurfaceG    = 26.0
     Description = {
@@ -10,7 +10,7 @@ Planet {
         Generator = Generators/Star.generator
 
         Parameters {
-            Radius = 26160 m
+            Radius = 26.1 km
 
             Atmosphere {
                 Composition = {
@@ -28,6 +28,6 @@ Planet {
     }
 
     Orbit {
-        Parent = Squad.AmpereSystem
+        Parent = Atom.AmpereSystem
     }
 }
