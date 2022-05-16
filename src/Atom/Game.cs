@@ -4,6 +4,7 @@ using Atom.Engine.Astro;
 using Silk.NET.Vulkan;
 using Atom.Engine.Astro.Transvoxel;
 using Atom.Engine.Shader;
+using Atom.Engine.Tree;
 using Atom.Game.Config;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -29,6 +30,8 @@ public class Game
     [Entry]
     private static void GameEntry()
     {
+        _ = new Octree<byte>();
+
         try
         {
             Video.Title = $"{Engine.Game.Name} {Engine.Game.Version}";

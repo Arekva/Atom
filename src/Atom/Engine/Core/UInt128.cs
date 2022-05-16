@@ -11,6 +11,9 @@ public struct UInt128 : IFormattable, IEquatable<UInt128>//, IComparable<UInt128
     private ulong _a;
     private ulong _b;
 
+    internal ulong High => _a;
+    internal ulong Low  => _b;
+
     public UInt128(ReadOnlySpan<ulong> longs) => (_a, _b) = (longs[0], longs[1]);
     public UInt128(ulong high, ulong low) => (_a, _b) = (high, low);
     
@@ -38,6 +41,10 @@ public struct UInt128 : IFormattable, IEquatable<UInt128>//, IComparable<UInt128
     public static UInt128 operator &(UInt128 lhs, UInt128 rhs) => new(lhs._a & rhs._a, lhs._b & rhs._b);
 
     public static UInt128 operator |(UInt128 lhs, UInt128 rhs) => new(lhs._a | rhs._a, lhs._b | rhs._b);
+
+    public static bool operator ==(UInt128 lhs, UInt128 rhs) => lhs._a == rhs._a && lhs._b == rhs._b;
+    
+    public static bool operator !=(UInt128 lhs, UInt128 rhs) => lhs._a != rhs._a || lhs._b != rhs._b;
 
 
     public static implicit operator UInt128(in ulong @ulong) => new(0, @ulong);
