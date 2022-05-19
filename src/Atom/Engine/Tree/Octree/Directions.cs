@@ -3,22 +3,25 @@ using Silk.NET.Maths;
 
 namespace Atom.Engine.Tree;
 
-[Flags] public enum Faces : byte
+[Flags] public enum Directions : byte
 {
     //               +- +- +-
     //               ZZ YY XX
     None        = 0b_00_00_00,
-    Left        = 0b_00_00_01,
-    Right       = 0b_00_00_10,
-    Down        = 0b_00_01_00,
-    Up          = 0b_00_10_00,
-    Backward    = 0b_01_00_00,
-    Forward     = 0b_10_00_00,
-    All         = Left|Right|Down|Up|Backward|Forward,
+    
+    Left        = 0b_00_00_01, //  1
+    Right       = 0b_00_00_10, //  2
+    Down        = 0b_00_01_00, //  4
+    Up          = 0b_00_10_00, //  8
+    Backward    = 0b_01_00_00, // 16
+    Forward     = 0b_10_00_00, // 32
+    
+    // same as none
+    All         = Left | Right| Down | Up | Backward | Forward,
 }
 
 
-public static class FacesExtension
+/*public static class FacesExtension
 {
     public static Vector3D<i32> GetNormal(this Faces faces)
     {
@@ -82,4 +85,4 @@ public static class FacesExtension
     public static Vector3D<f64> GetDirectionSpherical(this Faces faces) => Vector3D.Normalize(GetDirectionCubical(faces));
 
     public static IEnumerable<Faces> GetFlags(this Faces input) => Faces.GetValues(input.GetType()).Cast<Faces>().Where(value => input.HasFlag(value));
-}
+}*/

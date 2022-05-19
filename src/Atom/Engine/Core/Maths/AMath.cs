@@ -17,23 +17,26 @@ public static class AMath
     public const float RadToDegF = (float)RadToDeg;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int To1D(int x, int y, int z, int width, int height) => x + width*y + width*height*z;
-        
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int To1D(int x, int y, int width) => x + width*y;
+    public static i32 To1D(i32 x, i32 y, i32 z, i32 width, i32 height) => x + width*y + width*height*z;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint To1D(uint x, uint y, uint width) => x + width*y;
+    public static u32 To1D(u32 x, u32 y, u32 z, u32 width, u32 height) => x + width*y + width*height*z;
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void To2D(int index, int width, out int x, out int y)
+    public static i32 To1D(i32 x, i32 y, i32 width) => x + width*y;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static u32 To1D(u32 x, u32 y, u32 width) => x + width*y;
+        
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void To2D(i32 index, i32 width, out i32 x, out i32 y)
     {
         x = index % width;
         y = index / width;
     }
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void To3D(int index, int width, int height, out int x, out int y, out int z)
+    public static void To3D(i32 index, i32 width, i32 height, out i32 x, out i32 y, out i32 z)
     {
         x = index % width;
         y = (index / width)%height;

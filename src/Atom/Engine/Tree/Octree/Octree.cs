@@ -9,6 +9,8 @@ public class Octree<T>
     
     private Node<T> _root;
 
+    public Node<T> Root => _root;
+
     public Octree()
     {
         _root = new Node<T>();

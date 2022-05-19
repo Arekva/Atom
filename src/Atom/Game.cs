@@ -26,12 +26,11 @@ public class Game
 
         Engine.Engine.WaitForShutdown();
     }
+    
 
     [Entry]
     private static void GameEntry()
     {
-        _ = new Octree<byte>();
-
         try
         {
             Video.Title = $"{Engine.Game.Name} {Engine.Game.Version}";
