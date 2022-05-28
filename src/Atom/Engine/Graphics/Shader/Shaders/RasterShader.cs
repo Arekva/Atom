@@ -132,6 +132,7 @@ public class RasterShader : Shader, IRasterShader
         }
 
         vk.PushConstantRange[] push_constants = push_constants_list.ToArray();
+        
 
         PipelineLayout = new SlimPipelineLayout(
             device: Device, 

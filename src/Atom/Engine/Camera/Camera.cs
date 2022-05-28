@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Atom.Engine.Pipelines;
 using Atom.Engine.Vulkan;
@@ -12,15 +13,17 @@ namespace Atom.Engine;
 
 public partial class Camera : Thing
 {
-    public const u32                MAX_CAMERA_COUNT    = 1024U       ;
-    public const i32                UNINITIALIZED_INDEX = i32.MaxValue;
-    
-    private static ConcurrentDictionary<string, Camera> _cameras = new(concurrencyLevel: 6, capacity: (i32)MAX_CAMERA_COUNT);
+    public const u32 MAX_CAMERA_COUNT = 1024U;
+    public const i32 UNINITIALIZED_INDEX = i32.MaxValue;
+
+    private static ConcurrentDictionary<string, Camera> _cameras = new(concurrencyLevel: 6,
+        capacity: (i32)MAX_CAMERA_COUNT);
+
     public static IEnumerable<Camera> Cameras => _cameras.Values;
 
-    private static Camera? _world        ;
+    private static Camera? _world;
     private static Camera? _userInterface;
-    
+
     public static Camera? World
     {
         get => _world;
@@ -34,29 +37,29 @@ public partial class Camera : Thing
     }
 
 
-    
-    private string                 _identifier         ;
-    private u32                    _index              ;
-    private Space                  _space              ;
-    
-    private Resolution             _resolutionMode     ;
-    private Projection             _projectionMode     ;
-    
-    private ScreenResolution       _automaticResolution;
-    private ScreenResolution       _manualResolution   ;
 
-    private PerspectiveProjection  _perspective        ;
-    private OrthographicProjection _orthographic       ;
-    
-    private RenderTarget[]         _targets            ;
-    private IPipeline[]            _renderPipelines    ;
+    private string _identifier;
+    private u32 _index;
+    private Space _space;
 
-    private SlimCommandPool        _pipelinesPool      ;
-    private SlimCommandBuffer[]    _pipelinesCommands  ;
+    private Resolution _resolutionMode;
+    private Projection _projectionMode;
 
-    private SlimFence[]            _immediateFences    ;
+    private ScreenResolution _automaticResolution;
+    private ScreenResolution _manualResolution;
 
-    private ConcurrentDictionary<Guid, Drawer> _drawers;
+    private PerspectiveProjection _perspective;
+    private OrthographicProjection _orthographic;
+
+    private RenderTarget[] _targets;
+    private IPipeline[] _renderPipelines;
+
+    private SlimCommandPool _pipelinesPool;
+    private SlimCommandBuffer[] _pipelinesCommands;
+
+    private SlimFence[] _immediateFences;
+
+    private ConcurrentDictionary<Guid, Drawer>[] _drawers;
 
 
 
@@ -123,7 +126,7 @@ public partial class Camera : Thing
         ? ref _perspective .ProjectionMatrix
         : ref _orthographic.ProjectionMatrix;
 
-    public IEnumerable<Drawer> Drawers => _drawers.Values;
+    public IEnumerable<IEnumerable<Drawer>> Drawers => _drawers.AsEnumerable().Select(cat => cat.Values);
 
 
     public Camera(
@@ -137,8 +140,12 @@ public partial class Camera : Thing
         // if there is a parent, use it, otherwise create a space.
         _space = parent == null ? new Space(thing: this) : new Space(parent: parent);
         _identifier = identifier ?? GUID.ToString();
-        
-        _drawers = new ConcurrentDictionary<Guid, Drawer>();
+
+        _drawers = new ConcurrentDictionary<Guid, Drawer>[3]; // 3 subpasses: gbuffer, lit and debug append
+        for (int i = 0; i < 3; i++)
+        {
+            _drawers[i] = new ConcurrentDictionary<Guid, Drawer>();
+        }
 
         if (!_cameras.TryAdd(_identifier, this))
         {
@@ -271,7 +278,7 @@ public partial class Camera : Thing
     
     public RenderTarget RenderImmediate(u32 frameIndex, Action? wait = null)
     {
-        ThrowIfDeleted();
+        if (IsDeleted) return null!;
         
         wait?.Invoke();
         
@@ -290,7 +297,12 @@ public partial class Camera : Thing
         
         using (CommandRecorder recorder = new(cmd, CommandBufferUsageFlags.OneTimeSubmit))
         {
-            pipeline.CmdRender(camera: this, frameIndex, recorder, Drawers);
+            IEnumerable<Drawer>[] groups = new IEnumerable<Drawer>[3];
+            for (i32 i = 0; i < 3; i++)
+            {
+                groups[i] = _drawers[i].Values;
+            }
+            pipeline.CmdRender(camera: this, frameIndex, recorder, groups);
         }
 
         vk.Device device = VK.Device;
@@ -308,16 +320,16 @@ public partial class Camera : Thing
     public RenderTarget RenderImmediate(Action? wait = null) => RenderImmediate(Graphics.FrameIndex, wait);
 
 
-    internal void AddDrawer(Drawer drawer)
+    internal void AddDrawer(Drawer drawer, u32 pass = 0)
     {
         ThrowIfDeleted();
-        _drawers.TryAdd(drawer.GUID, drawer);
+        _drawers[pass].TryAdd(drawer.GUID, drawer);
     }
 
-    internal void RemoveDrawer(Drawer drawer)
+    internal void RemoveDrawer(Drawer drawer, u32 pass = 0)
     {
         ThrowIfDeleted();
-        _drawers.TryRemove(drawer.GUID, out _);
+        _drawers[pass].TryRemove(drawer.GUID, out _);
     }
 
     private void Resize()

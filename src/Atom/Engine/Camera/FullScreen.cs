@@ -39,10 +39,10 @@ public class FullScreen : IDisposable
     public void SetSampledImage(string name, Texture texture, u32 frameIndex = 0) 
         => _material.WriteImage<IFragmentModule>(name, texture, frameIndex: frameIndex);
 
-    public void CmdDraw(CommandRecorder recorder, Silk.NET.Maths.Vector2D<u32> extent, u32 frameIndex)
+    public void CmdDraw(CommandRecorder.RenderPassRecorder renderPassRecorder, Silk.NET.Maths.Vector2D<u32> extent, u32 frameIndex)
     {
-        _material.CmdBindMaterial(recorder.CommandBuffer, extent, 0);
-        recorder.Draw(vertexCount: 3);
+        _material.CmdBindMaterial(renderPassRecorder.CommandBuffer, extent, 0);
+        renderPassRecorder.Draw(vertexCount: 3);
     }
 
     public void Delete()

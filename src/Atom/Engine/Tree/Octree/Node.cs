@@ -36,6 +36,7 @@ public abstract class Node
 
 public class Node<T> : Node
 {
+    // Structure data
     private             T                          _data        ;
     private             Node<T>[]?                 _branches    ;
     private readonly    u128                       _location    ;
@@ -57,13 +58,13 @@ public class Node<T> : Node
 
     public u8 LocalLocation => (u8)(_location.Low & LOCATION_MASK);
 
-    public u128 ParentLocation => _location >> (i32)Octree<T>.DIMENSION;
+    public u128 ParentLocation => _location >> (i32)Octree.DIMENSION;
     
     public Node<T> Parent
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)] get
         {
-            // if parent is null, then user fault not to have checked for HasParent before.
+            // if parent is null, then user's fault not to have checked for HasParent before.
             // to be as fast as possible, NO NULL CHECK!!!!!!
             _parent!.TryGetTarget(out Node<T>? parent);
             return parent!;
@@ -74,7 +75,10 @@ public class Node<T> : Node
     
     public Node<T> this[char branchName] => _branches![CHAR_LOC_MAP[branchName - 'A']];
     
-    public event Action<Node<T>>? OnNodeDelete;
+    public event Action<Node<T>>? OnDelete;
+    public event Action<Node<T>> OnCreate;
+
+    public event Action<Node<T>, Node<T>[]>? OnSplit;
     
     public Node() // root node
     {
@@ -90,8 +94,13 @@ public class Node<T> : Node
         
         _location = (parent._location << 3) | branchIndex;
     }
+
+    internal void TriggerOnCreate()
+    {
+        OnCreate(this);
+    }
     
-    ~Node() => OnNodeDelete?.Invoke(this);
+    ~Node() => OnDelete?.Invoke(this);
 
     public override bool Equals(object? obj) => obj is Node<T> node && node._location.Equals(_location);
 
@@ -108,13 +117,25 @@ public class Node<T> : Node
 
         return builder.ToString();
     }
+    public string ToString(bool doColor)
+    {
+        if (Location == 1) 
+            return "Root";
+        
+        StringBuilder builder = new(capacity: (i32)Depth);
+        for (u32 i = 1; i < Depth + 1; i++)
+            builder.Append(LOC_CHAR_MAP[BranchIndexAtDepth(i)]);
+
+        return builder.ToString();
+    }
 
     private u32 DepthInternal()
     {
-        for (i32 i = 126, depth = 42; i >= 0; i -= 3, --depth)
+        u128 one_u128 = new(high: 0, low: 1);
+        for (i32 depth = (i32)Octree.MAX_SUBDIVISIONS; depth >= 0; --depth)
         {
-            u128 loc = _location >> i;
-            if (loc == 1) return (u32)depth;
+            u128 loc = _location >> (depth * 3);
+            if (loc == one_u128) return (u32)depth;
         }
 
         throw new Exception($"Location {_location} isn't valid.");
@@ -122,7 +143,7 @@ public class Node<T> : Node
 
     private bool LeafInternal() => (_location >> 126).Low == 1;
 
-    public u32 BranchIndexAtDepth(u32 depth) => (u32)(_location >> (i32)((Depth - depth) * Octree<T>.DIMENSION)).Low & LOCATION_MASK;
+    public u32 BranchIndexAtDepth(u32 depth) => (u32)(_location >> (i32)((Depth - depth) * Octree.DIMENSION)).Low & LOCATION_MASK;
 
     public void Split()
     {
@@ -138,11 +159,13 @@ public class Node<T> : Node
             return;
         }
 
-        _branches = new Node<T>[Octree<T>.BRANCH_COUNT];
-        for (u32 i = 0; i < Octree<T>.BRANCH_COUNT; i++)
+        _branches = new Node<T>[Octree.BRANCH_COUNT];
+        for (u32 i = 0; i < Octree.BRANCH_COUNT; i++)
         {
             _branches[i] = new Node<T>(parent: this, i);
         }
+        
+        OnSplit?.Invoke(this, _branches);
     }
 
     public void Merge() => _branches = null;
@@ -171,7 +194,7 @@ public class Node<T> : Node
 
         byte mask = 0b000;
         
-        Node<T>? NegativeSubroutine()
+        Node<T>? negative_subroutine()
         {
             if ((locloc & mask) == mask) return Parent._branches![locloc & ~mask];
             
@@ -181,7 +204,7 @@ public class Node<T> : Node
             return node._branches![locloc | mask];
         }
 
-        Node<T>? PositiveSubroutine()
+        Node<T>? positive_subroutine()
         {
             if ((locloc & mask) == 0) return Parent!._branches![locloc | mask];
             
@@ -196,27 +219,27 @@ public class Node<T> : Node
         switch (direction)
         {
             case Directions.Left:
-                routine = NegativeSubroutine;
+                routine = negative_subroutine;
                 mask = 0b100;
                 break;
             case Directions.Right:
-                routine = PositiveSubroutine;
+                routine = positive_subroutine;
                 mask = 0b100;
                 break;
             case Directions.Down:
-                routine = NegativeSubroutine;
+                routine = negative_subroutine;
                 mask = 0b010;
                 break;
             case Directions.Up:
-                routine = PositiveSubroutine;
+                routine = positive_subroutine;
                 mask = 0b010;
                 break;
             case Directions.Backward:
-                routine = NegativeSubroutine;
+                routine = negative_subroutine;
                 mask = 0b001;
                 break;
             case Directions.Forward:
-                routine = PositiveSubroutine;
+                routine = positive_subroutine;
                 mask = 0b001;
                 break;
             default:

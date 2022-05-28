@@ -110,6 +110,16 @@ public class CommandRecorder : IDisposable
                 VK.API.CmdBeginRenderPass(CommandBuffer, in pass_info, subpassContents);
             }
         }
+        
+        public void DrawIndexed(u32 indexCount, u32 instanceCount = 1U, u32 firstIndex = 0U, i32 vertexOffset = 0, u32 firstInstance = 0U)
+        {
+            VK.API.CmdDrawIndexed(CommandBuffer, indexCount, 1U, 0U, 0, 0U);
+        }
+        
+        public void Draw(u32 vertexCount, u32 instanceCount = 1U, u32 firstVertex = 0U, u32 firstInstance = 0U)
+        {
+            VK.API.CmdDraw(CommandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void NextSubpass(vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
@@ -239,10 +249,5 @@ public class CommandRecorder : IDisposable
             pRegions      : whole_region_base_mip,
             filter        : filter
         );
-    }
-    
-    public void Draw(u32 vertexCount, u32 instanceCount = 1U, u32 firstVertex = 0U, u32 firstInstance = 0U)
-    {
-        VK.API.CmdDraw(CommandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
     }
 }

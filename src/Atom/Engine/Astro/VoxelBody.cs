@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Atom.Engine.Shader;
+using Atom.Engine.Tree;
 using Atom.Game.Config;
 using Silk.NET.Maths;
 using Atom.Engine.Vulkan;
@@ -11,7 +12,7 @@ namespace Atom.Engine.Astro;
 
 public class VoxelBody : CelestialBody
 {
-    private static ReadOnlyMesh<u32> _mesh;
+    private static ReadOnlyMesh<GVertex, u32> _mesh;
 
     private IRasterShader _shader;
     private RasterizedMaterial _material;
@@ -42,10 +43,10 @@ public class VoxelBody : CelestialBody
     public f64 Rotation { get; private set; } = 0.0D;
     public f64 Day { get; set; } = 0.0D;
 
-    public ReadOnlyMesh<u16> SimplifiedMesh { get; set; }
+    public ReadOnlyMesh<GVertex, u16> SimplifiedMesh { get; set; }
 
 
-    
+    public readonly Grid Grid;
 
 
     struct VertexSettings
@@ -158,7 +159,20 @@ public class VoxelBody : CelestialBody
         _drawer = new Drawer(CmdDraw, GetMeshesBounds, Camera.World!);
 
 #endregion
-        
+
+        Grid = new Grid(this);
+        Grid.SpawnTerrain();
+        Grid.Root.Split();
+
+        if(Grid.TryFindNode(0b1010, out Node<Chunk>? chunk))
+        {
+            Log.Info("Found node |010|");
+        }
+        else
+        {
+            Log.Info("Cannot find node |010|");
+        }
+
         MakeReady();
     }
 
@@ -232,6 +246,8 @@ public class VoxelBody : CelestialBody
         {
             satellite.Dispose();
         }
+        
+        Grid.Dispose();
         
         _drawer.Dispose();          
         

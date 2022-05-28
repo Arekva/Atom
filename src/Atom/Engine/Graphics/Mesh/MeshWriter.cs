@@ -1,10 +1,14 @@
 ﻿using System.Runtime.CompilerServices;
 using Atom.Engine.Vulkan;
+using Silk.NET.Vulkan;
+using BufferUsageFlags = Atom.Engine.Vulkan.BufferUsageFlags;
+using MemoryPropertyFlags = Atom.Engine.Vulkan.MemoryPropertyFlags;
 
 namespace Atom.Engine;
 
-public class MeshWriter<TIndex> : IDisposable 
-    where TIndex : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
+public class MeshWriter<TVertex, TIndex> : IDisposable 
+    where TVertex : unmanaged
+    where TIndex  : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
 {
     private readonly vk.Device         _device        ;
     private readonly vk.PhysicalDevice _physicalDevice;
@@ -31,7 +35,7 @@ public class MeshWriter<TIndex> : IDisposable
 
 
     public MeshWriter(
-        u64 vertexCount, u64 indexCount, f64 boundingSphere,
+        u64 vertexCount, u64 indexCount, f64 boundingSphere = 1.0D,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
     {
         _device         = device         ?? VK.Device            ;
@@ -42,7 +46,7 @@ public class MeshWriter<TIndex> : IDisposable
 
         BoundingSphere = boundingSphere;
         
-        u64 vertex_data_size = _vertexSize  = (u64)Unsafe.SizeOf<GVertex>() * vertexCount;
+        u64 vertex_data_size = _vertexSize  = (u64)Unsafe.SizeOf<TVertex>() * vertexCount;
         u64 index_data_size  = _indicesSize = (u64)Unsafe.SizeOf<TIndex>()  *  indexCount;
         u64 data_size        = vertex_data_size + index_data_size;
 
@@ -96,4 +100,23 @@ public class MeshWriter<TIndex> : IDisposable
     }
 
     ~MeshWriter() => Dispose();
+}
+
+public class MeshWriter<TIndex> : MeshWriter<GVertex, TIndex>
+    where TIndex : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
+{
+    public MeshWriter(u64 vertexCount, u64 indexCount, f64 boundingSphere = 1.0D, 
+        Device? device = null, PhysicalDevice? physicalDevice = null) 
+        : base(vertexCount, indexCount, boundingSphere, device, physicalDevice)
+    {
+    }
+}
+
+public class MeshWriter : MeshWriter<u32>
+{
+    public MeshWriter(u64 vertexCount, u64 indexCount, f64 boundingSphere = 1.0D, 
+        Device? device = null, PhysicalDevice? physicalDevice = null) 
+        : base(vertexCount, indexCount, boundingSphere, device, physicalDevice)
+    {
+    }
 }

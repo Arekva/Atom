@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using Atom.Engine.Vulkan;
 
@@ -10,9 +11,13 @@ public static class StructExtension
         new(Unsafe.AsPointer(ref @struct), length: 1);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static unsafe Span<T> AsSpan<T>(this nint @ptr, i32 count) where T : unmanaged =>
+        new((T*)ptr, length: count);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static BufferSubresource CreateVulkanMemory<T>(
         ref this Span<T> span, vk.Device device, BufferUsageFlags usages, MemoryType type)
-        where T : unmanaged => CreateVulkanMemory<T>(ref span, device, usages, Unsafe.As<MemoryType, MemoryPropertyFlags>(ref type));
+        where T : unmanaged => CreateVulkanMemory(ref span, device, usages, Unsafe.As<MemoryType, MemoryPropertyFlags>(ref type));
     
     public static unsafe BufferSubresource CreateVulkanMemory<T>(
         ref this Span<T> span, vk.Device device, BufferUsageFlags usages, MemoryPropertyFlags properties) where T : unmanaged

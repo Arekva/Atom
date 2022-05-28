@@ -3,6 +3,7 @@ using Silk.NET.Input;
 
 using Atom.Engine;
 using Atom.Engine.Astro;
+using Atom.Engine.Tree;
 
 
 namespace Atom.Game;
@@ -22,13 +23,14 @@ public class ClassicPlayerController : Thing
     
     private f64 _moveSpeed  = 1.42D;
     private f64 _runSpeed   = 3.61D;
-    private f64 _slowSpeed  = 0.2D ;
+    private f64 _slowSpeed  = 0.2D *1E3D;
 
     public static ClassicPlayerController Singleton { get; private set; }
 
 
     private f64 _resolutionModifier = 1.0D;
 
+    private Location _debugLocation;
 
     public ClassicPlayerController() : base()
     {
@@ -50,8 +52,12 @@ public class ClassicPlayerController : Thing
 
     public void Teleport(VoxelBody body)
     {
-        Location = body.CelestialSpace.Location + body.RotatedSpace.Up * body.Radius;
+        Location = body.CelestialSpace.Location + body.RotatedSpace.Up * body.Radius + _debugLocation;
         _camera.Location = Location + Vector3D<f64>.UnitY * _eyesHeight;
+
+        u128 player_grid_location = body.Grid.GetLocation((Location - body.CelestialSpace.Location).Position);
+        body.Grid.TryFindNode(player_grid_location, out Node<Chunk> node);
+        //Log.Trace(node.ToString());
     }
 
     protected internal override void Frame()
@@ -67,8 +73,6 @@ public class ClassicPlayerController : Thing
             Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitY, _angles.Y * AMath.DegToRad) *
             Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, _angles.X * AMath.DegToRad) ;
         
-        /*
-
         Vector3D<f64> move_forward = _camera.Space.Forward;
         move_forward.Y = 0.0D;
         Vector3D<f64> forward = Vector3D.Normalize(move_forward);
@@ -91,9 +95,10 @@ public class ClassicPlayerController : Thing
         if (dir != Vector3D<f64>.Zero) dir = Vector3D.Normalize(dir);
 
         f64 speed = Keyboard.IsPressed(Key.ShiftLeft) ? _runSpeed : Keyboard.IsPressed(Key.ControlLeft) ? _slowSpeed : _moveSpeed;
-        
-        Location += dir * delta_time * speed;
 
+        _debugLocation += dir * delta_time * speed;
+
+/*
         _camera.Location = Location + Vector3D<f64>.UnitY * _eyesHeight;
 */
 

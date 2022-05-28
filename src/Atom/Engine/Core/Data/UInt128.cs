@@ -50,6 +50,7 @@ public struct UInt128 : IFormattable, IEquatable<UInt128>//, IComparable<UInt128
     public static implicit operator UInt128(in ulong @ulong) => new(0, @ulong);
 
 
+    public bool Equals(object o) => o is UInt128 u128 && Equals(u128);
     public bool Equals(UInt128 other) => other._a == _a && other._b == _b;
 
     public override int GetHashCode() => HashCode.Combine(_a, _b);

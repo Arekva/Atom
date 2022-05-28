@@ -100,9 +100,9 @@ public class Vulkan
             }
         }
 
-        builder.Append("\n*Message*   : `");
+        builder.Append("\n*Message*   : ");
         builder.Append(message);
-        builder.Append("`\n");
+        builder.Append("\n");
         if (link != null)
         {
             builder.Append("\n*Spec. Link*: |");

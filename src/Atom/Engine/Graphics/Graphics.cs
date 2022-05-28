@@ -4,7 +4,15 @@ public static class Graphics
 {
     public static vk.RenderPass MainRenderPass { get; set; }
 
+    
+    
     public static uint MainSubpass { get; set; } = 0;
+    
+    public static uint LitSubpass { get; set; } = 1;
+    
+    public static uint AppendSubpass { get; set; } = 2;
+    
+    
 
     public const uint MAX_FRAMES_COUNT = 3; // triple buffering
 

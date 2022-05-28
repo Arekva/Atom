@@ -1,0 +1,13 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "Grid Debug",
+    "Description": "Octree debugging.",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+
+    "Stages": 
+    {
+        "Vertex": "Modules/grid_debug.vert.spv",
+        "Fragment": "Modules/grid_debug.frag.spv"
+    }
+}

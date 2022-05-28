@@ -10,7 +10,7 @@ struct CameraVP {
 };
 
 // All the cameras' view-projection matrices
-layout(binding = 1) buffer CameraMatrices {
+layout(set = 0, binding = 1) buffer CameraMatrices {
     CameraVP matrices[MAX_CAMERA_COUNT];
 } _cameraMatrices;
 

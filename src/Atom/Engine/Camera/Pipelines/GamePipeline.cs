@@ -136,7 +136,7 @@ public class GamePipeline : IPipeline
         }
     }
 
-    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, IEnumerable<Drawer> drawers)
+    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, ReadOnlySpan<IEnumerable<Drawer>> drawers)
     {
         if (_resolution.X == 0 || _resolution.Y == 0) return; // do not attempt to draw anything.
         
@@ -155,7 +155,7 @@ public class GamePipeline : IPipeline
             // G-Buffer
             Span<Drawer.DrawRange> ranges = _drawRanges;
             
-            foreach (Drawer drawer in drawers)
+            foreach (Drawer drawer in drawers[0])
             {
                 _culler.CullPerspective(camera.Perspective.FieldOfView, _resolution, 
                     drawer.GetMeshes(), // get all mesh data
@@ -170,12 +170,18 @@ public class GamePipeline : IPipeline
             // use planet lights + star lights for shadowed directional light
             // ambient light is got from reflection cubemap
             
-            _gBufferLit.CmdDraw(recorder, _resolution, frameIndex);
+            _gBufferLit.CmdDraw(draw_pass, _resolution, frameIndex);
+            
+            draw_pass.NextSubpass();
+            // append world debug ui
+
+
+            foreach (Drawer drawer in drawers[2])
+            {
+                // no culling on debug stuff.
+                drawer.Draw(camera, draw_pass, ReadOnlySpan<Drawer.DrawRange>.Empty, _resolution, frameIndex);
+            }
         }
-        
-        
-        
-        
     }
 
     

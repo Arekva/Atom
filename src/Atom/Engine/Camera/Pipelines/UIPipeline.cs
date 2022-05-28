@@ -14,7 +14,7 @@ public class UIPipeline : IPipeline
     }
     
 
-    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, IEnumerable<Drawer> drawers)
+    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, ReadOnlySpan<IEnumerable<Drawer>> drawers)
     {
         
     }

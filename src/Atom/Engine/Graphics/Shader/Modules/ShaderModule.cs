@@ -153,7 +153,7 @@ public abstract class ShaderModule : IShaderModule
         {
             DescriptorSetLayout = new SlimDescriptorSetLayout(
                 device: Device,
-                bindings: bindings, 
+                bindings: bindings,
                 flags: 0
             );
         }

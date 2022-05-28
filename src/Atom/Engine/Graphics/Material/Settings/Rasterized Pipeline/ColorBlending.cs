@@ -6,7 +6,7 @@ namespace Atom.Engine.GraphicsPipeline;
 
 public class ColorBlending : IRasterSettings, IDisposable
 {
-    private const ColorComponentFlags ALL_FLAGS =
+    public const ColorComponentFlags ALL_FLAGS =
         ColorComponentFlags.ColorComponentRBit | ColorComponentFlags.ColorComponentGBit |
         ColorComponentFlags.ColorComponentBBit | ColorComponentFlags.ColorComponentABit;
 

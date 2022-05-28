@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Silk.NET.Maths;
 
 namespace Atom.Engine;
 
@@ -42,9 +43,39 @@ public static class AMath
         y = (index / width)%height;
         z = index / (width*height);
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void To3D(u32 index, u32 width, u32 height, out u32 x, out u32 y, out u32 z)
+    {
+        x = index % width;
+        y = (index / width)%height;
+        z = index / (width*height);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void To3D(i64 index, i64 width, i64 height, out i64 x, out i64 y, out i64 z)
+    {
+        x = index % width;
+        y = (index / width)%height;
+        z = index / (width*height);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void To3D(u64 index, u64 width, u64 height, out u64 x, out u64 y, out u64 z)
+    {
+        x = index % width;
+        y = (index / width)%height;
+        z = index / (width*height);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void To3D(u64 index, u64 width, u64 height, out Vector3D<u64> indices)
+    {
+        indices.X = index % width;
+        indices.Y = (index / width)%height;
+        indices.Z = index / (width*height);
+    }
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Map(double value, double oldLow, double oldHigh, double newLow, double newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3D<f64> Map(Vector3D<f64> value, Vector3D<f64> oldLow, Vector3D<f64> oldHigh, Vector3D<f64> newLow, Vector3D<f64> newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Map(float value, float oldLow, float oldHigh, float newLow, float newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);

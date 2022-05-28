@@ -1,5 +1,6 @@
 ﻿//global using static Atom.Engine.Vulkan;
 
+using System.Runtime.CompilerServices;
 using Silk.NET.Vulkan;
 using AtomQueue = Atom.Engine.Queue;
 
@@ -256,10 +257,25 @@ public static class VK
                 queueCreateInfoCount   : (u32)queues.Length             ,
                 pQueueCreateInfos      : p_queues                       
             );
+            
             info.AddNext(out vk.PhysicalDeviceFeatures2 enabled_features);
-            enabled_features.Features = new vk.PhysicalDeviceFeatures(samplerAnisotropy: true);
+            enabled_features.Features = new vk.PhysicalDeviceFeatures(
+                samplerAnisotropy: true,
+                fillModeNonSolid : true,
+                #if DEBUG
+                wideLines        : true
+                #endif
+            );
+            
             enabled_features.AddNext(out vk.PhysicalDeviceTimelineSemaphoreFeatures timeline_features);
             timeline_features.TimelineSemaphore = true;
+
+            enabled_features.AddNext(out vk.PhysicalDeviceIndexTypeUint8FeaturesEXT index_uint8_features);
+            index_uint8_features.IndexTypeUint8 = true;
+            
+            
+            
+            
             
             API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
 
@@ -370,5 +386,34 @@ public static class VK
             }
         }
         throw new Exception("No format is supported with this tiling.");
+    }
+    
+    public static BufferSubresource CreateMemory<T>(u64 count, BufferUsageFlags usages, MemoryPropertyFlags properties, vk.Device? device = null) where T : unmanaged
+    {
+        vk.Device used_device = device ?? VK.Device;
+        
+        u64 buffer_size = count * (u64)Unsafe.SizeOf<T>();
+
+        u32 queue_fam = 0;
+        
+        SlimBuffer buffer = new (used_device,
+            buffer_size,
+            usage: usages,
+            sharingMode: vk.SharingMode.Exclusive, queue_fam.AsSpan()
+        );
+        buffer.GetMemoryRequirements(used_device, out vk.MemoryRequirements reqs);
+
+        VulkanMemory memory = new (
+            device: used_device,
+            size: reqs.Size,
+            VK.GPU.PhysicalDevice.FindMemoryType(
+                typeFilter: reqs.MemoryTypeBits,
+                properties: properties
+            )
+        );
+
+        buffer.BindMemory(memory.Whole);
+        
+        return new BufferSubresource(buffer, memory.Whole);
     }
 }

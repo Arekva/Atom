@@ -13,7 +13,7 @@ public abstract class ReadOnlyMesh : AtomObject
         { typeof(u32), IndexType.u32    },
     };
 
-    public static ReadOnlyMesh<TIndex> Load<TIndex>(
+    public static ReadOnlyMesh<GVertex, TIndex> Load<TIndex>(
         string path, BufferSubresource? targetResource = null,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
         where TIndex : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
@@ -45,12 +45,23 @@ public abstract class ReadOnlyMesh : AtomObject
             );
         }
         
-        return new ReadOnlyMesh<TIndex>(writer, targetResource, device, physicalDevice);
+        return new ReadOnlyMesh<GVertex, TIndex>(writer, targetResource, device, physicalDevice);
     }
 }
 
-public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
+/*public class ReadOnlyMesh<TIndex> : ReadOnlyMesh<GVertex, TIndex>
     where TIndex : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
+{
+    private ReadOnlyMesh(
+        BufferSubresource targetResource,
+        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
+        vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null) : base(targetResource, vertices, indices,
+        boundingSphere, device, physicalDevice) { }
+}*/
+
+public class ReadOnlyMesh<TVertex, TIndex> : ReadOnlyMesh
+    where TVertex : unmanaged
+    where TIndex  : unmanaged, IFormattable, IEquatable<TIndex>, IComparable<TIndex>
 {
     /* Type validation   */
     static ReadOnlyMesh()
@@ -87,7 +98,7 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
     /* Constructors      */
     private ReadOnlyMesh(
         bool isMemoryOwned,
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
+        ReadOnlySpan<TVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
     {
         _isMemoryOwned = isMemoryOwned;
@@ -104,15 +115,15 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
     }
 
     public unsafe ReadOnlyMesh(
-        MeshWriter<TIndex> writer, BufferSubresource? targetResource = null, 
+        MeshWriter<TVertex, TIndex> writer, BufferSubresource? targetResource = null, 
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
     : this (
         isMemoryOwned : targetResource == null, 
-        vertices      : new ReadOnlySpan<GVertex>((void*)writer.Vertices, (i32)writer.VertexCount), 
+        vertices      : new ReadOnlySpan<TVertex>((void*)writer.Vertices, (i32)writer.VertexCount), 
         indices       : new ReadOnlySpan<TIndex> ((void*)writer.Indices , (i32)writer.IndexCount ),
         boundingSphere: writer.BoundingSphere)
     {
-        u64 vertex_data_size = (u64)Unsafe.SizeOf<GVertex>() * writer.VertexCount;
+        u64 vertex_data_size = (u64)Unsafe.SizeOf<TVertex>() * writer.VertexCount;
         u64 index_data_size  = (u64)Unsafe.SizeOf<TIndex>()  *  writer.IndexCount;
         u64 data_size        = vertex_data_size + index_data_size;
         
@@ -153,7 +164,8 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
             u64 data_alignment = buffer_requirements.Alignment;
 
             const u64 VERTEX_OFFSET = 0UL;
-            index_offset            = AMath.Align(VERTEX_OFFSET + vertex_data_size, data_alignment);
+            index_offset            = VERTEX_OFFSET + vertex_data_size; // alignment does shit
+                //AMath.Align(VERTEX_OFFSET + vertex_data_size, data_alignment);
 
             u64 buffer_data_size    = AMath.Align(index_offset + index_data_size, data_alignment);
 
@@ -228,7 +240,7 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
 
 
     public ReadOnlyMesh(
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere, BufferSubresource targetResource,
+        ReadOnlySpan<TVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere, BufferSubresource targetResource,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
         : this(isMemoryOwned: true, vertices, indices, boundingSphere, device, physicalDevice)
     {
@@ -236,7 +248,7 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
 
         _buffer = targetResource.Buffer;
 
-        u64 vertex_data_size = (u64)Unsafe.SizeOf<GVertex>() * (u64)vertices.Length;
+        u64 vertex_data_size = (u64)Unsafe.SizeOf<TVertex>() * (u64)vertices.Length;
         u64 index_data_size  = (u64)Unsafe.SizeOf<TIndex>()  * (u64) indices.Length;
 
         _buffer.GetMemoryRequirements(_device, out vk.MemoryRequirements buffer_requirements);
@@ -269,7 +281,7 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
     }
 
     public ReadOnlyMesh(
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
+        ReadOnlySpan<TVertex> vertices, ReadOnlySpan<TIndex> indices, f64 boundingSphere,
         vk.Device? device = null, vk.PhysicalDevice? physicalDevice = null)
         : this(isMemoryOwned: true, vertices, indices, boundingSphere, device, physicalDevice)
     {
@@ -368,10 +380,10 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
 
     private void CopyToDeviceBuffer(
         u64 dataSize, u64 indexOffset,
-        ReadOnlySpan<GVertex> vertices, ReadOnlySpan<TIndex> indices,
+        ReadOnlySpan<TVertex> vertices, ReadOnlySpan<TIndex> indices,
         BufferSubresource targetResource)
     {
-        u64 vertex_data_size = (u64)Unsafe.SizeOf<GVertex>() * (u64)vertices.Length;
+        u64 vertex_data_size = (u64)Unsafe.SizeOf<TVertex>() * (u64)vertices.Length;
         u64 index_data_size =  (u64)Unsafe.SizeOf<TIndex>()  * (u64) indices.Length;
 
         u32 queue_family_index = 0;
@@ -409,7 +421,7 @@ public class ReadOnlyMesh<TIndex> : ReadOnlyMesh
             {
                 byte* p_map = map;
 
-                fixed (GVertex* p_vertices = vertices) System.Buffer.MemoryCopy(
+                fixed (TVertex* p_vertices = vertices) System.Buffer.MemoryCopy(
                     source                : p_vertices      ,
                     destination           : p_map           ,
                     destinationSizeInBytes: dataSize        ,

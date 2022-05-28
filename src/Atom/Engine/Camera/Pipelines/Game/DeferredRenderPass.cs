@@ -137,6 +137,16 @@ internal static class DeferredRenderPass
                 g_depth_attachment
             }
         );
+        Subpass append_subpass = new(
+            colors: new[]
+            {
+                lit_attachment
+            },
+            depthStencils: new[]
+            {
+                g_depth_attachment
+            }
+        );
 #endregion
 
 #region Dependencies
@@ -159,6 +169,12 @@ internal static class DeferredRenderPass
                         PipelineStageFlags.EarlyFragmentTests    ,
             accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit
         );
+        DependencyInfo append_info = new(
+            subpass   : append_subpass                           ,
+            stageMask : PipelineStageFlags.ColorAttachmentOutput | 
+                        PipelineStageFlags.EarlyFragmentTests    ,
+            accessMask: vk.AccessFlags.AccessColorAttachmentWriteBit
+        );
         
         Dependency g_buffer_dependency = new(
             source     : external_info, 
@@ -168,18 +184,24 @@ internal static class DeferredRenderPass
             source     : g_buffer_info, 
             destination: lit_info
         );
+        Dependency append_dependency = new(
+            source     : lit_info, 
+            destination: append_info
+        );
 #endregion
 
         RenderPassBuilder builder = new(
             subpasses: new []
             {
                 g_buffer_subpass,
-                lit_subpass
+                lit_subpass,
+                append_subpass
             },
             dependencies: new []
             {
                 g_buffer_dependency,
-                lit_dependency
+                lit_dependency,
+                append_dependency
             }
         );
 

@@ -21,11 +21,12 @@ public class VulkanMemory : IDisposable
     public ulong Size { get; }
 
     public MemorySegment Whole { get; }
-    
-    
+
+
+    public VulkanMemory(u64 size, u32 memoryTypeIndex) : this(VK.Device, size, memoryTypeIndex) { }
 
     // todo: user friendly API, just pass a memorytype object/struct and get its type index
-    public unsafe VulkanMemory(vk.Device device, ulong size, uint memoryTypeIndex)
+    public VulkanMemory(vk.Device device, u64 size, u32 memoryTypeIndex)
     {
         Device = device;
         
@@ -40,7 +41,7 @@ public class VulkanMemory : IDisposable
         Whole = new MemorySegment(this, offset: 0UL, size);
     }
 
-    public ulong GetCapacity<T>() => Size / (ulong)Unsafe.SizeOf<T>();
+    public u64 GetCapacity<T>() => Size / (u64)Unsafe.SizeOf<T>();
     
     
     
@@ -48,10 +49,10 @@ public class VulkanMemory : IDisposable
 
     public MemorySegment Segment<T>(ulong start, ulong length)
     {
-        ulong sizeofT = (ulong)Unsafe.SizeOf<T>();
+        u64 sizeofT = (u64)Unsafe.SizeOf<T>();
         
-        ulong offset = start * sizeofT;
-        ulong size = length * sizeofT;
+        u64 offset = start * sizeofT;
+        u64 size = length * sizeofT;
         
         return new MemorySegment(this, offset, size);
     }

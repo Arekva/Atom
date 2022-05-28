@@ -14,5 +14,5 @@ public interface IPipeline : IDisposable
 
     public void Resize(Vector2D<u32> resolution, RenderTarget target);
 
-    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, IEnumerable<Drawer> drawers);
+    public void CmdRender(Camera camera, u32 frameIndex, CommandRecorder recorder, ReadOnlySpan<IEnumerable<Drawer>> drawers);
 }
