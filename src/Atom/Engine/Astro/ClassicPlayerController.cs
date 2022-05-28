@@ -21,9 +21,9 @@ public class ClassicPlayerController : Thing
 
     private f64 _mouseSpeed = 45.0D;
     
-    private f64 _moveSpeed  = 1.42D;
-    private f64 _runSpeed   = 3.61D;
-    private f64 _slowSpeed  = 0.2D *1E3D;
+    private f64 _moveSpeed  = /*1.42D*/  1E11D;
+    private f64 _runSpeed   = /*3.61D*/  1E13D;
+    private f64 _slowSpeed  = /*0.2D  */ 1E9D;
 
     public static ClassicPlayerController Singleton { get; private set; }
 
@@ -34,6 +34,7 @@ public class ClassicPlayerController : Thing
 
     public ClassicPlayerController() : base()
     {
+        {}
         if (Singleton != null!)
         {
             Delete();

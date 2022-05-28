@@ -58,5 +58,9 @@ public partial class Chunk
             SIZES[i] = Math.Pow(2, SCALE_COUNT - i - 1) * SIZE;
             SCALES[i] = SIZES[i] * 0.5D;
         }
+
+        {
+            
+        }
     }
 }

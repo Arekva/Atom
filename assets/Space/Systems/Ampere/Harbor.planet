@@ -10,7 +10,7 @@ Planet {
         Generator = Generators/Rocky.generator
 
         Parameters {
-            Radius = 40 m
+            Radius = 16300 km //
 
             Atmosphere {
                 Composition = {

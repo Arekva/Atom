@@ -76,14 +76,12 @@ public class Grid : Octree<Chunk>
         OnNodeCreated += CreateVoxel;
 
         _debugDrawer = new Drawer(DebugDraw, bounds: null, subpass: 2U);
-
-
-        // graphics
-        _debugShader = Shader.Shader.Load<RasterShader>("Atom.Space", "GridDebug"); //new("Atom.Space", "Debug", );
+        
+        _debugShader = Shader.Shader.Load<RasterShader>("Atom.Space", "GridDebug");
         
         _debugMaterial = new RasterizedMaterial(_debugShader, createPipeline: false, subpass: 2U);
         
-        
+
         // oh yes big "thicc" config
         _debugMaterial.Rasterizer = new Rasterizer(Rasterizer.Default);
         _debugMaterial.Rasterizer.CullMode = vk.CullModeFlags.CullModeFrontAndBack;
@@ -258,7 +256,7 @@ public class Grid : Octree<Chunk>
             Vector3D<f32> rel_pos_cam = (Vector3D<f32>)(body!.CelestialSpace.Location - Camera.World!.Location).Position;
 
             vertex_settings_map.AsSpan()[0].Model = 
-                Matrix4X4.Multiply(Matrix4X4.CreateScale((f32)body.Radius), Matrix4X4.Multiply(Matrix4X4.CreateTranslation(rel_pos_cam), Matrix4X4<f32>.Identity)); // write red for uniform buffer
+                Matrix4X4.Multiply(Matrix4X4.CreateScale((f32)Chunk.SCALES[0]), Matrix4X4.Multiply(Matrix4X4.CreateTranslation(rel_pos_cam), Matrix4X4<f32>.Identity)); // write red for uniform buffer
         }
         using (MemoryMap<FragmentSettings> fragment_settings_map = _debugFragmentSubresource.Segment.Map<FragmentSettings>())
         {
