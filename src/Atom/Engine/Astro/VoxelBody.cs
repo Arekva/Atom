@@ -162,7 +162,7 @@ public class VoxelBody : CelestialBody
 
         Grid = new Grid(this);
         Grid.SpawnTerrain();
-        Grid.Root.Split();
+        Grid.Root.Subdivide();
 
         if(Grid.TryFindNode(0b1010, out Node<Chunk>? chunk))
         {

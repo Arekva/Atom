@@ -8,7 +8,7 @@ public abstract class Node
 {
     public const u32 LOCATION_MASK = 0b111;
     
-    protected static readonly char[] LOC_CHAR_MAP =
+    public static readonly char[] LOC_CHAR_MAP =
     {
         'A', // 000 = 0 = -X -Y -Z = left  down backward (A)
         'E', // 001 = 1 = -X -Y +Z = left  down forward  (E)
@@ -20,7 +20,7 @@ public abstract class Node
         'H', // 111 = 7 = +X +Y +Z = right up   forward  (H)
     };
 
-    protected static readonly u32[] CHAR_LOC_MAP =
+    public static readonly u8[] CHAR_LOC_MAP =
     {
         0b000, // A 0 => 0
         0b100, // B 1 => 4
@@ -70,7 +70,30 @@ public class Node<T> : Node
             return parent!;
         }
     }
-    
+
+    public IEnumerable<Node<T>> SubNodes
+    {
+        get
+        {
+            if (HasBranches)
+            {
+                for (i32 i = 0; i < Octree.BRANCH_COUNT; i++)
+                {
+                    Node<T> branch = _branches![i];
+                    yield return branch;
+                    foreach (Node<T> sub_node in branch.SubNodes)
+                    {
+                        yield return sub_node;
+                    }
+                }
+            }
+            else
+            {
+                yield break;
+            }
+        }
+    }
+
     public Node<T> this[u32 branchIndex] => _branches![branchIndex];
     
     public Node<T> this[char branchName] => _branches![CHAR_LOC_MAP[branchName - 'A']];
@@ -78,7 +101,7 @@ public class Node<T> : Node
     public event Action<Node<T>>? OnDelete;
     public event Action<Node<T>> OnCreate;
 
-    public event Action<Node<T>, Node<T>[]>? OnSplit;
+    public event Action<Node<T>, Node<T>[]>? OnSubdivide;
     
     public Node() // root node
     {
@@ -91,8 +114,7 @@ public class Node<T> : Node
     public Node(Node<T> parent, u32 branchIndex)
     {
         _parent = new WeakReference<Node<T>>(parent);
-        
-        _location = (parent._location << 3) | branchIndex;
+        _location = (parent._location << (i32)Octree.DIMENSION) | new u128(0, branchIndex);
     }
 
     internal void TriggerOnCreate()
@@ -141,22 +163,22 @@ public class Node<T> : Node
         throw new Exception($"Location {_location} isn't valid.");
     }
 
-    private bool LeafInternal() => (_location >> 126).Low == 1;
+    private bool LeafInternal() => (_location >> (i32)(Octree.MAX_SUBDIVISIONS*Octree.DIMENSION)).Low == 1;
 
     public u32 BranchIndexAtDepth(u32 depth) => (u32)(_location >> (i32)((Depth - depth) * Octree.DIMENSION)).Low & LOCATION_MASK;
 
-    public void Split()
+    public Node<T>[]? Subdivide()
     {
         if (HasBranches)
         {
             Log.Warning("Cannot split node: it is already split.");
-            return;
+            return null;
         }
 
         if (IsLeaf)
         {
             Log.Warning("Cannot split node: it is leaf.");
-            return;
+            return null;
         }
 
         _branches = new Node<T>[Octree.BRANCH_COUNT];
@@ -165,7 +187,9 @@ public class Node<T> : Node
             _branches[i] = new Node<T>(parent: this, i);
         }
         
-        OnSplit?.Invoke(this, _branches);
+        OnSubdivide?.Invoke(this, _branches);
+
+        return _branches;
     }
 
     public void Merge() => _branches = null;

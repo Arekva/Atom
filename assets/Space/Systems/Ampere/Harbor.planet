@@ -30,7 +30,7 @@ Planet {
     }
     
     Rotation { 
-        Day = 86.4 s
+        Day = 0 s // 86.4 s
 
         Inclination {
             Obliquity      = 00.00 °
@@ -39,14 +39,14 @@ Planet {
     }
 
     Orbit {
-        Parent                   = Atom.Ampere.Ampere
+        Parent                   = Atom.AmpereSystem
         
-        SemiMajorAxis            = 1 AU
+        // SemiMajorAxis            = 1 AU
 
-        Eccentricity             = 0.00
-        Inclination              = 0.00 °
-        LongitudeOfAscendingNode = 0.00 °
-        ArgumentOfPeriapsis      = 0.00 °
-        MeanAnomaly              = 0.00 rad
+        // Eccentricity             = 0.00
+        // Inclination              = 0.00 °
+        // LongitudeOfAscendingNode = 0.00 °
+        // ArgumentOfPeriapsis      = 0.00 °
+        // MeanAnomaly              = 0.00 rad
     }
 }

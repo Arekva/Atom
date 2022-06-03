@@ -113,7 +113,7 @@ public class CommandRecorder : IDisposable
         
         public void DrawIndexed(u32 indexCount, u32 instanceCount = 1U, u32 firstIndex = 0U, i32 vertexOffset = 0, u32 firstInstance = 0U)
         {
-            VK.API.CmdDrawIndexed(CommandBuffer, indexCount, 1U, 0U, 0, 0U);
+            VK.API.CmdDrawIndexed(CommandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
         }
         
         public void Draw(u32 vertexCount, u32 instanceCount = 1U, u32 firstVertex = 0U, u32 firstInstance = 0U)

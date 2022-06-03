@@ -79,7 +79,7 @@ public static class Log
             skipFrames: 2, 
             needFileInfo: true
         );
-        string file = frame.GetFileName()!.Split('\\', '/').Last();
+        string file = frame.GetFileName()?.Split('\\', '/').Last() ?? "<unknown>";
         int line = frame.GetFileLineNumber();
 
         builder.Append(FormattedThreadInfo(levelInfo));

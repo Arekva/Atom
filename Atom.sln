@@ -1,10 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atom", "src/Atom/Atom.csproj", "{27567662-D89E-4210-A3FD-A455EED492F9}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32104.313
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Atom", "src\Atom\Atom.csproj", "{27567662-D89E-4210-A3FD-A455EED492F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPIRV-Cross", "src/SPIRV-Cross/SPIRV-Cross.csproj", "{3EE06F40-912F-43B9-9625-91FEADC48981}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPIRV-Cross", "src\SPIRV-Cross\SPIRV-Cross.csproj", "{3EE06F40-912F-43B9-9625-91FEADC48981}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeTest", "src\Test\ComputeTest\ComputeTest\ComputeTest.csproj", "{B4E3319C-38BE-4761-9BC8-3F44820734C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeTest", "src\Test\ComputeTest\ComputeTest\ComputeTest.csproj", "{B4E3319C-38BE-4761-9BC8-3F44820734C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,17 +15,23 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{27567662-D89E-4210-A3FD-A455EED492F9}.Debug|x64.ActiveCfg = Debug|x64
-		{27567662-D89E-4210-A3FD-A455EED492F9}.Debug|x64.Build.0 = Debug|x64
-		{27567662-D89E-4210-A3FD-A455EED492F9}.Release|x64.ActiveCfg = Release|x64
-		{27567662-D89E-4210-A3FD-A455EED492F9}.Release|x64.Build.0 = Release|x64
-		{3EE06F40-912F-43B9-9625-91FEADC48981}.Debug|x64.ActiveCfg = Debug|x64
-		{3EE06F40-912F-43B9-9625-91FEADC48981}.Debug|x64.Build.0 = Debug|x64
-		{3EE06F40-912F-43B9-9625-91FEADC48981}.Release|x64.ActiveCfg = Release|x64
-		{3EE06F40-912F-43B9-9625-91FEADC48981}.Release|x64.Build.0 = Release|x64
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.ActiveCfg = Debug|x64
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.Build.0 = Debug|x64
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.ActiveCfg = Release|x64
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.Build.0 = Release|x64
+		{27567662-D89E-4210-A3FD-A455EED492F9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{27567662-D89E-4210-A3FD-A455EED492F9}.Debug|x64.Build.0 = Debug|Any CPU
+		{27567662-D89E-4210-A3FD-A455EED492F9}.Release|x64.ActiveCfg = Release|Any CPU
+		{27567662-D89E-4210-A3FD-A455EED492F9}.Release|x64.Build.0 = Release|Any CPU
+		{3EE06F40-912F-43B9-9625-91FEADC48981}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3EE06F40-912F-43B9-9625-91FEADC48981}.Debug|x64.Build.0 = Debug|Any CPU
+		{3EE06F40-912F-43B9-9625-91FEADC48981}.Release|x64.ActiveCfg = Release|Any CPU
+		{3EE06F40-912F-43B9-9625-91FEADC48981}.Release|x64.Build.0 = Release|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.Build.0 = Debug|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.ActiveCfg = Release|Any CPU
+		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC33D4BB-2EFD-4478-994E-6C12546B1081}
 	EndGlobalSection
 EndGlobal

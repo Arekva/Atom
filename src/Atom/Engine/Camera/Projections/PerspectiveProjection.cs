@@ -11,7 +11,7 @@ namespace Atom.Engine;
 
 public class PerspectiveProjection : IProjection
 {
-    public  const f64            MIN_NEAR     = 0.001D               ;
+    public  const f64            MIN_NEAR     = f64.Epsilon          ;
     public  const f64            FAR          = f64.PositiveInfinity ;
  
     public  const f64            MIN_FOV      = f64.Epsilon          ;

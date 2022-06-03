@@ -20,14 +20,20 @@ public struct UInt128 : IFormattable, IEquatable<UInt128>//, IComparable<UInt128
     
     public static UInt128 operator >> (UInt128 n, int shift)
     {
-        shift %= sizeof(ulong) * 8 * 2;
-        return shift > sizeof(ulong) * 8 
-            ? new UInt128(0, n._a >> shift)
+        if (shift == 0) return n; // some weird stuff is happening when shifting at 0 and have
+                                  // _b as 0, _a[0] is being duplicated to _b[0]
+        
+        shift %= sizeof(ulong) * 8 * 2;  // get usable 0..128 range
+        return shift > sizeof(ulong) * 8
+            ? new UInt128(0, n._a >> (shift - sizeof(ulong) * 8))
             : new UInt128(n._a >> shift, (n._b >> shift) | (n._a << (sizeof(ulong) * 8 - shift)));
     }
     
     public static UInt128 operator <<(UInt128 n, int shift)
     {
+        if (shift == 0) return n; // some weird stuff is happening when shifting at 0 and have
+                                  // _b as 0, _a[0] is being duplicated to _b[0]
+        
         shift %= sizeof(ulong) * 8 * 2;
         return shift > sizeof(ulong) * 8 
             ? new UInt128(n._b << shift, 0) 

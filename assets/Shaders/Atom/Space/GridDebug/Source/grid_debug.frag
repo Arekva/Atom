@@ -1,12 +1,18 @@
 #version 460
 
+
+
+layout(location = 0) flat in uint in_instance_index;
+
 layout(location = 0) out vec4 out_color;
 
-layout(set = 1, binding = 3) uniform FragmentSettings {
-    vec3 color;
-} _fragmentSettings;
+
+
+layout(set = 1, binding = 0) buffer InstanceData {
+    vec4 colors[];
+} _instanceData;
 
 
 void main() {
-    out_color = vec4(_fragmentSettings.color, 1.0);
+    out_color = _instanceData.colors[in_instance_index];
 }

@@ -80,7 +80,7 @@ public class Space : AtomObject
 
     public Space(Space parent, string? name = "Space") : base(name)
     {
-        _thing = parent._thing ?? throw new ArgumentNullException(nameof(parent), "An upper space must be set");
+        _thing = parent?._thing ?? throw new ArgumentNullException(nameof(parent), "An upper space must be set");
 
         _parent = parent;
         _subspaces = new List<Space>();

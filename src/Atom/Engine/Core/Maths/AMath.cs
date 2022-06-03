@@ -74,11 +74,16 @@ public static class AMath
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Map(double value, double oldLow, double oldHigh, double newLow, double newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3D<f64> Map(Vector3D<f64> value, Vector3D<f64> oldLow, Vector3D<f64> oldHigh, Vector3D<f64> newLow, Vector3D<f64> newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Map(float value, float oldLow, float oldHigh, float newLow, float newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Location Map(Location value, Location oldLow, Location oldHigh, Location newLow, Location newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+    
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static u64 Align(ulong number, ulong alignment)

@@ -262,9 +262,9 @@ public static class VK
             enabled_features.Features = new vk.PhysicalDeviceFeatures(
                 samplerAnisotropy: true,
                 fillModeNonSolid : true,
-                #if DEBUG
+                //#if DEBUG
                 wideLines        : true
-                #endif
+                //#endif
             );
             
             enabled_features.AddNext(out vk.PhysicalDeviceTimelineSemaphoreFeatures timeline_features);

@@ -36,7 +36,7 @@ public class SpaceScene : AtomObject, IScene
         Log.Warning("System loaded.");
 
         _playerBody = (VoxelBody)_systems.First(s => s.Name == "Ampere System")
-            .Satellites.First(p => p.Name == "Ampere").Satellites.First(p => p.Name == "Harbor");
+            .Satellites./*First(p => p.Name == "Ampere").Satellites.*/First(p => p.Name == "Harbor");
 
         /*_systems = new List<CelestialSystem>();
         CelestialSystem system = new (ConfigFile.LoadInto<SystemConfig>("Assets/Space/Systems/Kerbol/Kerbol.system"));

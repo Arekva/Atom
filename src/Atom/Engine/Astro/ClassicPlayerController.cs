@@ -21,9 +21,11 @@ public class ClassicPlayerController : Thing
 
     private f64 _mouseSpeed = 45.0D;
     
-    private f64 _moveSpeed  = /*1.42D*/  1E11D;
-    private f64 _runSpeed   = /*3.61D*/  1E13D;
-    private f64 _slowSpeed  = /*0.2D  */ 1E9D;
+    private f64 _moveSpeed  = /*1.42D*/  1E9D;
+    private f64 _runSpeed   = /*3.61D*/  1E7D;
+    private f64 _slowSpeed  = /*0.2D  */ 1E5D;
+    private f64 _ultraSlowSpeed  = /*0.2D  */ 1E3D;
+    private f64 _omegaSlowSpeed  = /*0.2D  */ 3.61D;
 
     public static ClassicPlayerController Singleton { get; private set; }
 
@@ -44,7 +46,7 @@ public class ClassicPlayerController : Thing
         Singleton = this;
 
         _camera = new Camera(identifier: "default_world_viewport");
-        _camera.Perspective.Near = 0.01D;
+        _camera.Perspective.Near = 1.0D;
 
         Camera.World = _camera;
 
@@ -56,9 +58,7 @@ public class ClassicPlayerController : Thing
         Location = body.CelestialSpace.Location + body.RotatedSpace.Up * body.Radius + _debugLocation;
         _camera.Location = Location + Vector3D<f64>.UnitY * _eyesHeight;
 
-        u128 player_grid_location = body.Grid.GetLocation((Location - body.CelestialSpace.Location).Position);
-        body.Grid.TryFindNode(player_grid_location, out Node<Chunk> node);
-        //Log.Trace(node.ToString());
+        //Log.Trace(body.Grid.GetTreeLocation(Location).ToString());
     }
 
     protected internal override void Frame()
@@ -95,7 +95,12 @@ public class ClassicPlayerController : Thing
         
         if (dir != Vector3D<f64>.Zero) dir = Vector3D.Normalize(dir);
 
-        f64 speed = Keyboard.IsPressed(Key.ShiftLeft) ? _runSpeed : Keyboard.IsPressed(Key.ControlLeft) ? _slowSpeed : _moveSpeed;
+        f64 speed = 
+            Keyboard.IsPressed(Key.ShiftLeft)   ? _runSpeed :
+            Keyboard.IsPressed(Key.ControlLeft) ? _slowSpeed : 
+            Keyboard.IsPressed(Key.AltLeft) ? _ultraSlowSpeed :
+            Keyboard.IsPressed(Key.Space) ? _omegaSlowSpeed :
+            _moveSpeed;
 
         _debugLocation += dir * delta_time * speed;
 
