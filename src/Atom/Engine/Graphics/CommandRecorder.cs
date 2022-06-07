@@ -89,14 +89,21 @@ public class CommandRecorder : IDisposable
     {
         public SlimCommandBuffer CommandBuffer => Recorder.CommandBuffer;
         public readonly CommandRecorder Recorder;
+
+        public readonly Vector2D<u32> Resolution;
+        public readonly u32 FrameIndex;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe RenderPassRecorder(
             CommandRecorder recorder, vk.RenderPass renderPass,
             vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
+            u32 frameIndex,
             vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
         {
             Recorder = recorder;
+
+            Resolution = Unsafe.As<vk.Extent2D, Vector2D<u32>>(ref renderArea.Extent);
+            FrameIndex = frameIndex;
             
             fixed (vk.ClearValue* p_clear_values = clearValues)
             {
@@ -111,15 +118,15 @@ public class CommandRecorder : IDisposable
             }
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DrawIndexed(u32 indexCount, u32 instanceCount = 1U, u32 firstIndex = 0U, i32 vertexOffset = 0, u32 firstInstance = 0U)
         {
             VK.API.CmdDrawIndexed(CommandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Draw(u32 vertexCount, u32 instanceCount = 1U, u32 firstVertex = 0U, u32 firstInstance = 0U)
-        {
-            VK.API.CmdDraw(CommandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
-        }
+        => VK.API.CmdDraw(CommandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void NextSubpass(vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
@@ -137,8 +144,9 @@ public class CommandRecorder : IDisposable
 
     public RenderPassRecorder RenderPass(vk.RenderPass renderPass,
         vk.Rect2D renderArea, SlimFramebuffer framebuffer, ReadOnlySpan<vk.ClearValue> clearValues,
+        u32 frameIndex,
         vk.SubpassContents subpassContents = vk.SubpassContents.Inline)
-    => new (this, renderPass, renderArea, framebuffer, clearValues, subpassContents);
+    => new (this, renderPass, renderArea, framebuffer, clearValues, frameIndex, subpassContents);
     
     public void Blit(ImageSubresource source, ImageSubresource destination, 
         vk.Filter filter = vk.Filter.Nearest)

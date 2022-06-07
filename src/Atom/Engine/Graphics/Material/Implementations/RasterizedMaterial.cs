@@ -7,6 +7,17 @@ using Atom.Engine.GraphicsPipeline;
 
 namespace Atom.Engine;
 
+
+public static class RasterizedMaterialRenderPassRecorderExtension
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void BindMaterial(this CommandRecorder.RenderPassRecorder recorder, RasterizedMaterial material, Camera camera)
+    {
+        material.CmdBindMaterial(recorder.CommandBuffer, recorder.Resolution, camera.Index, recorder.FrameIndex);
+    }
+}
+
+
 public class RasterizedMaterial : Material, IRasterizedMaterial
 {
     public IRasterShader Shader { get; private set; }

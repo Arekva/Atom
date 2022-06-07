@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Silk.NET.Maths;
 
 namespace Atom.Engine;
 
@@ -131,6 +132,9 @@ public class MemoryMap<T> : IDisposable, IMemoryMap where T : unmanaged
             return new Span<T>((T*)Handle + start, Unsafe.As<u64, i32>(ref length_size));
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MemoryMap<O> As<O>() where O : unmanaged => new(Handle, Segment);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Span<T>(in MemoryMap<T> map) => map.AsSpan();

@@ -8,7 +8,7 @@ namespace Atom.Engine.Astro;
 
 
 
-public partial class Chunk
+public partial class Cell
 {
     public const u32 UNITS = 32;
     
@@ -50,7 +50,7 @@ public partial class Chunk
     public static readonly Quaternion<f64> ROTATION = Quaternion<f64>.Identity; // Local rotation from planet centre.
 
     
-    static Chunk()
+    static Cell()
     {
         // MAX_SUBDIVISIONS + 1 because we also count the root node.
         const u32 SCALE_COUNT = Octree.MAX_SUBDIVISIONS + 1;

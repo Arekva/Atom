@@ -51,6 +51,8 @@ public partial class Camera
 
     public static BufferSubresource ShaderData => _matricesSubresource;
 
+    public const string ShaderDataName = "_cameraMatrices";
+
 
 
     public static void Initialize(ReadOnlySpan<u32> queueFamilies, vk.Device? device = null)

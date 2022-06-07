@@ -1,0 +1,12 @@
+{
+    "FormatVersion": { "Major": 0, "Minor": 1, "Patch": 0 },
+
+    "Name": "Standard",
+    "Description": "Standard PBR deferred diffuse shader.",
+    "Version": { "Major": 1, "Minor": 0, "Patch": 0 },
+    "Stages": 
+    {
+        "Vertex": "Modules/static_procedural.vert.spv",
+        "Fragment": "Modules/static_procedural.frag.spv"
+    }
+}

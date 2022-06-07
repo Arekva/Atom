@@ -107,8 +107,6 @@ public class Node<T> : Node
     {
         _parent   = null;
         _location = 0b1; // end bit
-
-        DepthInternal();
     }
 
     public Node(Node<T> parent, u32 branchIndex)
@@ -181,15 +179,15 @@ public class Node<T> : Node
             return null;
         }
 
-        _branches = new Node<T>[Octree.BRANCH_COUNT];
+        Node<T>[] branches = new Node<T>[Octree.BRANCH_COUNT];
         for (u32 i = 0; i < Octree.BRANCH_COUNT; i++)
         {
-            _branches[i] = new Node<T>(parent: this, i);
+            branches[i] = new Node<T>(parent: this, i);
         }
         
-        OnSubdivide?.Invoke(this, _branches);
+        OnSubdivide?.Invoke(this, branches);
 
-        return _branches;
+        return _branches = branches;
     }
 
     public void Merge() => _branches = null;
@@ -197,7 +195,7 @@ public class Node<T> : Node
     public Node<T>[] GetNeighbours(Directions directions)
     {
         Node<T>? neighbor = GetNeighborSameOrGreaterSize(directions);
-        return GetNeighborSmallerSize(neighbor, directions);
+        return GetNeighborsSmallerSize(neighbor, directions);
     }
 
 #region Neighbours
@@ -272,7 +270,7 @@ public class Node<T> : Node
 
         return routine();
     }
-    private Node<T>[] GetNeighborSmallerSize(Node<T>? neighbor, Directions direction)
+    private Node<T>[] GetNeighborsSmallerSize(Node<T>? neighbor, Directions direction)
     {
         if (neighbor is null) return Array.Empty<Node<T>>();
         

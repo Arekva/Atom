@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Atom.Engine.Astro;
 using Silk.NET.GLFW;
 using Atom.Engine.Vulkan;
 
@@ -40,11 +41,13 @@ public static class Engine
         {
             u32 queue = 0;
             Camera.Initialize(queue.AsSpan());
+            VoxelBody.Initialize();
             //Draw  .Initialize();
         };
         VK.OnTerminate += () =>
         {
             //Draw  .Cleanup();
+            VoxelBody.Cleanup();
             Camera.Cleanup();
         };
         

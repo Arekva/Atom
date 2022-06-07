@@ -78,8 +78,12 @@ public class GamePipeline : IPipeline
         
 
         _workSubresources[0] = _workImage.CreateSubresource(arrayLayers: 0..1);
+        _workSubresources[0].View.SetName("GBuffer Albedo/Luminance");
         _workSubresources[1] = _workImage.CreateSubresource(arrayLayers: 1..2);
+        _workSubresources[1].View.SetName("GBuffer Normal/Roughness/Metalness");
         _workSubresources[2] = _workImage.CreateSubresource(arrayLayers: 2..3);
+        _workSubresources[2].View.SetName("GBuffer Position/Translucency");
+        
 
         Span<SlimImageView> views = stackalloc SlimImageView[5];
         views[0] = _workSubresources[0];
@@ -150,7 +154,7 @@ public class GamePipeline : IPipeline
         
         
         using (CommandRecorder.RenderPassRecorder draw_pass = 
-               recorder.RenderPass(_renderPass, draw_area, _framebuffer, _clearValues.Array))
+               recorder.RenderPass(_renderPass, draw_area, _framebuffer, _clearValues.Array, frameIndex))
         {
             // G-Buffer
             Span<Drawer.DrawRange> ranges = _drawRanges;
@@ -161,7 +165,7 @@ public class GamePipeline : IPipeline
                     drawer.GetMeshes(), // get all mesh data
                     ranges, out i32 culled_count);
                 
-                drawer.Draw(camera, draw_pass, ranges[..culled_count], _resolution, frameIndex);
+                drawer.Draw(camera, draw_pass, ranges[..culled_count]);
             }
             
             draw_pass.NextSubpass();
@@ -179,7 +183,7 @@ public class GamePipeline : IPipeline
             foreach (Drawer drawer in drawers[2])
             {
                 // no culling on debug stuff.
-                drawer.Draw(camera, draw_pass, ReadOnlySpan<Drawer.DrawRange>.Empty, _resolution, frameIndex);
+                drawer.Draw(camera, draw_pass, ReadOnlySpan<Drawer.DrawRange>.Empty);
             }
         }
     }

@@ -279,7 +279,7 @@ public partial class Camera : Thing
     public RenderTarget RenderImmediate(u32 frameIndex, Action? wait = null)
     {
         if (IsDeleted) return null!;
-        
+
         wait?.Invoke();
         
         ScreenResolution resolution = Resolution;

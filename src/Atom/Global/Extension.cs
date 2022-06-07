@@ -16,25 +16,28 @@ public static class StructExtension
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static BufferSubresource CreateVulkanMemory<T>(
-        ref this Span<T> span, vk.Device device, BufferUsageFlags usages, MemoryType type)
-        where T : unmanaged => CreateVulkanMemory(ref span, device, usages, Unsafe.As<MemoryType, MemoryPropertyFlags>(ref type));
+        ref this Span<T> span, BufferUsageFlags usages, MemoryType type, vk.Device? device = null)
+        where T : unmanaged => CreateVulkanMemory(ref span, usages, Unsafe.As<MemoryType, MemoryPropertyFlags>(ref type), device);
     
     public static unsafe BufferSubresource CreateVulkanMemory<T>(
-        ref this Span<T> span, vk.Device device, BufferUsageFlags usages, MemoryPropertyFlags properties) where T : unmanaged
+        ref this Span<T> span, BufferUsageFlags usages, MemoryPropertyFlags properties, vk.Device? device = null) where T : unmanaged
     {
         u64 buffer_size = (u64)span.Length * (u64)Unsafe.SizeOf<T>();
 
         u32 queue_fam = 0;
+
+        vk.Device used_device = device ?? VK.Device;
         
-        SlimBuffer buffer = new (device,
+        SlimBuffer buffer = new (
+            used_device,
             buffer_size,
             usage: usages,
             sharingMode: vk.SharingMode.Exclusive, queue_fam.AsSpan()
         );
-        buffer.GetMemoryRequirements(device, out vk.MemoryRequirements reqs);
+        buffer.GetMemoryRequirements(used_device, out vk.MemoryRequirements reqs);
 
         VulkanMemory memory = new (
-            device: device,
+            device: used_device,
             size: reqs.Size,
             VK.GPU.PhysicalDevice.FindMemoryType(
                 typeFilter: reqs.MemoryTypeBits,

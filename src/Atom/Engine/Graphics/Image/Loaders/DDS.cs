@@ -106,12 +106,12 @@ public static class DDS
 
         DXT10Header dxt10_header;
         stream.Read(buffer: new Span<u8>(&dxt10_header, length: Unsafe.SizeOf<DXT10Header>()));
-        
-        
+
+
         // Some sanitary header checking
         if (header.PixelFormat.FourCharCode != FourCharCodes.DX10)
         {
-            throw new NotImplementedException("Only DX10 DDS files are implemented.");
+            throw new NotImplementedException($"Only DX10 DDS files are implemented. (Tried to load {header.PixelFormat.FourCharCode})");
         }
 
         // Get Vulkan parameters

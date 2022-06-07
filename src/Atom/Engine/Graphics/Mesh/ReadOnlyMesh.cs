@@ -4,6 +4,19 @@ using Atom.Engine.Vulkan;
 
 namespace Atom.Engine;
 
+public static class ReadOnlyMeshRenderPassRecorderExtension
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void DrawIndexed(this CommandRecorder.RenderPassRecorder recorder, ReadOnlyMesh mesh, u32 instanceCount = 1U, u32 firstIndex = 0U, i32 vertexOffset = 0, u32 firstInstance = 0U)
+    {
+        BindBuffers(recorder, mesh);
+        recorder.DrawIndexed(mesh.IndexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+        
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void BindBuffers(this CommandRecorder.RenderPassRecorder recorder, ReadOnlyMesh mesh) => mesh.CmdBindBuffers(recorder.CommandBuffer);
+}
+
 public abstract class ReadOnlyMesh : AtomObject
 {
     protected internal static readonly Dictionary<Type, IndexType> IndexTypes = new()
@@ -12,6 +25,9 @@ public abstract class ReadOnlyMesh : AtomObject
         { typeof(u16), IndexType.u16    },
         { typeof(u32), IndexType.u32    },
     };
+    
+    public abstract u32 VertexCount { get; }
+    public abstract u32 IndexCount  { get; }
 
     public static ReadOnlyMesh<GVertex, TIndex> Load<TIndex>(
         string path, BufferSubresource? targetResource = null,
@@ -47,6 +63,8 @@ public abstract class ReadOnlyMesh : AtomObject
         
         return new ReadOnlyMesh<GVertex, TIndex>(writer, targetResource, device, physicalDevice);
     }
+
+    public abstract void CmdBindBuffers(SlimCommandBuffer cmd);
 }
 
 /*public class ReadOnlyMesh<TIndex> : ReadOnlyMesh<GVertex, TIndex>
@@ -88,11 +106,11 @@ public class ReadOnlyMesh<TVertex, TIndex> : ReadOnlyMesh
 
 
     /* API               */
-    public static IndexType IndexType      { get; }
-    public        u32       VertexCount    { get; }
-    public        u32       IndexCount     { get; }
+    public static   IndexType IndexType      { get; }
+    public override u32       VertexCount    { get; }
+    public override u32       IndexCount     { get; }
     
-    public        f64       BoundingSphere { get; }
+    public          f64       BoundingSphere { get; }
 
 
     /* Constructors      */
@@ -488,7 +506,7 @@ public class ReadOnlyMesh<TVertex, TIndex> : ReadOnlyMesh
         }
     }
     
-    public void CmdBindBuffers(SlimCommandBuffer cmd)
+    public override void CmdBindBuffers(SlimCommandBuffer cmd)
     {
         if (IsDeleted) return;
         

@@ -10,7 +10,7 @@ Planet {
         Generator = Generators/Rocky.generator
 
         Parameters {
-            Radius = 16300 km //
+            Radius = 6371.0 km //
 
             Atmosphere {
                 Composition = {
@@ -30,10 +30,10 @@ Planet {
     }
     
     Rotation { 
-        Day = 0 s // 86.4 s
+        Day = 1 day // 86.4 s
 
         Inclination {
-            Obliquity      = 00.00 °
+            Obliquity      = 23.44 °
             RightAscension = 00.00 °
         }
     }

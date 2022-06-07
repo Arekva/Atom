@@ -10,7 +10,7 @@ namespace Atom.Engine.Astro;
 
 
 
-public partial class Chunk : IDisposable
+public partial class Cell : IDisposable
 {
     private readonly Voxel[]?            _voxels   ; // The actual voxel data of the chunk
     
@@ -20,15 +20,13 @@ public partial class Chunk : IDisposable
 
     private          bool                _generated; // Has the chunk been generated (either from save file or generator)
 
-    
-    
     public ref Voxel this[u32 x, u32 y, u32 z] => ref _voxels![AMath.To1D(x, y, z, width: UNIT_COUNT, height: UNIT_COUNT)];
     
     public ref Voxel this[u32 i] => ref _voxels![i];
     
     
     
-    public Chunk(in Node<Chunk> node)
+    public Cell(in Node<Cell> node)
     {
         _depth = node.Depth;
         _voxels = new Voxel[UNIT_COUNT];
@@ -70,19 +68,20 @@ public partial class Chunk : IDisposable
                 _voxels![i].Element = 1;
                 _voxels![i].Mass = 1.0F;
             }
-            /*else
-            {
-                _voxels![i].Element = 0;
-            }*/
         }
         
         _generated = true;
     }
 
+    /*public static Vector3D<u64> GetCellCoordinates(u128 location)
+    {
+        
+    }*/
+
     public void Delete() { }
 
     public void Dispose() => Delete();
 
-    ~Chunk() => Dispose();
+    ~Cell() => Dispose();
 
 }

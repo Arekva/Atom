@@ -7,7 +7,7 @@ using Silk.NET.Maths;
 
 namespace Atom.Engine.Astro;
 
-public class Grid : Octree<Chunk>
+public class Grid : Octree<Cell>
 {
     private BufferSubresource _voxelMeshMemory;
     
@@ -32,6 +32,8 @@ public class Grid : Octree<Chunk>
     private BufferSubresource _debugFragmentSubresource;
     private BufferSubresource _debugMatricesSubresource;
 
+    private MemoryMap<u8> _settingsMap;
+
     private ReadOnlyMesh<DebugLineVertex, u8> _linesMesh;
 
     private bool _isReady;
@@ -43,14 +45,16 @@ public class Grid : Octree<Chunk>
         public Vector3D<f32> Position;
     }
 
+    
+    const u64 VOXEL_TERRAIN_COUNT = 1024;
+    const u64 DEBUG_CHUNK_DISPLAY_COUNT = 1<<16;
 
     public Grid(VoxelBody body)
     {
         _body = new WeakReference<VoxelBody>(target: body);
         _space = new(body.RotatedSpace, $"{body.Name} main grid space");
         
-        const u64 VOXEL_TERRAIN_COUNT = 1024;
-        u64 VOXEL_MESH_SIZE = Chunk.MAX_VERTEX_COUNT * (u64)Unsafe.SizeOf<GVertex>() + Chunk.MAX_INDEX_COUNT * sizeof(u16);
+        u64 VOXEL_MESH_SIZE = Cell.MAX_VERTEX_COUNT * (u64)Unsafe.SizeOf<GVertex>() + Cell.MAX_INDEX_COUNT * sizeof(u16);
         u64 VOXEL_MESH_TOTAL_SIZE = VOXEL_TERRAIN_COUNT * VOXEL_MESH_SIZE;
 
         _voxelMeshMemory = VK.CreateMemory<u8>(
@@ -130,8 +134,8 @@ public class Grid : Octree<Chunk>
 
         _linesMesh = new ReadOnlyMesh<DebugLineVertex, u8>(mesh_writer);
 
-        u64 sizeof_vertex_sets = (u64)Unsafe.SizeOf<Matrix4X4<f32>>() * Graphics.MAX_FRAMES_COUNT * VOXEL_TERRAIN_COUNT;
-        u64 sizeof_fragment_sets = (u64)Unsafe.SizeOf<Vector4D<f32>>() * VOXEL_TERRAIN_COUNT;
+        u64 sizeof_vertex_sets = (u64)Unsafe.SizeOf<Matrix4X4<f32>>() * Graphics.MAX_FRAMES_COUNT * DEBUG_CHUNK_DISPLAY_COUNT;
+        u64 sizeof_fragment_sets = (u64)Unsafe.SizeOf<Vector4D<f32>>() * DEBUG_CHUNK_DISPLAY_COUNT;
         
         _debugSettingsSubresource = VK.CreateMemory<u8>(
             count     : sizeof_vertex_sets + sizeof_fragment_sets, 
@@ -149,6 +153,8 @@ public class Grid : Octree<Chunk>
         
         _debugFragmentSubresource = _debugSettingsSubresource.Subresource(start: sizeof_vertex_sets, length: sizeof_fragment_sets);
         _debugMaterial.WriteBuffer<IFragmentModule>("_instanceData", _debugFragmentSubresource);
+
+        _settingsMap = _debugSettingsSubresource.Segment.Map();
         
         _isReady = true;
     }
@@ -161,12 +167,19 @@ public class Grid : Octree<Chunk>
         Initialize();
         
         _body.TryGetTarget(out VoxelBody? body);
-        if (body.Name == "Harbor")
+        
+        u128 loc = GetTreeLocation(new Location(Vector3D<f64>.UnitY * body.Radius));
+        SubdivideToSmooth(loc);
+
+        Parallel.ForEach(Nodes, node =>
         {
-            SubdivideTo(GetTreeLocation(new Location(
-                Vector3D<f64>.UnitY * body.Radius)));
-                //Vector3D<f64>.UnitY * body.Radius)));
-        }
+            if (!node.HasBranches)
+            {
+                Log.Info($"Spawning chunk {node}");
+                Cell cell = node.Data = new Cell(node);
+                cell.Generate(body.Radius);
+            }
+        });
         
         _terrainSpawned = true;
     }
@@ -193,21 +206,15 @@ public class Grid : Octree<Chunk>
     {
         u128 one = new(0, 1);
         if (depth == 0) return one;
-        // make space for coordinates
+        
         u128 location = one << (i32)(depth * DIMENSION);
-
-        Vector3D<i64> POSITION_OFFSET = Vector3D<i64>.Zero; //-Vector3D<i64>.One * 1024;
-        
         Vector3D<i64> local_position = (Vector3D<i64>)localPosition.Position;
-
-        Vector3D<u64> grid_space_position = (Vector3D<u64>)(local_position + new Vector3D<i64>(Chunk.SCALES_LONG[0]) + POSITION_OFFSET);
-
-        Vector3D<u64> chunk_coord = grid_space_position / (u64)Chunk.SIZE;
-        
+        Vector3D<u64> grid_space_position = (Vector3D<u64>)(local_position + new Vector3D<i64>(Cell.SCALES_LONG[0]));
+        Vector3D<u64> chunk_coord = grid_space_position / (u64)Cell.SIZE;
 
         for (i32 i = 1; i <= depth; i++)
         {
-            i32 offset =  (i32)(depth-i);
+            i32 offset = (i32)(depth-i);
             u8 local_location = 0b000;
             
             local_location |= (u8)(((chunk_coord.X >> offset) & 0b1) << 2); // x
@@ -230,8 +237,8 @@ public class Grid : Octree<Chunk>
         {
             u8 loc_loc = (u8)(location.Low & 0b111);
             
-            Location norm_pos = new (Chunk.POSITIONS[loc_loc]);
-            norm_pos.Scale(Chunk.SIZES[i]);
+            Location norm_pos = new (Cell.POSITIONS[loc_loc]);
+            norm_pos.Scale(Cell.SIZES[i]);
             position += norm_pos;
 
             location >>= (i32)DIMENSION;
@@ -239,14 +246,13 @@ public class Grid : Octree<Chunk>
         return position;
     }
 
-    private void CreateVoxel(Node<Chunk> node)
+    private void CreateVoxel(Node<Cell> node)
     {
         //node.Data = new Chunk(node, this);
     }
 
     private void TerrainDraw(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
-        ReadOnlySpan<Drawer.DrawRange> ranges,
-        Vector2D<u32> resolution, u32 frameIndex)
+        ReadOnlySpan<Drawer.DrawRange> ranges)
     {
         
     }
@@ -257,77 +263,81 @@ public class Grid : Octree<Chunk>
     }
     
     private void DebugDraw(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
-        ReadOnlySpan<Drawer.DrawRange> ranges,
-        Vector2D<u32> resolution, u32 frameIndex)
+        ReadOnlySpan<Drawer.DrawRange> ranges)
     {
+        //return;
         if (!_isReady) return;
         
         _body.TryGetTarget(out VoxelBody? body);
-        if (body!.Name != "Harbor") return;
 
-        const u32 SHOW_AFTER = 0;
-
-        u32 node_count = 0;
+        const u32 SHOW_AFTER = 20;
         
-        using (MemoryMap<Vector4D<f32>> color_map = _debugFragmentSubresource.Segment.Map<Vector4D<f32>>())
+        i32 node_count = 0;
+        
+        Span<u8> color_map_raw = _settingsMap.AsSpan(
+            _debugFragmentSubresource.Segment.Offset,
+            _debugFragmentSubresource.Segment.Size
+        );
+        Span<u8> vertex_map_raw = _settingsMap.AsSpan(
+            _debugMatricesSubresource.Segment.Offset,
+            _debugMatricesSubresource.Segment.Size
+        );
+        Span<Vector4D<f32>> color_map; 
+        Span<Matrix4X4<f32>> vertex_map;
+
+        unsafe
         {
-            Vector4D<f64> min_color = new(1.0D, 0.0D, 0.0D, 1.0D);
-            Vector4D<f64> max_color = new(0.0D, 1.0D, 0.0D, 1.0D);
+            fixed (u8* color_map_ptr = color_map_raw)
+                color_map = new(color_map_ptr, (i32)_debugFragmentSubresource.Segment.Size/sizeof(Vector4D<f32>));
             
-            foreach(Node<Chunk> node in Nodes)
-            {
-                if (!node.Equals(Root) && node.HasBranches) continue;
-                
-                u32 depth = node.Depth;
-                if (depth != 0 && depth < SHOW_AFTER) continue;
-                
-                color_map[node_count] = node.Equals(Root) ?
-                    new Vector4D<f32>(0.0F, 0.0F, 1.0F, 0.0F)
-                    :
-                    (Vector4D<f32>)Vector4D.Lerp(min_color, max_color, depth/(f64)MAX_SUBDIVISIONS);
-                ++node_count;
-            }
+            fixed (u8* vertex_map_ptr = vertex_map_raw)
+                vertex_map = new(vertex_map_ptr, (i32)_debugMatricesSubresource.Segment.Size/sizeof(Matrix4X4<f32>));
         }
+        
 
-        using (MemoryMap<Matrix4X4<f32>> matrices_map = _debugMatricesSubresource.Segment.Map<Matrix4X4<f32>>())
+
+        Vector4D<f64> min_color = new(1.0D, 0.0D, 0.0D, 1.0D);
+        Vector4D<f64> max_color = new(0.0D, 1.0D, 0.0D, 1.0D);
+        
+        Location grid_location = body!.CelestialSpace.Location;
+        Quaternion<f64> rotation = body.RotatedSpace.Rotation;
+        
+        foreach(Node<Cell> node in Nodes)
         {
-            Location grid_location = body!.CelestialSpace.Location;
-            Quaternion<f64> rotation = body.RotatedSpace.Rotation;
+            if (node == null!) continue;
+            if (!node.Equals(Root) && node.HasBranches) continue;
+            
+            // FRAGMENT
+            u32 depth = node.Depth;
+            if (depth != 0 && depth < SHOW_AFTER) continue;
+            
+            color_map[node_count] = node.Equals(Root) ?
+                new Vector4D<f32>(0.0F, 0.0F, 1.0F, 0.0F)
+                :
+                (Vector4D<f32>)Vector4D.Lerp(min_color, max_color, depth/(f64)MAX_SUBDIVISIONS);
 
-            u32 i = 0U;
+            // VERTEX
 
-            foreach(Node<Chunk> node in Nodes)
-            {
-                if (!node.Equals(Root) && node.HasBranches) continue;
-                
-                u32 depth = node.Depth;
-                if (depth != 0 && depth < SHOW_AFTER) continue;
-                
-                f64 scale = Chunk.SCALES[depth];
-
-                Location location = GetGridLocation(node.Location, depth);
-                location.Rotate(rotation);
-
-                location += grid_location;
-
-                Vector3D<f32> rel_pos_cam = (Vector3D<f32>)(location - Camera.World!.Location).Position;
-
-                matrices_map[i * Graphics.MAX_FRAMES_COUNT + frameIndex] = Matrix4X4.Multiply(Matrix4X4.Multiply(
-                    /*Matrix4X4.CreateFromQuaternion((Quaternion<f32>)rotation),
-                    Matrix4X4.CreateScale((f32)scale)), 
-                    Matrix4X4.CreateTranslation(rel_pos_cam));*/
+            f64 scale = Cell.SCALES[depth];
+            
+            Location location = GetGridLocation(node.Location, depth);
+            location.Rotate(rotation);
+            
+            location += grid_location;
+            
+            Vector3D<f32> rel_pos_cam = (Vector3D<f32>)(location - Camera.World!.Location).Position;
+            
+            vertex_map[node_count * (i32)Graphics.MAX_FRAMES_COUNT + (i32)renderPass.FrameIndex] = Matrix4X4.Multiply(Matrix4X4.Multiply(
                     Matrix4X4.CreateFromQuaternion((Quaternion<f32>)rotation),
                     Matrix4X4.CreateScale((f32)scale)), 
                     Matrix4X4.CreateTranslation(rel_pos_cam));
-                ++i;
-            }
-        }
 
-        _debugMaterial.CmdBindMaterial(renderPass.CommandBuffer, resolution, frameIndex);
+            ++node_count;
+        }
         
-        _linesMesh.CmdBindBuffers(renderPass.CommandBuffer);
+        _debugMaterial.CmdBindMaterial(renderPass.CommandBuffer, renderPass.Resolution, renderPass.FrameIndex);
         
-        renderPass.DrawIndexed(indexCount: _linesMesh.IndexCount, instanceCount: node_count);
+        renderPass.DrawIndexed(_linesMesh, instanceCount: (u32)node_count);
     }
 
 
@@ -354,6 +364,8 @@ public class Grid : Octree<Chunk>
         DispawnTerrain();
         _voxelMeshMemory.Delete();
         
+        _settingsMap.Dispose();
+
         _debugDrawer.Delete();
         _debugMaterial.Delete();
         _debugShader.Delete();

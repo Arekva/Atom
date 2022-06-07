@@ -93,29 +93,32 @@ public static class Updater
                 catch (Exception e) { Log.Error(e); }
             }
 
-            //= 4- Render Logic ==//
-            foreach (AtomObject @object in AtomObject.Objects)
+            if (Graphics.IsRenderReady)
             {
-                if (@object.IsDeleted) continue;
-
-                try { @object.Render(); }
-                catch (Exception e) { Log.Error(e); }
-            }
-
-            if (Graphics.IsRenderReady && Camera.World != null)
-            {
-                Viewport viewport = ViewportWindow.Instance.Viewport;
-                Camera camera = Camera.World;
-
-                RenderTarget final_render = camera.RenderImmediate(Graphics.FrameIndex, () =>
+                //= 4- Render Logic ==//
+                foreach (AtomObject @object in AtomObject.Objects)
                 {
-                    viewport.WaitResizeFinished();
-                    viewport.WaitForRender();
-                });
+                    if (@object.IsDeleted) continue;
 
-                viewport.Present(final_render!.Color!);
+                    try { @object.Render(); }
+                    catch (Exception e) { Log.Error(e); }
+                }
+
+                if (Camera.World != null)
+                {
+                    Viewport viewport = ViewportWindow.Instance.Viewport;
+                    Camera camera = Camera.World;
+
+                    RenderTarget final_render = camera.RenderImmediate(Graphics.FrameIndex, () =>
+                    {
+                        viewport.WaitResizeFinished();
+                        viewport.WaitForRender();
+                    });
+
+                    viewport.Present(final_render!.Color!);
+                }
             }
-            
+
             _frameDoneEvent.Set();
         }
     }

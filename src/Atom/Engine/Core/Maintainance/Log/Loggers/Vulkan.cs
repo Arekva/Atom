@@ -47,7 +47,6 @@ public class Vulkan
             }
         }
         
-        
         u32 relevant_objects_count = vkData->ObjectCount;
         ReadOnlySpan<vk.DebugUtilsObjectNameInfoEXT> relevant_objects = new(vkData->PObjects, (i32)relevant_objects_count);
 

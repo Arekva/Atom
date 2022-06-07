@@ -36,7 +36,6 @@ public class ClassicPlayerController : Thing
 
     public ClassicPlayerController() : base()
     {
-        {}
         if (Singleton != null!)
         {
             Delete();
@@ -46,7 +45,7 @@ public class ClassicPlayerController : Thing
         Singleton = this;
 
         _camera = new Camera(identifier: "default_world_viewport");
-        _camera.Perspective.Near = 1.0D;
+        _camera.Perspective.Near = 0.001D;
 
         Camera.World = _camera;
 

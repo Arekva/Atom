@@ -22,7 +22,7 @@ public class Game
     {
         Mouse.CursorMode = CursorMode.Raw;
 
-        using IScene scene = Scene.Load<SpaceScene>();
+        using IScene scene = Scene.Load<VoxelTestScene>();
 
         Engine.Engine.WaitForShutdown();
     }

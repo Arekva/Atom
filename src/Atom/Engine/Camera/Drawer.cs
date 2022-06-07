@@ -19,9 +19,11 @@ public class Drawer : IDisposable
     
 
 
-    public delegate void DrawCommand(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
-        ReadOnlySpan<DrawRange> ranges,
-        Vector2D<u32> resolution, u32 frameIndex);
+    public delegate void DrawCommand(
+        Camera camera, 
+        CommandRecorder.RenderPassRecorder renderPass,
+        ReadOnlySpan<DrawRange> ranges
+    );
 
     public delegate ReadOnlySpan<MeshBounding> GetMeshesBounds();
     
@@ -42,7 +44,7 @@ public class Drawer : IDisposable
     // ReSharper disable once InconsistentNaming
     public Guid GUID => _guid;
 
-    public IEnumerable<Camera> DrawBy => Camera.Cameras.Where(cam => cam.Drawers.SelectMany(d => d).Contains(this));
+    public IEnumerable<Camera> DrawBy => Camera.Cameras.Where(cam => cam.Drawers.SelectMany(drawer => drawer).Contains(this));
 
     public u64 TotalMeshCount;
     
@@ -119,8 +121,7 @@ public class Drawer : IDisposable
     
     
     public void Draw(Camera camera, CommandRecorder.RenderPassRecorder renderPass,
-        ReadOnlySpan<DrawRange> ranges,
-        Vector2D<u32> resolution, u32 frameIndex) => _command(camera, renderPass, ranges, resolution, frameIndex);
+        ReadOnlySpan<DrawRange> ranges) => _command(camera, renderPass, ranges);
     public ReadOnlySpan<MeshBounding> GetMeshes() => _bounds();
     
 

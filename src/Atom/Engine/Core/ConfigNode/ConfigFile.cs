@@ -140,6 +140,7 @@ public class ConfigFile
         
         const NumberStyles STYLE =  NumberStyles.AllowDecimalPoint | 
                                     NumberStyles.AllowThousands    |
+                                    NumberStyles.AllowLeadingSign  |
                                     NumberStyles.AllowExponent     ;
 
         f64 final_value = 0.0;

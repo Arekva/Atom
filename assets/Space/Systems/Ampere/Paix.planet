@@ -1,0 +1,37 @@
+Planet {
+    ID          = Atom.Ampere.Paix
+    Name        = Paix
+    SurfaceG    = 0.1654
+    Description = {
+        Test place for voxel stuff.
+    }
+
+    Generation {
+        Generator = Generators/Rocky.generator
+
+        Parameters {
+            Radius = 1737.4 km
+        }
+    }
+    
+    Rotation { 
+        Day = 27.321661 day
+
+        Inclination {
+            Obliquity      = -21.9 °
+            RightAscension = 00.00 °
+        }
+    }
+
+    Orbit {
+        Parent                   = Atom.Ampere.Harbor
+        
+        SemiMajorAxis            = 384399 km
+
+        Eccentricity             = 0.0549
+        Inclination              = 28.58 °
+        LongitudeOfAscendingNode = -11.26064 °
+        ArgumentOfPeriapsis      = 114.20783 °
+        MeanAnomaly              = 358.617 °
+    }
+}

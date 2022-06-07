@@ -7,6 +7,17 @@ public abstract class Octree
     public const u32 DIMENSION = 3;
     public const u32 BRANCH_COUNT = 2 * 2 * 2; // 2^DIMENSION
     public const u32 MAX_SUBDIVISIONS = 42U; 
+    
+    protected static readonly Directions[] NEIGHBOURS_DIRECTIONS = new[]
+    {
+        Directions.Left,
+        Directions.Right,
+        Directions.Down,
+        Directions.Up,
+        Directions.Backward,
+        Directions.Forward
+    };
+    
     //todo: fix world => grid position to increase that.
     // everything is fine but that, for now.
 }
@@ -111,6 +122,34 @@ public class Octree<T> : Octree, IDisposable
 
             ++current_depth;
             current_location = next_location;
+        }
+
+        return node;
+    }
+    
+    public Node<T> SubdivideToSmooth(u128 location)
+    {
+        // get base node to subdivide from
+        Node<T> node = SubdivideTo(location);
+        u32 node_depth = node.Depth;
+        
+        
+        // all the standard directions
+        for (i32 i = 0; i < NEIGHBOURS_DIRECTIONS.Length; i++)
+        {
+            ref readonly Directions neighbour_direction = ref NEIGHBOURS_DIRECTIONS[i];
+            Node<T>[] neighbours = node.GetNeighbours(neighbour_direction);
+
+            if (neighbours.Length == 0) continue; // ignore if no neighbours (tree boundaries)
+
+            while ((neighbours = node.GetNeighbours(neighbour_direction))[0].Depth < node_depth - 1)
+            {
+                for (i32 j = 0; j < neighbours.Length; j++)
+                {
+                    neighbours[j].Subdivide();
+                    SubdivideToSmooth(neighbours[j].Location);
+                }
+            }
         }
 
         return node;

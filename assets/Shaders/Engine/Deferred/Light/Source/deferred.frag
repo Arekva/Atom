@@ -50,7 +50,7 @@ void main()
     
     float sun_angle = max(dot(normal, sun_direction), 0.0);
 
-    vec3 raw_color = (albedo * (sky_light + sun_angle * sun_light));
+    vec3 raw_color = (albedo * (luminance + sky_light + sun_angle * sun_light));
 
     const vec3 EXPOSURE = vec3(0.00005);
 
