@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Silk.NET.Input;
+﻿using Silk.NET.Input;
 
 namespace Atom.Engine;
 
@@ -10,7 +9,7 @@ public static class Keyboard
     private static HashSet<Key> _previousFrameKeys = new();
     
     private static IInputContext _context;
-
+    
     public static IInputContext Context // todo: multiple keyboards
     {
         get => _context;
@@ -32,12 +31,16 @@ public static class Keyboard
     public static bool IsPressed(Key key) => GameFocus && _thisFrameKeys.Contains(key);
     public static bool IsReleased(Key key) => GameFocus && !IsPressed(key);
 
-    public static bool IsPressing(Key key) => GameFocus && _thisFrameKeys.Contains(key) && !_previousFrameKeys.Contains(key);
+    public static bool IsPressing(Key key) 
+        => GameFocus && _thisFrameKeys.Contains(key) && !_previousFrameKeys.Contains(key);
 
-    public static bool IsReleasing(Key key) => GameFocus && !_thisFrameKeys.Contains(key) && _previousFrameKeys.Contains(key);
+    public static bool IsReleasing(Key key) 
+        => GameFocus && !_thisFrameKeys.Contains(key) && _previousFrameKeys.Contains(key);
 
-    private static void OnKeyUp(IKeyboard keyboard, Key key, int idk) => _recordingFrameKeys.Remove(key);
-    private static void OnKeyDown(IKeyboard keyboard, Key key, int idk) => _recordingFrameKeys.Add(key);
+    private static void OnKeyUp(IKeyboard keyboard, Silk.NET.Input.Key key, i32 idk)
+        => _recordingFrameKeys.Remove((Key)key);
+    private static void OnKeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, i32 idk) 
+        => _recordingFrameKeys.Add((Key)key);
 
     internal static void NextFrame()
     {

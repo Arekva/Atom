@@ -7,12 +7,8 @@
         "id": "276dd2507eba344d",
         "type": "leaf",
         "state": {
-          "type": "markdown",
-          "state": {
-            "file": "Documentation/Engine/Camera.md",
-            "mode": "source",
-            "source": false
-          }
+          "type": "empty",
+          "state": {}
         }
       }
     ],
@@ -85,7 +81,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Documentation/Engine/Camera.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -105,6 +100,7 @@
   },
   "active": "276dd2507eba344d",
   "lastOpenFiles": [
+    "Milestones.md",
     "Documentation/Engine/Camera.md",
     "Systems/Kerbol System/Kerbol.md",
     "Systems/Kerbol System/Sans titre.md",
@@ -113,7 +109,6 @@
     "Systems/Kerbol System/Bop.md",
     "Systems/Kerbol System/Pol.md",
     "Systems/Kerbol System/Vall.md",
-    "Systems/Kerbol System/Laythe.md",
-    "Systems/Kerbol System/Jool.md"
+    "Systems/Kerbol System/Laythe.md"
   ]
 }

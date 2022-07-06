@@ -198,7 +198,7 @@ public class RasterizedMaterial : Material, IRasterizedMaterial
             pDynamicOffsets: null);
     }
     
-    public override unsafe void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<uint> extent, uint cameraIndex, uint frameIndex)
+    public override unsafe void CmdBindMaterial(SlimCommandBuffer cmd, Vector2D<u32> extent, u32 cameraIndex, u32 frameIndex)
     {
         vk.Viewport viewport = new(width: extent.X, height: extent.Y, minDepth: 0.0F, maxDepth: 1.0F);
         vk.Rect2D scissor = new(extent: new vk.Extent2D(extent.X, extent.Y));

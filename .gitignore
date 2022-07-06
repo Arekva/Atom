@@ -359,3 +359,6 @@ MigrationBackup/
 
 **/do_not_push/**
 *.spv
+
+gource/
+gource.ps1

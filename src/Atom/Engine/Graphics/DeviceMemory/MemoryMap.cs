@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Silk.NET.Maths;
 
 namespace Atom.Engine;
 
@@ -9,6 +8,7 @@ public class MemoryMap<T> : IDisposable, IMemoryMap where T : unmanaged
     {
         get
         {
+#if DEBUG
             if (index >= Segment.Length<T>())
             {
                 throw new ArgumentOutOfRangeException(
@@ -16,6 +16,8 @@ public class MemoryMap<T> : IDisposable, IMemoryMap where T : unmanaged
                     actualValue: index,
                     message    : $"A {Segment.Size} bytes {typeof(T)} memory contains {Segment.Length<T>()} elements, therefore index {index} is out of range."); 
             }
+            
+#endif
 
             unsafe
             {
@@ -36,10 +38,12 @@ public class MemoryMap<T> : IDisposable, IMemoryMap where T : unmanaged
             u64 start = range.Start.IsFromEnd ? segment_to_index - start_val : start_val;
             u64 end   = range.Start.IsFromEnd ? segment_to_index - end_val   : end_val  ;
 
+#if DEBUG
             if (start >= end)
             {
                 throw new ArgumentException("Range must be at least have 1 of length", nameof(range));
             }
+#endif
 
             return AsSpan(start, unchecked(end - start));
         }
@@ -134,6 +138,7 @@ public class MemoryMap<T> : IDisposable, IMemoryMap where T : unmanaged
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // ReSharper disable once InconsistentNaming
     public MemoryMap<O> As<O>() where O : unmanaged => new(Handle, Segment);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -69,6 +69,6 @@ public class SpaceScene : AtomObject, IScene
         }
         
         
-        _controller      .Dispose(      );
+        _controller.Dispose(      );
     }
 }

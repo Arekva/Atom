@@ -1,9 +1,7 @@
 ﻿using Silk.NET.Maths;
-using Silk.NET.Input;
 
 using Atom.Engine;
 using Atom.Engine.Astro;
-using Atom.Engine.Tree;
 
 
 namespace Atom.Game;

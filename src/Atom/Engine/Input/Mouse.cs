@@ -40,9 +40,9 @@ public static class Mouse
     }
 
 
-    private static Vector2D<double> _previousFramePosition = new (double.PositiveInfinity);
-    private static Vector2D<double> _delta = Vector2D<double>.Zero;
-    public static Vector2D<double> Delta => InputFocus ? _delta : Vector2D<double>.Zero;
+    private static Vector2D<f64> _previousFramePosition = new (f64.PositiveInfinity);
+    private static Vector2D<f64> _delta = Vector2D<f64>.Zero;
+    public static Vector2D<f64> Delta => InputFocus ? _delta : Vector2D<f64>.Zero;
 
 
     private static bool _windowFocus = true;
@@ -58,7 +58,7 @@ public static class Mouse
                 GameFocus = false;
             }
 
-            _previousFramePosition = new Vector2D<double>(double.PositiveInfinity);
+            _previousFramePosition = new Vector2D<f64>(f64.PositiveInfinity);
 
             UpdateCurrentCursorMode();
         }
@@ -72,7 +72,7 @@ public static class Mouse
         {
             _gameFocus = value;
 
-            _previousFramePosition = new Vector2D<f64>(double.PositiveInfinity);
+            _previousFramePosition = new Vector2D<f64>(f64.PositiveInfinity);
 
             UpdateCurrentCursorMode();
         }
@@ -97,7 +97,9 @@ public static class Mouse
 
     private static void UpdateCurrentCursorMode()
     {
-        _context.Mice[0].Cursor.CursorMode = InputFocus ? _userCursorMode : CursorMode.Normal;
+        _context.Mice[0].Cursor.CursorMode = InputFocus 
+            ? (Silk.NET.Input.CursorMode)_userCursorMode
+            : (Silk.NET.Input.CursorMode)CursorMode.Normal;
     }
     
     

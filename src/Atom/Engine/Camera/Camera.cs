@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
 using Atom.Engine.Pipelines;
 using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
@@ -126,14 +124,17 @@ public partial class Camera : Thing
         ? ref _perspective .ProjectionMatrix
         : ref _orthographic.ProjectionMatrix;
 
-    public IEnumerable<IEnumerable<Drawer>> Drawers => _drawers.AsEnumerable().Select(cat => cat.Values);
+    public IEnumerable<IEnumerable<Drawer>> Drawers => _drawers
+        .AsEnumerable()
+        .Select(cat => cat.Values);
 
 
     public Camera(
-        string? identifier = null, Space? parent = null,
-        Projection projectionMode = Projection.Perspective,
+        string? identifier = null, Space? parent = null             ,
+        Projection projectionMode = Projection.Perspective          ,
         Resolution resolutionMode = Atom.Engine.Resolution.Automatic,
-        Vector2D<u32>? resolution = null) : base(name: identifier ?? "Camera")
+        Vector2D<u32>? resolution = null     
+        ) : base(name: identifier ?? "Camera")
     {
         BorrowIndex();
         
@@ -181,7 +182,8 @@ public partial class Camera : Thing
         vk.Device device = VK.Device;
 
         _pipelinesPool = new SlimCommandPool(device, 0, CommandPoolCreateFlags.ResetCommandBuffer);
-        _pipelinesPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, Graphics.MAX_FRAMES_COUNT, out _pipelinesCommands);
+        _pipelinesPool.AllocateCommandBuffers(device, CommandBufferLevel.Primary, Graphics.MAX_FRAMES_COUNT,
+            out _pipelinesCommands);
         _pipelinesPool.SetName($"{Name} Render Pool");
         
         for (int i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
@@ -256,10 +258,12 @@ public partial class Camera : Thing
     
     public void CopyMatrices(Span<Matrix4X4<f32>> target, Camera? reference = null)
     {
+#if DEBUG
         if (target.Length < 2)
         {
             throw new ArgumentException("Target span must have at least a count of 2.", nameof(target));
         }
+#endif
         
         target[0] = (Matrix4X4<f32>)ViewMatrix(reference);
         target[1] = (Matrix4X4<f32>)ProjectionMatrix     ;
@@ -267,10 +271,12 @@ public partial class Camera : Thing
     
     public void CopyMatrices(Span<Matrix4X4<f64>> target, Camera? reference = null)
     {
+#if DEBUG
         if (target.Length < 2)
         {
             throw new ArgumentException("Target span must have at least a count of 2.", nameof(target));
         }
+#endif
         
         target[0] = ViewMatrix(reference);
         target[1] = ProjectionMatrix     ;

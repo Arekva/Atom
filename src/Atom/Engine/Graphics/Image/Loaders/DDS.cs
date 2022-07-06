@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Atom.Engine.Vulkan;
 using Silk.NET.Maths;
 
@@ -111,7 +109,8 @@ public static class DDS
         // Some sanitary header checking
         if (header.PixelFormat.FourCharCode != FourCharCodes.DX10)
         {
-            throw new NotImplementedException($"Only DX10 DDS files are implemented. (Tried to load {header.PixelFormat.FourCharCode})");
+            throw new NotImplementedException(
+                $"Only DX10 DDS files are implemented. (Tried to load {header.PixelFormat.FourCharCode})");
         }
 
         // Get Vulkan parameters

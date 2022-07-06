@@ -25,7 +25,7 @@ public enum ImageFormat : uint
     B5G5R5A1_UNorm_Pack16       = vk.Format.B5G5R5A1UnormPack16     ,
     // -- ARGB
     // ---- 2x10x10x10
-    A2R10G10B10_UNORM_PACK32    = vk.Format.A2R10G10B10UnormPack32  ,
+    A2R10G10B10_UNorm_PACK32    = vk.Format.A2R10G10B10UnormPack32  ,
     // ---- 1x5x5x5
     A1R5G5B5_UNorm_Pack16       = vk.Format.A1R5G5B5UnormPack16     ,
     // -- ABGR
