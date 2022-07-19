@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Atom.Engine.Generator;
 using Atom.Engine.GraphicsPipeline;
 using Atom.Engine.Shader;
 using Atom.Engine.Tree;
@@ -146,7 +147,7 @@ public class Grid : Octree<Cell>
 
         
         
-        _debugMaterial.WriteBuffer<IVertexModule>("_cameraMatrices", Camera.ShaderData);
+        _debugMaterial.WriteBuffer<IVertexModule>(Camera.ShaderDataName, Camera.ShaderData);
         
         _debugMatricesSubresource = _debugSettingsSubresource.Subresource(start: 0UL, length: sizeof_vertex_sets);
         _debugMaterial.WriteBuffer<IVertexModule>("_instanceData", _debugMatricesSubresource);
@@ -159,7 +160,9 @@ public class Grid : Octree<Cell>
         _isReady = true;
     }
 
-    public void SpawnTerrain()
+
+    private volatile int _nodeCount = 0;
+    public void SpawnTerrain(IGenerator generator)
     {
         if (_terrainSpawned) return;
 
@@ -175,11 +178,15 @@ public class Grid : Octree<Cell>
         {
             if (!node.HasBranches)
             {
-                Log.Info($"Spawning chunk {node}");
+                Log.Info($"Spawning cell {node}");
                 Cell cell = node.Data = new Cell(node);
-                cell.Generate(body.Radius);
+                cell.Generate(generator);
+
+                Interlocked.Increment(ref _nodeCount);
             }
         });
+        
+        Log.Warning($"Spawned terrain with {_nodeCount} cells");
         
         _terrainSpawned = true;
     }
@@ -188,7 +195,7 @@ public class Grid : Octree<Cell>
     {
         if (_terrainSpawned) return;
         
-        Root = null!; // GC should be automatically collecting this.
+        Root = null!; // GC should be automatically collecting this. 
         _drawer!.Delete();
         
         
@@ -202,7 +209,7 @@ public class Grid : Octree<Cell>
         return GetTreeLocation(relative_location, depth);
     }
 
-    public u128 GetTreeLocation(Location localPosition, u32 depth = MAX_SUBDIVISIONS)
+    public static u128 GetTreeLocation(Location localPosition, u32 depth = MAX_SUBDIVISIONS)
     {
         u128 one = new(0, 1);
         if (depth == 0) return one;
@@ -227,7 +234,7 @@ public class Grid : Octree<Cell>
         return location;
     }
 
-    public Location GetGridLocation(u128 location, u32 depth)
+    public static Location GetGridLocation(u128 location, u32 depth)
     {
         if (depth == 0) return Location.Origin;
         

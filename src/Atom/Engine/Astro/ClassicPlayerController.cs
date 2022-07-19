@@ -68,8 +68,8 @@ public class ClassicPlayerController : Thing
         _angles.X = Math.Clamp(_angles.X, -MAX_X_ROT, MAX_X_ROT);
         
         _camera.Space.LocalRotation =
-            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitY, _angles.Y * AMath.DegToRad) *
-            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, _angles.X * AMath.DegToRad) ;
+            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitY, _angles.Y * AMath.DEG_TO_RAD) *
+            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, _angles.X * AMath.DEG_TO_RAD) ;
         
         Vector3D<f64> move_forward = _camera.Space.Forward;
         move_forward.Y = 0.0D;

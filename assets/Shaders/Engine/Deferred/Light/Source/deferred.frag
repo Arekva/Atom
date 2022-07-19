@@ -52,7 +52,7 @@ void main()
 
     vec3 raw_color = (albedo * (luminance + sky_light + sun_angle * sun_light));
 
-    const vec3 EXPOSURE = vec3(0.00005);
+    const vec3 EXPOSURE = vec3(0.000025);
 
-    out_color = vec4(tonemapping_reinhard_exposure(raw_color, EXPOSURE), 2.0);
+    out_color = vec4(tonemapping_reinhard_exposure_hdr(raw_color, EXPOSURE), 2.0);
 }

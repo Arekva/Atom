@@ -17,14 +17,13 @@ public abstract class Octree
         Directions.Backward,
         Directions.Forward
     };
-    
-    //todo: fix world => grid position to increase that.
-    // everything is fine but that, for now.
 }
 
 public class Octree<T> : Octree, IDisposable
 {
-    private Node<T> _root;
+    private Node<T> _root           ;
+
+    private u32     _fromSubdivision;
 
     public Node<T> Root
     {
@@ -50,9 +49,20 @@ public class Octree<T> : Octree, IDisposable
         }
     }
 
+    public u32 SubdivisionCount => MAX_SUBDIVISIONS - _fromSubdivision;
 
+    public u32 FromSubdivision => _fromSubdivision;
+    
 
-    public Octree() { }
+    public Octree(u32 fromSubdivision = 0)
+    {
+        _fromSubdivision = fromSubdivision;
+    }
+
+    public void EditFromSubdivision(u32 newFromSubdivision)
+    {
+        
+    }
 
     public bool TryFindNode(ReadOnlySpan<char> code, out Node<T> node)
     {
@@ -61,7 +71,7 @@ public class Octree<T> : Octree, IDisposable
         {
             ref readonly char branch_code = ref code[i];
             ref readonly u8 branch = ref Node.CHAR_LOC_MAP[branch_code - 'A'];
-            location = ((location << (i32)DIMENSION) | branch );
+            location = (location << (i32)DIMENSION) | branch;
         }
 
         return TryFindNode(location, out node);

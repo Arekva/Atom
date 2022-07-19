@@ -27,6 +27,8 @@ public class Texture : IDisposable
         IsImageOwned = false;
     }
     
+    public Texture(string path) : this (image: Loaders.DDS.Load(stream: File.OpenRead(path))) { }
+    
     public Texture(
         Image image, bool ownImage = true, 
         TextureSampler? sampler = null, bool ownSampler = true)

@@ -1,17 +1,21 @@
 using Atom.Engine;
 using Atom.Game.PlanetEditor;
+using Atom.Tricot;
 
 namespace Atom.Game;
 
 public class Game
 {
-    public static void Main(string[] args) => Engine.Engine.Run(gui: true, "Atom");
+    public static void Main(string[] args)
+    {
+        Engine.Engine.Run(gui: true, "Atom");
+    }
 
     private static void Run()
     {
         Mouse.CursorMode = CursorMode.Raw;
 
-        using IScene scene = Scene.Load<PlanetEditorScene>();
+        using IScene scene = Scene.Load<SpaceScene>();
 
         Engine.Engine.WaitForShutdown();
     }
@@ -33,7 +37,6 @@ public class Game
 
             try
             {
-                
                 Run();
                 
                 GC.Collect( // enforce collection to free potential native handles

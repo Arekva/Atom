@@ -16,6 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Atom.Sculpture\Atom.Sculpture.csproj" />
       <ProjectReference Include="..\SPIRV-Cross\SPIRV-Cross.csproj" />
     </ItemGroup>
 

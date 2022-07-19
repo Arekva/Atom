@@ -97,7 +97,7 @@ public abstract class ShaderModule : IShaderModule
             {
                 if (string.IsNullOrEmpty(descs[i].Name)) throw new Exception("Descriptor name should not be empty! Corrupted SPIR-V file.");
                 NamedDescriptors.Add(
-                    key:   descs[i].Name,
+                    key  : descs[i].Name,
                     value: descs[i]
                 );
             }

@@ -8,14 +8,14 @@ public static class AMath
     public const f64 TAU = 2.0D * Math.PI;
     
     /// <summary> Conversion ratio from degrees to radians. </summary>
-    public const double DegToRad = Math.PI / 180D;
+    public const f64 DEG_TO_RAD = Math.PI / 180D;
     /// <summary> Conversion ratio from radians to degrees. </summary>
-    public const double RadToDeg = 180D / Math.PI;
+    public const f64 RAD_TO_DEG = 180D / Math.PI;
     
     /// <summary> Conversion ratio from degrees to radians. </summary>
-    public const float DegToRadF = (float)DegToRad;
+    public const f32 DEG_TO_RAD_F = (f32)DEG_TO_RAD;
     /// <summary> Conversion ratio from radians to degrees. </summary>
-    public const float RadToDegF = (float)RadToDeg;
+    public const f32 RAD_TO_DEG_F = (f32)RAD_TO_DEG;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static i32 To1D(i32 x, i32 y, i32 z, i32 width, i32 height) => x + width*y + width*height*z;
@@ -73,13 +73,13 @@ public static class AMath
     }
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double Map(double value, double oldLow, double oldHigh, double newLow, double newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+    public static f64 Map(f64 value, f64 oldLow, f64 oldHigh, f64 newLow, f64 newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3D<f64> Map(Vector3D<f64> value, Vector3D<f64> oldLow, Vector3D<f64> oldHigh, Vector3D<f64> newLow, Vector3D<f64> newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Map(float value, float oldLow, float oldHigh, float newLow, float newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
+    public static f32 Map(f32 value, f32 oldLow, f32 oldHigh, f32 newLow, f32 newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Location Map(Location value, Location oldLow, Location oldHigh, Location newLow, Location newHigh) => newLow + (value - oldLow) * (newHigh - newLow) / (oldHigh - oldLow);
@@ -111,11 +111,11 @@ public static class AMath
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double LinearInterpolation(double a, double b, double t) => (1.0D - t) * a + t * b;
+    public static f64 Lerp(f64 a, f64 b, f64 t) => (1.0D - t) * a + t * b;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double SCurve3(double a) => a*a*(3.0 - 2.0*a);
+    public static f64 SCurve3(f64 a) => a*a*(3.0 - 2.0*a);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double SCurve5(double a) => a*a*a*(a*(a*6.0 - 15.0) + 10.0);
+    public static f64 SCurve5(f64 a) => a*a*a*(a*(a*6.0 - 15.0) + 10.0);
 }

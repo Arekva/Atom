@@ -35,8 +35,8 @@ public class EditorPlanetCamera : AtomObject
     private void UpdateSpace()
     {
         Quaternion<f64> rotation = 
-            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitY, _angles.Y * AMath.DegToRad) *
-            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, _angles.X * AMath.DegToRad) ;
+            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitY, _angles.Y * AMath.DEG_TO_RAD) *
+            Quaternion<f64>.CreateFromAxisAngle(Vector3D<f64>.UnitX, _angles.X * AMath.DEG_TO_RAD) ;
         
         _camera.Space.LocalRotation = -rotation;
         _camera.Space.LocalPosition = rotation.Multiply(-Vector3D<Double>.UnitZ) * _normalizedDistance * BodyRadius;

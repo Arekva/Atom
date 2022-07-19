@@ -63,7 +63,7 @@ public class VoxelBody : CelestialBody
             new NoOrbit() :
             new RailOrbit(this, orbit);
         
-        // Grid = new Grid(this);
+        Grid = new Grid(this);
         // Grid.SpawnTerrain();
         
         Display(true);
@@ -173,7 +173,7 @@ public class VoxelBody : CelestialBody
     {
         if (state && !_displaying)
         {
-            _shader = Shader.Shader.Load<IRasterShader>("Engine", "Standard"); 
+            _shader = Shader.Shader.Load<IRasterShader>(@namespace: "Engine", name: "Standard"); 
             _material = new RasterizedMaterial(_shader);
             
             // default every transformation to identity
@@ -247,10 +247,10 @@ public class VoxelBody : CelestialBody
     public static void Initialize()
     {
         _mesh   = ReadOnlyMesh.Load<u32>("assets/Meshes/SimpleSphere.obj");
-        _white  = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/white.dds"       )));
-        _black  = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/black.dds"       )));
-        _purple = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/white_normal.dds")));
-        _se = new Texture(image: dds.Load(stream: File.OpenRead(path: "assets/Images/thumbnail.dds")));
+        _white  = new Texture(path: "assets/Images/white.dds"       );
+        _black  = new Texture(path: "assets/Images/black.dds"       );
+        _purple = new Texture(path: "assets/Images/white_normal.dds");
+        _se     = new Texture(path: "assets/Images/uv_test.dds"     );
     }
 
     public static void Cleanup()

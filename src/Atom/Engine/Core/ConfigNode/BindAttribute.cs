@@ -14,8 +14,8 @@ public class BindAttribute : Attribute
             {
                 // angles
                 { "rad", 1.0D           }, // rad is the base angle unit
-                { "°"  , AMath.DegToRad }, // deg => rad = PI/180
-                { "deg", AMath.DegToRad }, // -
+                { "°"  , AMath.DEG_TO_RAD }, // deg => rad = PI/180
+                { "deg", AMath.DEG_TO_RAD }, // -
             }
         },
         {

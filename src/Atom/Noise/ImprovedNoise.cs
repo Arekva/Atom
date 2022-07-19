@@ -86,7 +86,7 @@ public class ImprovedPerlin
         int n = x > 0.0 ? (int) x : (int) x - 1;
         int index = n & 255; // ceil to 255
         x -= n;
-        return AMath.LinearInterpolation(Grad(_random[index], x), Grad(_random[index + 1], x - 1f), Quality switch
+        return AMath.Lerp(Grad(_random[index], x), Grad(_random[index + 1], x - 1f), Quality switch
         {
             NoiseQuality.Fast => x,
             NoiseQuality.Standard => AMath.SCurve3(x),
@@ -129,8 +129,8 @@ public class ImprovedPerlin
 
         int index2 = _random[index1] + num3;
         int index3 = _random[index1 + 1] + num3;
-        return AMath.LinearInterpolation(AMath.LinearInterpolation(Grad(_random[index2], x, y), Grad(_random[index3], x - 1.0, y), a1),
-            AMath.LinearInterpolation(Grad(_random[index2 + 1], x, y - 1.0), Grad(_random[index3 + 1], x - 1.0, y - 1.0), a1),
+        return AMath.Lerp(AMath.Lerp(Grad(_random[index2], x, y), Grad(_random[index3], x - 1.0, y), a1),
+            AMath.Lerp(Grad(_random[index2 + 1], x, y - 1.0), Grad(_random[index3 + 1], x - 1.0, y - 1.0), a1),
             a2);
     }
 
@@ -179,14 +179,14 @@ public class ImprovedPerlin
         int index5 = _random[index1 + 1] + num4;
         int index6 = _random[index5] + num5;
         int index7 = _random[index5 + 1] + num5;
-        return AMath.LinearInterpolation(
-            AMath.LinearInterpolation(AMath.LinearInterpolation(Grad(_random[index3], x, y, z), Grad(_random[index6], x - 1.0, y, z), a1),
-                AMath.LinearInterpolation(this.Grad(this._random[index4], x, y - 1.0, z),
+        return AMath.Lerp(
+            AMath.Lerp(AMath.Lerp(Grad(_random[index3], x, y, z), Grad(_random[index6], x - 1.0, y, z), a1),
+                AMath.Lerp(this.Grad(this._random[index4], x, y - 1.0, z),
                     this.Grad(this._random[index7], x - 1.0, y - 1.0, z), a1), a2),
-            AMath.LinearInterpolation(
-                AMath.LinearInterpolation(Grad(_random[index3 + 1], x, y, z - 1.0),
+            AMath.Lerp(
+                AMath.Lerp(Grad(_random[index3 + 1], x, y, z - 1.0),
                     Grad(_random[index6 + 1], x - 1.0, y, z - 1.0), a1),
-                AMath.LinearInterpolation(Grad(_random[index4 + 1], x, y - 1.0, z - 1f),
+                AMath.Lerp(Grad(_random[index4 + 1], x, y - 1.0, z - 1f),
                     Grad(_random[index7 + 1], x - 1.0, y - 1.0, z - 1.0), a1), a2), a3);
     }
 

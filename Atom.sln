@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Atom", "src\Atom\Atom.cspro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPIRV-Cross", "src\SPIRV-Cross\SPIRV-Cross.csproj", "{3EE06F40-912F-43B9-9625-91FEADC48981}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeTest", "src\Test\ComputeTest\ComputeTest\ComputeTest.csproj", "{B4E3319C-38BE-4761-9BC8-3F44820734C4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,10 +21,6 @@ Global
 		{3EE06F40-912F-43B9-9625-91FEADC48981}.Debug|x64.Build.0 = Debug|Any CPU
 		{3EE06F40-912F-43B9-9625-91FEADC48981}.Release|x64.ActiveCfg = Release|Any CPU
 		{3EE06F40-912F-43B9-9625-91FEADC48981}.Release|x64.Build.0 = Release|Any CPU
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Debug|x64.Build.0 = Debug|Any CPU
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.ActiveCfg = Release|Any CPU
-		{B4E3319C-38BE-4761-9BC8-3F44820734C4}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

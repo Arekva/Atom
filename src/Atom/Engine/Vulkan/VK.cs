@@ -278,6 +278,8 @@ public static class VK
             
             
             API.CreateDevice(best_gpu.PhysicalDevice, in info, null, out _device);
+            
+            best_gpu.PhysicalDevice.SetName(best_gpu.Name);
 
             const u32 GRAPHICS_FAMILY_NVIDIA = 0;
 

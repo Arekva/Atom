@@ -6,6 +6,8 @@ namespace Atom.Engine;
 
 public struct Location : IFormattable, IEquatable<Location>, IComparable<Location>
 {
+    public const bool IS_UNIVERSE_HYPERTORUS = true;
+    
     // we need to keep everything under reasonable distance so the precisions
     // stays around the millimetre
     public const f64 SECTOR_SIZE        = (1UL<<39) * Units.METRE;
@@ -29,7 +31,7 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
     /// <summary> The global universe coordinates. Avoid using this for precise calculations. </summary>
     public Vector3D<f64> Position => new Vector3D<f64>(Sector.X, Sector.Y, Sector.Z) * SectorScale + Coordinates;
 
-    public Location(Vector3D<f64> coordinates, Vector3D<long> sector)
+    public Location(Vector3D<f64> coordinates, Vector3D<i64> sector)
     {
         Coordinates = coordinates;
         Sector = sector;
@@ -83,9 +85,12 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
         c.Y -= s_overflow_y * SECTOR_HEIGHT;
         c.Z -= s_overflow_z * SECTOR_DEPTH ;
         
-        s.X += s_overflow_x;
-        s.Y += s_overflow_y;
-        s.Z += s_overflow_z;
+        unchecked // leave this so the universe wraps
+        {
+            s.X += s_overflow_x;
+            s.Y += s_overflow_y;
+            s.Z += s_overflow_z;
+        }
     }
 
     public override string ToString() => ToString(null, null);
@@ -100,33 +105,33 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
 
     public bool Equals(Location other) => other.Sector == Sector && other.Coordinates == Coordinates;
 
-    public int CompareTo(Location other)
+    public i32 CompareTo(Location other)
     {
-        double other_length = other.Position.LengthSquared;
-        double this_length = Position.LengthSquared;
+        f64 other_length = other.Position.LengthSquared;
+        f64 this_length = Position.LengthSquared;
         return other_length > this_length ? -1 : other_length < this_length ? 1 : 0;
     }
 
     public static Location operator +(Location a, Location b)
     {
-        Vector3D<double> coords = a.Coordinates + b.Coordinates;
-        Vector3D<long> sector = a.Sector + b.Sector;
+        Vector3D<f64> coords = a.Coordinates + b.Coordinates;
+        Vector3D<i64> sector = a.Sector + b.Sector;
 
         return new Location(coords, sector);
     }
     
-    public static Location operator +(Location a, Vector3D<double> b)
+    public static Location operator +(Location a, Vector3D<f64> b)
     {
-        Vector3D<double> coords = a.Coordinates + b;
-        Vector3D<long> sector = a.Sector;
+        Vector3D<f64> coords = a.Coordinates + b;
+        Vector3D<i64> sector = a.Sector;
 
         return new Location(coords, sector);
     }
     
     public static Location operator -(Location a, Location b)
     {
-        Vector3D<double> coords = a.Coordinates - b.Coordinates;
-        Vector3D<long> sector = a.Sector - b.Sector;
+        Vector3D<f64> coords = a.Coordinates - b.Coordinates;
+        Vector3D<i64> sector = a.Sector - b.Sector;
 
         return new Location(coords, sector);
     }
@@ -134,16 +139,16 @@ public struct Location : IFormattable, IEquatable<Location>, IComparable<Locatio
     public static Location operator *(Location a, Location b)
     {
         // todo: check if this is mathematically true
-        Vector3D<double> coords = a.Coordinates * b.Coordinates;
-        Vector3D<long> sector = a.Sector * b.Sector;
+        Vector3D<f64> coords = a.Coordinates * b.Coordinates;
+        Vector3D<i64> sector = a.Sector * b.Sector;
 
         return new Location(coords, sector);
     }
     public static Location operator /(Location a, Location b)
     {
         // todo: check if this is mathematically true
-        Vector3D<double> coords = a.Coordinates / b.Coordinates;
-        Vector3D<long> sector = default;
+        Vector3D<f64> coords = a.Coordinates / b.Coordinates;
+        Vector3D<i64> sector = default;
         if (b.Sector.X == 0.0D || b.Sector.Y == 0.0D || b.Sector.Z == 0.0D)
         {
             sector = a.Sector;

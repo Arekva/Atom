@@ -1,7 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿// ReSharper disable CompareOfFloatsByEqualityOperator
+using System.Runtime.CompilerServices;
 
 using Silk.NET.Maths;
-// ReSharper disable CompareOfFloatsByEqualityOperator
 
 
 
@@ -135,7 +135,7 @@ public class PerspectiveProjection : IProjection
         Matrix4X4<f64> infinite_depth = new(
             r, 0, 0, 0,
             0, f, 0, 0,
-            0, 0, 0,-1, // infinite far clip
+            0, 0, 0,-1, // infinite far clip and inverted depth
             0, 0, n, 0  // only near clip matters
         );
 
@@ -150,7 +150,7 @@ public class PerspectiveProjection : IProjection
         _projection = Matrix4X4.Multiply(infinite_depth, coordinate_fix);
         
         OnProjectionMatrixChange?.Invoke(in _projection);
-
+        
         return ref ProjectionMatrix;
     }
 }

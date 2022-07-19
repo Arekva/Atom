@@ -188,7 +188,7 @@ public partial class Camera : Thing
         
         for (int i = 0; i < Graphics.MAX_FRAMES_COUNT; i++)
         {
-            _targets[i] = new RenderTarget(Resolution, name: $"{Name} #{i}");
+            _targets[i] = new RenderTarget(Resolution, name: $"{Name} #{i}", colorFormat: ImageFormat.A2B10G10R10_UNorm_Pack32);
             _renderPipelines[i] = new GamePipeline(device);
             _immediateFences[i] = new SlimFence(device);
             _pipelinesCommands[i].SetName($"{Name} Render Command #{i}");

@@ -154,13 +154,14 @@ public class Viewport : IDisposable
         AssignSupportedUsages();
 
         _colorFormat = //ImageFormat.A2B10G10R10_UNorm_Pack32;
-                         ImageFormat.B8G8R8A8_UNorm      ;
+                       ImageFormat.B8G8R8A8_UNorm      ;
+                       //ImageFormat.R16G16B16A16_SFloat;
         _colorSpace  = //ColorSpace.HDR10_ST2084             ;
-                         ColorSpace.sRGB_NonLinear       ;
+                       ColorSpace.sRGB_NonLinear       ;
+                       //ColorSpace.Extended_sRGB_Linear;
 
         if (IsVSyncSupported(out _presentMode))
         {
-            
         }
         else
         {

@@ -85,6 +85,7 @@ public class GPU
         VK.API.GetPhysicalDeviceProperties2(physicalDevice, &properties);
 
         Name = LowLevel.GetString(properties.Properties.DeviceName)!;
+
         fixed (byte* p_uuid = IDProperties.DeviceUuid)
         {
             UUID = new Guid(new Span<byte>(p_uuid, 16));
